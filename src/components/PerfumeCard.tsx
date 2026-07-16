@@ -13,9 +13,11 @@ const ease = [0.22, 1, 0.36, 1] as const;
 export default function PerfumeCard({
   perfume,
   index,
+  onClick,
 }: {
   perfume: Perfume;
   index: number;
+  onClick?: () => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [clickedGlow, setClickedGlow] = useState(false);
@@ -25,6 +27,7 @@ export default function PerfumeCard({
   const handleTap = () => {
     setClickedGlow(true);
     setTimeout(() => setClickedGlow(false), 800);
+    onClick?.();
   };
 
   const mouseX = useMotionValue(0);

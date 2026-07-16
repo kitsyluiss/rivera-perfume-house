@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useScroll, useSpring } from "motion/react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PerfumeCard from "@/components/PerfumeCard";
 import { Perfume } from "@/lib/types";
 import { PERFUME_TAGS, inferPerfumeTag } from "@/lib/perfume-tags";
 import PreloaderIdent from "@/components/PreloaderIdent";
+import { formatPhp } from "@/lib/format";
+import { getFragranceDNA } from "@/lib/fragrance-dna";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -98,6 +100,7 @@ export default function CatalogView({
 }) {
   const [preloaderDone, setPreloaderDone] = useState(false);
   const [query, setQuery] = useState("");
+  const [selectedPerfume, setSelectedPerfume] = useState<Perfume | null>(null);
   const [brandFilter, setBrandFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
 
@@ -289,7 +292,12 @@ export default function CatalogView({
           ) : (
             <motion.div layout transition={{ duration: 0.4, ease }} className="w-full grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((perfume, index) => (
-                <PerfumeCard key={perfume.id} perfume={perfume} index={index} />
+                <PerfumeCard
+                  key={perfume.id}
+                  perfume={perfume}
+                  index={index}
+                  onClick={() => setSelectedPerfume(perfume)}
+                />
               ))}
             </motion.div>
           )}
@@ -307,6 +315,230 @@ export default function CatalogView({
           Rivera Perfume House &mdash; Fine Fragrances
         </p>
       </motion.footer>
+
+      <AnimatePresence>
+        {selectedPerfume && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[5000] flex items-end justify-center md:items-center"
+          >
+            {/* Scrim */}
+            <div
+              className="absolute inset-0 bg-black/82 backdrop-blur-md cursor-pointer"
+              onClick={() => setSelectedPerfume(null)}
+            />
+
+            {/* Panel */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 220 }}
+              className="relative z-10 w-full max-w-3xl overflow-hidden rounded-t-[1.5rem] border border-border bg-background shadow-2xl md:rounded-[1.5rem] max-h-[92vh] md:max-h-[85vh] flex flex-col"
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setSelectedPerfume(null)}
+                className="absolute right-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-card/85 text-muted-foreground transition hover:bg-primary/10 hover:text-foreground cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="overflow-y-auto overscroll-contain flex-1">
+                {/* Hero Section */}
+                <div className="grid grid-cols-1 md:grid-cols-12">
+                  <div className="relative aspect-[4/5] md:aspect-auto md:h-full md:col-span-5 bg-secondary overflow-hidden">
+                    {selectedPerfume.image_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={selectedPerfume.image_url}
+                        alt={selectedPerfume.scent_name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
+                        No Image
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-background" />
+                  </div>
+
+                  <div className="p-8 md:col-span-7 flex flex-col justify-center">
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-primary mb-2">
+                      {selectedPerfume.brand}
+                    </p>
+                    <h2 className="font-display text-3xl font-light leading-tight text-foreground md:text-4xl lg:text-5xl mb-4">
+                      {selectedPerfume.scent_name}
+                    </h2>
+                    
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      <span className="rounded-full border border-primary/25 px-3.5 py-1 text-[9px] uppercase tracking-[0.15em] text-primary">
+                        {inferPerfumeTag(selectedPerfume)}
+                      </span>
+                      <span className="rounded-full border border-border px-3.5 py-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground">
+                        {selectedPerfume.quantity > 0 ? "Available" : "Unavailable"}
+                      </span>
+                    </div>
+
+                    <div className="mb-6">
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
+                        Price
+                      </p>
+                      <p className="font-display text-3xl font-semibold text-foreground">
+                        {formatPhp(selectedPerfume.target_sale_price)}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-8">
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          selectedPerfume.quantity > 0 ? "bg-emerald-400" : "bg-red-400"
+                        }`}
+                      />
+                      <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {selectedPerfume.quantity > 0
+                          ? selectedPerfume.quantity <= 5
+                            ? `Low stock — only ${selectedPerfume.quantity} left`
+                            : "In Stock"
+                          : "Sold Out"}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={selectedPerfume.quantity === 0}
+                      className={`flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-xs uppercase tracking-[0.15em] font-mono transition-all duration-300 ${
+                        selectedPerfume.quantity > 0
+                          ? "bg-primary text-primary-foreground hover:bg-primary/95 hover:translate-y-[-2px] hover:shadow-lg hover:shadow-primary/25 active:translate-y-0 cursor-pointer"
+                          : "bg-border text-muted-foreground cursor-not-allowed"
+                      }`}
+                    >
+                      {selectedPerfume.quantity > 0 ? "Add to Cart" : "Sold Out"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Fragrance DNA block */}
+                {(() => {
+                  const dna = getFragranceDNA(selectedPerfume.scent_name);
+                  return (
+                    <div className="border-t border-border p-8">
+                      {/* Accords Profile */}
+                      <div className="mb-8">
+                        <h4 className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-6 font-mono">
+                          Accord Profile
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                          {dna.accords.map((accord) => (
+                            <div key={accord.name} className="flex items-center gap-3">
+                              <span className="w-20 text-right text-xs text-muted-foreground">
+                                {accord.name}
+                              </span>
+                              <div className="h-1 bg-border rounded-full flex-1 overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${accord.value}%` }}
+                                  transition={{ duration: 0.8, ease }}
+                                  className="h-full rounded-full"
+                                  style={{
+                                    background:
+                                      accord.color === "warm"
+                                        ? "linear-gradient(90deg, #d6b36d, #e8c547)"
+                                        : accord.color === "fresh"
+                                        ? "linear-gradient(90deg, #5bb8a9, #7ed6c8)"
+                                        : accord.color === "citrus"
+                                        ? "linear-gradient(90deg, #d4a94b, #e8c94b)"
+                                        : accord.color === "sweet"
+                                        ? "linear-gradient(90deg, #c48a6e, #d9a382)"
+                                        : accord.color === "spice"
+                                        ? "linear-gradient(90deg, #a36d5c, #c48a6e)"
+                                        : accord.color === "woody"
+                                        ? "linear-gradient(90deg, #7a6b5a, #9e8d78)"
+                                        : accord.color === "aquatic"
+                                        ? "linear-gradient(90deg, #4a9ec4, #6bb8d6)"
+                                        : accord.color === "musk"
+                                        ? "linear-gradient(90deg, #b8a0b0, #cbbcc8)"
+                                        : accord.color === "leather"
+                                        ? "linear-gradient(90deg, #6e4f3a, #8b6b54)"
+                                        : accord.color === "floral"
+                                        ? "linear-gradient(90deg, #b88eae, #cda6c3)"
+                                        : accord.color === "smoky"
+                                        ? "linear-gradient(90deg, #6b6b6b, #8e8e8e)"
+                                        : accord.color === "aromatic"
+                                        ? "linear-gradient(90deg, #6a9e78, #82b890)"
+                                        : accord.color === "rose"
+                                        ? "linear-gradient(90deg, #c27878, #d69090)"
+                                        : "linear-gradient(90deg, #5bb8a9, #7ed6c8)",
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Fragrance Pyramid */}
+                      <div>
+                        <h4 className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-6 font-mono">
+                          Fragrance Pyramid
+                        </h4>
+                        <div className="flex flex-col gap-4 border-t border-primary/5 pt-2">
+                          {dna.notes.top && dna.notes.top.length > 0 && (
+                            <div className="flex gap-4 items-start">
+                              <span className="w-16 text-xs text-[#7ed6c8] font-mono uppercase tracking-[0.1em] pt-1">
+                                Top
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {dna.notes.top.map((note) => (
+                                  <span key={note} className="rounded-full border border-[#7ed6c8]/15 px-3 py-1 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors duration-200">
+                                    {note}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {dna.notes.heart && dna.notes.heart.length > 0 && (
+                            <div className="flex gap-4 items-start border-t border-border/40 pt-4">
+                              <span className="w-16 text-xs text-primary font-mono uppercase tracking-[0.1em] pt-1">
+                                Heart
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {dna.notes.heart.map((note) => (
+                                  <span key={note} className="rounded-full border border-primary/15 px-3 py-1 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors duration-200">
+                                    {note}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {dna.notes.base && dna.notes.base.length > 0 && (
+                            <div className="flex gap-4 items-start border-t border-border/40 pt-4">
+                              <span className="w-16 text-xs text-[#c48a6e] font-mono uppercase tracking-[0.1em] pt-1">
+                                Base
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {dna.notes.base.map((note) => (
+                                  <span key={note} className="rounded-full border border-[#c48a6e]/15 px-3 py-1 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors duration-200">
+                                    {note}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
     </>
   );
