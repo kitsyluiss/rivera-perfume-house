@@ -347,7 +347,7 @@ export default function CatalogView({
                 : "No fragrances match your search."}
             </motion.p>
           ) : (
-            <motion.div layout transition={{ duration: 0.4, ease }} className="w-full grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+            <motion.div layout transition={{ duration: 0.4, ease }} className="w-full grid grid-cols-2 gap-3 landscape:grid-cols-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((perfume, index) => (
                 <PerfumeCard
                   key={perfume.id}
