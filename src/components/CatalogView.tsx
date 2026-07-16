@@ -60,6 +60,8 @@ function getAccordGradient(color: string): string {
       return "linear-gradient(90deg, #4e342e, #5d4037)";
     case "smoky":
       return "linear-gradient(90deg, #374151, #4b5563)";
+    case "animalic":
+      return "linear-gradient(90deg, #a0522d, #8b4513)";
     default:
       return "linear-gradient(90deg, #d6b36d, #e8c547)";
   }

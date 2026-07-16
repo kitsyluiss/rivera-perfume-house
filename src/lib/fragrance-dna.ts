@@ -188,6 +188,26 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
       heart: ["Birch", "Jasmine", "Rose"],
       base: ["Musk", "Ambergris", "Patchouli", "Vanilla"]
     }
+  },
+  "vanguard": {
+    description: "A commanding and vibrant burst of tart pineapple, crisp apple, and sharp grapefruit that settles into a highly masculine, powerful base of rich leather, earthy moss, and deep woods. It is bold, confident, and built to leave a lasting impression.",
+    accords: [
+      { name: "Fruity", value: 100, color: "fruity" },
+      { name: "Citrus", value: 75, color: "citrus" },
+      { name: "Fresh", value: 60, color: "fresh" },
+      { name: "Fresh Spicy", value: 58, color: "fresh_spicy" },
+      { name: "Woody", value: 55, color: "woody" },
+      { name: "Sweet", value: 53, color: "sweet" },
+      { name: "Aromatic", value: 52, color: "aromatic" },
+      { name: "Animalic", value: 48, color: "animalic" },
+      { name: "Warm Spicy", value: 46, color: "warm_spicy" },
+      { name: "Musky", value: 45, color: "musky" }
+    ],
+    notes: {
+      top: ["Pineapple", "Blackcurrant", "Grapefruit", "Pink Pepper", "Apple", "Bergamot"],
+      heart: ["Cardamom", "Lily of the Valley", "Ginger", "Carnation"],
+      base: ["Musk", "Cashmere Musk", "Ambergris", "Leather", "Cedarwood", "Moss"]
+    }
   }
 };
 
