@@ -463,18 +463,6 @@ export default function CatalogView({
                           : "Sold Out"}
                       </span>
                     </div>
-
-                    <button
-                      type="button"
-                      disabled={selectedPerfume.quantity === 0}
-                      className={`flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-xs uppercase tracking-[0.15em] font-mono transition-all duration-300 ${
-                        selectedPerfume.quantity > 0
-                          ? "bg-primary text-primary-foreground hover:bg-primary/95 hover:translate-y-[-2px] hover:shadow-lg hover:shadow-primary/25 active:translate-y-0 cursor-pointer"
-                          : "bg-border text-muted-foreground cursor-not-allowed"
-                      }`}
-                    >
-                      {selectedPerfume.quantity > 0 ? "Add to Cart" : "Sold Out"}
-                    </button>
                   </div>
                 </div>
 
