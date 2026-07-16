@@ -490,7 +490,8 @@ export default function CatalogView({
                               <div className="h-1 bg-border rounded-full flex-1 overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
-                                  animate={{ width: `${accord.value}%` }}
+                                  whileInView={{ width: `${accord.value}%` }}
+                                  viewport={{ once: true }}
                                   transition={{ duration: 0.8, ease }}
                                   className="h-full rounded-full"
                                   style={{
