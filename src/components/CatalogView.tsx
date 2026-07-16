@@ -13,6 +13,58 @@ import { getFragranceDNA } from "@/lib/fragrance-dna";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
+function getAccordGradient(color: string): string {
+  switch (color) {
+    case "fruity":
+      return "linear-gradient(90deg, #da4453, #e9573f)";
+    case "citrus":
+      return "linear-gradient(90deg, #f6bb42, #fc6e51)";
+    case "sweet":
+      return "linear-gradient(90deg, #ec87c0, #d770ad)";
+    case "fresh":
+      return "linear-gradient(90deg, #3bafda, #4fc1e9)";
+    case "aromatic":
+      return "linear-gradient(90deg, #8cc152, #a0d468)";
+    case "musky":
+    case "musk":
+      return "linear-gradient(90deg, #ccd1d9, #aab2bd)";
+    case "powdery":
+      return "linear-gradient(90deg, #d2d6de, #e6e9ed)";
+    case "fresh_spicy":
+      return "linear-gradient(90deg, #fc6e51, #f6bb42)";
+    case "green":
+      return "linear-gradient(90deg, #37bc9b, #48cfad)";
+    case "white_floral":
+      return "linear-gradient(90deg, #f5f7fa, #e4e7eb)";
+    case "woody":
+      return "linear-gradient(90deg, #8d6e63, #a1887f)";
+    case "amber":
+      return "linear-gradient(90deg, #ffb300, #ffca28)";
+    case "cinnamon":
+      return "linear-gradient(90deg, #b71c1c, #d32f2f)";
+    case "warm_spicy":
+      return "linear-gradient(90deg, #c0392b, #d35400)";
+    case "vodka":
+      return "linear-gradient(90deg, #cbd5e1, #94a3b8)";
+    case "soft_spicy":
+      return "linear-gradient(90deg, #e6c280, #f3d9ab)";
+    case "floral":
+      return "linear-gradient(90deg, #ec4899, #f472b6)";
+    case "earthy":
+      return "linear-gradient(90deg, #5d4037, #8d6e63)";
+    case "vanilla":
+      return "linear-gradient(90deg, #fef08a, #fde047)";
+    case "lavender":
+      return "linear-gradient(90deg, #a78bfa, #c084fc)";
+    case "leather":
+      return "linear-gradient(90deg, #4e342e, #5d4037)";
+    case "smoky":
+      return "linear-gradient(90deg, #374151, #4b5563)";
+    default:
+      return "linear-gradient(90deg, #d6b36d, #e8c547)";
+  }
+}
+
 function BrandDropdown({
   brands,
   value,
@@ -445,34 +497,7 @@ export default function CatalogView({
                                   transition={{ duration: 0.8, ease }}
                                   className="h-full rounded-full"
                                   style={{
-                                    background:
-                                      accord.color === "warm"
-                                        ? "linear-gradient(90deg, #d6b36d, #e8c547)"
-                                        : accord.color === "fresh"
-                                        ? "linear-gradient(90deg, #5bb8a9, #7ed6c8)"
-                                        : accord.color === "citrus"
-                                        ? "linear-gradient(90deg, #d4a94b, #e8c94b)"
-                                        : accord.color === "sweet"
-                                        ? "linear-gradient(90deg, #c48a6e, #d9a382)"
-                                        : accord.color === "spice"
-                                        ? "linear-gradient(90deg, #a36d5c, #c48a6e)"
-                                        : accord.color === "woody"
-                                        ? "linear-gradient(90deg, #7a6b5a, #9e8d78)"
-                                        : accord.color === "aquatic"
-                                        ? "linear-gradient(90deg, #4a9ec4, #6bb8d6)"
-                                        : accord.color === "musk"
-                                        ? "linear-gradient(90deg, #b8a0b0, #cbbcc8)"
-                                        : accord.color === "leather"
-                                        ? "linear-gradient(90deg, #6e4f3a, #8b6b54)"
-                                        : accord.color === "floral"
-                                        ? "linear-gradient(90deg, #b88eae, #cda6c3)"
-                                        : accord.color === "smoky"
-                                        ? "linear-gradient(90deg, #6b6b6b, #8e8e8e)"
-                                        : accord.color === "aromatic"
-                                        ? "linear-gradient(90deg, #6a9e78, #82b890)"
-                                        : accord.color === "rose"
-                                        ? "linear-gradient(90deg, #c27878, #d69090)"
-                                        : "linear-gradient(90deg, #5bb8a9, #7ed6c8)",
+                                    background: getAccordGradient(accord.color),
                                   }}
                                 />
                               </div>

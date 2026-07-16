@@ -16,126 +16,167 @@ export interface FragranceDNA {
 }
 
 const DNA_DICTIONARY: Record<string, FragranceDNA> = {
-  "vulcan baie": {
-    accords: [
-      { name: "Warm", value: 85, color: "warm" },
-      { name: "Fresh", value: 60, color: "fresh" },
-      { name: "Spice", value: 72, color: "spice" },
-      { name: "Woody", value: 68, color: "woody" },
-      { name: "Sweet", value: 50, color: "sweet" }
-    ],
-    notes: {
-      top: ["Bergamot", "Black Pepper", "Cardamom"],
-      heart: ["Saffron", "Leather", "Cedar"],
-      base: ["Amber", "Musk", "Vetiver"]
-    }
-  },
-  "liquid brun": {
-    accords: [
-      { name: "Sweet", value: 90, color: "sweet" },
-      { name: "Warm", value: 85, color: "warm" },
-      { name: "Musk", value: 70, color: "musk" },
-      { name: "Woody", value: 55, color: "woody" }
-    ],
-    notes: {
-      top: ["Hazelnut", "Caramel"],
-      heart: ["Vanilla", "Tonka Bean", "Praline"],
-      base: ["Sandalwood", "Musk", "Benzoin"]
-    }
-  },
   "hawas ice": {
     accords: [
-      { name: "Fresh", value: 95, color: "fresh" },
-      { name: "Aquatic", value: 88, color: "aquatic" },
-      { name: "Citrus", value: 75, color: "citrus" },
-      { name: "Musk", value: 50, color: "musk" }
+      { name: "Fruity", value: 100, color: "fruity" },
+      { name: "Citrus", value: 90, color: "citrus" },
+      { name: "Sweet", value: 85, color: "sweet" },
+      { name: "Fresh", value: 80, color: "fresh" },
+      { name: "Aromatic", value: 75, color: "aromatic" },
+      { name: "Musky", value: 65, color: "musky" },
+      { name: "Powdery", value: 55, color: "powdery" },
+      { name: "Fresh Spicy", value: 45, color: "fresh_spicy" },
+      { name: "Green", value: 35, color: "green" },
+      { name: "White Floral", value: 25, color: "white_floral" }
     ],
     notes: {
-      top: ["Lemon", "Mint", "Grapefruit"],
-      heart: ["Marine Notes", "Apple", "Violet Leaf"],
-      base: ["White Musk", "Amber", "Driftwood"]
+      top: ["Apple", "Italian Lemon", "Sicilian Bergamot", "Star Anise"],
+      heart: ["Plum", "Orange Blossom", "Cardamon"],
+      base: ["Musk", "Amber", "Driftwood", "Moss"]
     }
   },
   "hawas kobra": {
     accords: [
-      { name: "Warm", value: 88, color: "warm" },
-      { name: "Spice", value: 82, color: "spice" },
-      { name: "Leather", value: 65, color: "leather" },
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "Fresh Spicy", value: 90, color: "fresh_spicy" },
+      { name: "Fresh", value: 80, color: "fresh" },
+      { name: "Musky", value: 75, color: "musky" },
+      { name: "Woody", value: 65, color: "woody" },
+      { name: "Amber", value: 60, color: "amber" },
+      { name: "Green", value: 50, color: "green" },
+      { name: "Powdery", value: 45, color: "powdery" },
+      { name: "Cinnamon", value: 35, color: "cinnamon" },
+      { name: "Warm Spicy", value: 30, color: "warm_spicy" }
+    ],
+    notes: {
+      top: ["Ginger", "Bergamot", "Tangerine"],
+      heart: ["Green Tea", "Cinnamon", "Neroli"],
+      base: ["Musk", "Woodsy Notes", "Amber"]
+    }
+  },
+  "vulcan baie": {
+    accords: [
+      { name: "Fruity", value: 100, color: "fruity" },
+      { name: "Sweet", value: 90, color: "sweet" },
+      { name: "Aromatic", value: 80, color: "aromatic" },
+      { name: "Fresh Spicy", value: 70, color: "fresh_spicy" },
       { name: "Woody", value: 60, color: "woody" },
-      { name: "Smoky", value: 55, color: "smoky" }
+      { name: "Vodka", value: 50, color: "vodka" }
     ],
     notes: {
-      top: ["Cinnamon", "Bergamot", "Saffron"],
-      heart: ["Leather", "Tobacco", "Oud"],
-      base: ["Patchouli", "Smoky Woods", "Amber"]
-    }
-  },
-  "delilah blanc": {
-    accords: [
-      { name: "Floral", value: 92, color: "floral" },
-      { name: "Rose", value: 88, color: "rose" },
-      { name: "Sweet", value: 60, color: "sweet" },
-      { name: "Musk", value: 72, color: "musk" },
-      { name: "Warm", value: 55, color: "warm" }
-    ],
-    notes: {
-      top: ["Rose", "Peony", "Litchi"],
-      heart: ["White Rose", "Magnolia", "Freesia"],
-      base: ["White Musk", "Vanilla", "Cashmere Wood"]
-    }
-  },
-  "elixir": {
-    accords: [
-      { name: "Sweet", value: 85, color: "sweet" },
-      { name: "Warm", value: 80, color: "warm" },
-      { name: "Aromatic", value: 60, color: "aromatic" },
-      { name: "Musk", value: 65, color: "musk" }
-    ],
-    notes: {
-      top: ["Bergamot", "Lavender", "Apple"],
-      heart: ["Caramel", "Tonka Bean", "Coumarin"],
-      base: ["Vanilla", "Musk", "Sandalwood"]
-    }
-  },
-  "lion": {
-    accords: [
-      { name: "Warm", value: 90, color: "warm" },
-      { name: "Woody", value: 85, color: "woody" },
-      { name: "Spice", value: 75, color: "spice" },
-      { name: "Leather", value: 70, color: "leather" }
-    ],
-    notes: {
-      top: ["Saffron", "Cinnamon", "Bergamot"],
-      heart: ["Leather", "Oud", "Rosewood"],
-      base: ["Patchouli", "Tonka Bean", "Cedarwood"]
-    }
-  },
-  "club de nuit intense man": {
-    accords: [
-      { name: "Citrus", value: 92, color: "citrus" },
-      { name: "Smoky", value: 78, color: "smoky" },
-      { name: "Woody", value: 82, color: "woody" },
-      { name: "Musk", value: 68, color: "musk" },
-      { name: "Sweet", value: 55, color: "sweet" }
-    ],
-    notes: {
-      top: ["Pineapple", "Bergamot", "Apple", "Blackcurrant"],
-      heart: ["Rose", "Birch", "Jasmine"],
-      base: ["Musk", "Ambergris", "Patchouli", "Vanilla"]
+      top: ["Blackberry", "Black Currant", "Rosemary", "Bergamot"],
+      heart: ["Raspberry", "Vodka", "Basil", "Lily of the Valley"],
+      base: ["Strawberry", "Musk", "Peach", "Amber", "Sandalwood", "Patchouli", "Incense"]
     }
   },
   "shiyaaka snow": {
     accords: [
-      { name: "Fresh", value: 88, color: "fresh" },
-      { name: "Aquatic", value: 82, color: "aquatic" },
-      { name: "Aromatic", value: 70, color: "aromatic" },
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "Fresh Spicy", value: 90, color: "fresh_spicy" },
+      { name: "Aromatic", value: 85, color: "aromatic" },
+      { name: "Warm Spicy", value: 75, color: "warm_spicy" },
+      { name: "Soft Spicy", value: 70, color: "soft_spicy" },
       { name: "Woody", value: 60, color: "woody" },
-      { name: "Musk", value: 55, color: "musk" }
+      { name: "Floral", value: 55, color: "floral" },
+      { name: "Green", value: 50, color: "green" },
+      { name: "Earthy", value: 45, color: "earthy" },
+      { name: "Musky", value: 40, color: "musky" }
     ],
     notes: {
-      top: ["Frost Mint", "Grapefruit", "Lavender"],
-      heart: ["Marine Accord", "Geranium", "Sage"],
-      base: ["Cedarwood", "White Musk", "Ambroxan"]
+      top: ["Bergamot", "Mandarin"],
+      heart: ["Pink Pepper", "Nutmeg", "Neroli"],
+      base: ["Cardamom", "Vetiver"]
+    }
+  },
+  "liquid brun": {
+    accords: [
+      { name: "Sweet", value: 100, color: "sweet" },
+      { name: "Warm Spicy", value: 95, color: "warm_spicy" },
+      { name: "Vanilla", value: 85, color: "vanilla" },
+      { name: "Cinnamon", value: 75, color: "cinnamon" },
+      { name: "White Floral", value: 65, color: "white_floral" },
+      { name: "Powdery", value: 60, color: "powdery" },
+      { name: "Citrus", value: 55, color: "citrus" },
+      { name: "Aromatic", value: 50, color: "aromatic" },
+      { name: "Musky", value: 45, color: "musky" },
+      { name: "Amber", value: 40, color: "amber" }
+    ],
+    notes: {
+      top: ["Cinnamon", "Orange Blossom", "Cardamom", "Bergamot"],
+      heart: ["Bourbon Vanilla", "Elemi"],
+      base: ["Praline", "Ambroxan", "Guaiac Wood", "Musk"]
+    }
+  },
+  "lion": {
+    accords: [
+      { name: "Aromatic", value: 100, color: "aromatic" },
+      { name: "Vanilla", value: 95, color: "vanilla" },
+      { name: "Lavender", value: 85, color: "lavender" },
+      { name: "Fresh Spicy", value: 80, color: "fresh_spicy" },
+      { name: "Sweet", value: 70, color: "sweet" },
+      { name: "Green", value: 65, color: "green" },
+      { name: "Cinnamon", value: 60, color: "cinnamon" },
+      { name: "Fruity", value: 55, color: "fruity" },
+      { name: "Warm Spicy", value: 50, color: "warm_spicy" },
+      { name: "Amber", value: 45, color: "amber" }
+    ],
+    notes: {
+      top: ["Lavender", "Pear", "Mint", "Bergamot"],
+      heart: ["Cinnamon", "Clary Sage", "Cumin"],
+      base: ["Vanilla", "Amber", "Cedar", "Patchouli"]
+    }
+  },
+  "elixir": {
+    accords: [
+      { name: "Vanilla", value: 100, color: "vanilla" },
+      { name: "Aromatic", value: 65, color: "aromatic" },
+      { name: "Amber", value: 60, color: "amber" },
+      { name: "Green", value: 55, color: "green" },
+      { name: "Fresh Spicy", value: 50, color: "fresh_spicy" },
+      { name: "Lavender", value: 45, color: "lavender" },
+      { name: "Sweet", value: 40, color: "sweet" },
+      { name: "Warm Spicy", value: 35, color: "warm_spicy" }
+    ],
+    notes: {
+      top: ["Mint", "Bergamot"],
+      heart: ["Lavender", "Benzoin"],
+      base: ["Vanilla", "Tonka"]
+    }
+  },
+  "delilah blanc": {
+    accords: [
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "Musky", value: 60, color: "musky" },
+      { name: "Powdery", value: 50, color: "powdery" },
+      { name: "White Floral", value: 45, color: "white_floral" },
+      { name: "Aromatic", value: 40, color: "aromatic" },
+      { name: "Sweet", value: 35, color: "sweet" },
+      { name: "Fruity", value: 30, color: "fruity" },
+      { name: "Fresh Spicy", value: 25, color: "fresh_spicy" },
+      { name: "Woody", value: 20, color: "woody" }
+    ],
+    notes: {
+      top: ["Bergamot", "White Peach", "Mandarin"],
+      heart: ["Orange Blossom", "Vetiver"],
+      base: ["Musk", "Vanilla"]
+    }
+  },
+  "club de nuit intense man": {
+    accords: [
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "Fruity", value: 75, color: "fruity" },
+      { name: "Leather", value: 65, color: "leather" },
+      { name: "Smoky", value: 60, color: "smoky" },
+      { name: "Woody", value: 55, color: "woody" },
+      { name: "Aromatic", value: 50, color: "aromatic" },
+      { name: "Sweet", value: 45, color: "sweet" },
+      { name: "Fresh", value: 40, color: "fresh" },
+      { name: "Musky", value: 35, color: "musky" }
+    ],
+    notes: {
+      top: ["Lemon", "Pineapple", "Bergamot", "Black Currant", "Apple"],
+      heart: ["Birch", "Jasmine", "Rose"],
+      base: ["Musk", "Ambergris", "Patchouli", "Vanilla"]
     }
   }
 };
@@ -151,7 +192,7 @@ export function getFragranceDNA(scentName: string): FragranceDNA {
   return {
     accords: [
       { name: "Fresh", value: 75, color: "fresh" },
-      { name: "Warm", value: 65, color: "warm" },
+      { name: "Citrus", value: 65, color: "citrus" },
       { name: "Woody", value: 50, color: "woody" }
     ],
     notes: {
