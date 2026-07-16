@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rivera Perfume House — Local Catalog</title>
+  
+  <!-- Font imports -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  
+  <style>
+    /* CSS Variables & Theme */
+    :root {
+      --background: #080706;
+      --card-bg: #0e0d0c;
+      --border: #1a1816;
+      --primary: #d6b36d;
+      --primary-rgb: 214, 179, 109;
+      --text: #ece8e2;
+      --text-muted: #9e9686;
+      --shadow-color: rgba(0, 0, 0, 0.6);
+      --font-display: "Cormorant Garamond", serif;
+      --font-body: "Lora", serif;
+      --font-mono: "DM Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      outline: none;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      background-image: 
+        radial-gradient(circle at top, rgba(214, 179, 109, 0.08), transparent 45%),
+        radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.02), transparent 30%);
+      background-attachment: fixed;
+    }
+
+    /* Grain effect */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.02;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--background);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary);
+    }
+
+    /* ─── PRELOADER IDENT ─── */
+    #preloader {
+      position: fixed;
+      inset: 0;
+      background: #080706;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #preloader.dismissed {
+      opacity: 0;
+      transform: translateY(-20px);
+      pointer-events: none;
+    }
+
+    .preloader-glow {
+      position: absolute;
+      width: 460px;
+      height: 460px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(var(--primary-rgb), 0.08), transparent 55%);
+      pointer-events: none;
+      transform: scale(0.5);
+      opacity: 0;
+      animation: scaleUpGlow 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .preloader-content {
+      position: relative;
+      display: flex;
+      flex-col: column;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .preloader-line {
+      height: 1px;
+      background-color: rgba(var(--primary-rgb), 0.28);
+      width: 0;
+      animation: drawLine 0.55s 0.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .preloader-diamond {
+      width: 5px;
+      height: 5px;
+      transform: rotate(45deg) scale(0);
+      background-color: rgba(var(--primary-rgb), 0.38);
+      margin: 20px 0;
+      opacity: 0;
+      animation: zoomIn 0.3s 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .preloader-brand {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .preloader-brand span {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 300;
+      color: var(--primary);
+      letter-spacing: 0.15em;
+      opacity: 0;
+      transform: translateY(14px);
+      filter: blur(4px);
+      display: inline-block;
+    }
+
+    /* Cascade animation classes */
+    .preloader-brand span:nth-child(1) { animation: cascadeIn 0.42s 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .preloader-brand span:nth-child(2) { animation: cascadeIn 0.42s 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .preloader-brand span:nth-child(3) { animation: cascadeIn 0.42s 0.69s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .preloader-brand span:nth-child(4) { animation: cascadeIn 0.42s 0.76s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .preloader-brand span:nth-child(5) { animation: cascadeIn 0.42s 0.83s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .preloader-brand span:nth-child(6) { animation: cascadeIn 0.42s 0.90s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+    .preloader-subtitle {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      font-weight: 300;
+      letter-spacing: 0.42em;
+      text-transform: uppercase;
+      color: #7e725b;
+      margin-top: 10px;
+      opacity: 0;
+      transform: translateY(6px);
+      animation: fadeInUp 0.45s 1.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .preloader-line-bottom {
+      height: 1px;
+      background-color: rgba(var(--primary-rgb), 0.28);
+      width: 0;
+      animation: drawLine 0.55s 1.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .preloader-diamond-bottom {
+      width: 5px;
+      height: 5px;
+      transform: rotate(45deg) scale(0);
+      background-color: rgba(var(--primary-rgb), 0.38);
+      margin: 20px 0;
+      opacity: 0;
+      animation: zoomIn 0.3s 1.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .preloader-progress-track {
+      margin-top: 30px;
+      width: 84px;
+      height: 1px;
+      background-color: rgba(var(--primary-rgb), 0.1);
+      opacity: 0;
+      animation: fadeIn 0.25s 1.55s forwards;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .preloader-progress-bar {
+      height: 100%;
+      background-color: rgba(var(--primary-rgb), 0.45);
+      width: 0%;
+      animation: fillBar 0.85s 1.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    /* Keyframes for Preloader */
+    @keyframes scaleUpGlow {
+      to { transform: scale(1); opacity: 1; }
+    }
+    @keyframes drawLine {
+      to { width: 48px; }
+    }
+    @keyframes zoomIn {
+      to { transform: rotate(45deg) scale(1); opacity: 1; }
+    }
+    @keyframes cascadeIn {
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+    @keyframes fadeInUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+    @keyframes fillBar {
+      to { width: 100%; }
+    }
+
+    /* ─── MAIN WEB PAGE LAYOUT ─── */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    header {
+      padding: 30px 0;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(8, 7, 6, 0.8);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-img {
+      height: 38px;
+      width: auto;
+    }
+
+    /* Fallback stylized gold crown/diamond logo if logo.svg missing */
+    .logo-fallback {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--primary);
+      transform: rotate(45deg);
+    }
+    .logo-fallback-inner {
+      width: 8px;
+      height: 8px;
+      background-color: var(--primary);
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 300;
+      color: var(--text);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .brand-title span {
+      color: var(--primary);
+    }
+
+    .subtitle-small {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Filters Section */
+    .filter-panel {
+      margin: 40px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    @media (min-width: 768px) {
+      .filter-panel {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+    }
+
+    .search-box {
+      position: relative;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 12px 24px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .search-input:focus {
+      border-color: rgba(var(--primary-rgb), 0.4);
+      box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+    }
+
+    /* Tag filters button group */
+    .tag-filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 8px 18px;
+      border-radius: 50px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .filter-btn:hover {
+      border-color: rgba(var(--primary-rgb), 0.4);
+      color: var(--text);
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--background);
+      font-weight: 500;
+    }
+
+    /* Catalog grid */
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+      gap: 24px;
+      margin-bottom: 80px;
+    }
+
+    @media (min-width: 640px) {
+      .catalog-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .catalog-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (min-width: 1280px) {
+      .catalog-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    /* ─── CARD DESIGN ─── */
+    .perfume-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 1.1rem;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: border-color 0.5s ease;
+      display: flex;
+      flex-direction: column;
+      transform-style: preserve-3d;
+      perspective: 900px;
+    }
+
+    .perfume-card:hover {
+      border-color: rgba(var(--primary-rgb), 0.25);
+    }
+
+    /* Gold Shimmer Glow (Pseudo Element styled) */
+    .perfume-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(var(--primary-rgb), 0.06) 45%,
+        rgba(var(--primary-rgb), 0.12) 50%,
+        rgba(var(--primary-rgb), 0.06) 55%,
+        transparent 60%
+      );
+      background-size: 200% 100%;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Shimmer keyframe */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* Glow on hover, active state, or programmatically triggered class */
+    .perfume-card:hover::before,
+    .perfume-card:active::before,
+    .perfume-card.is-glowing::before {
+      opacity: 1;
+      animation: shimmer 2.5s ease-in-out infinite;
+    }
+
+    .card-image-wrapper {
+      position: relative;
+      aspect-ratio: 4/5;
+      background-color: #12100f;
+      overflow: hidden;
+    }
+
+    .card-image {
+      width: 100%;
+      height: 100%;
+      object-cover: cover;
+      object-fit: cover;
+      transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .perfume-card:hover .card-image {
+      transform: scale(1.06);
+    }
+
+    .card-image-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, var(--card-bg) 0%, rgba(14, 13, 12, 0.6) 35%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Badges */
+    .badge-status {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      border-radius: 50px;
+      padding: 4px 10px;
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 500;
+      backdrop-filter: blur(8px);
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .badge-status::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-instock {
+      background-color: rgba(6, 78, 59, 0.6);
+      border-color: rgba(52, 211, 153, 0.2);
+      color: #a7f3d0;
+    }
+    .status-instock::before {
+      background-color: #34d399;
+    }
+
+    .status-soldout {
+      background-color: rgba(127, 29, 29, 0.6);
+      border-color: rgba(248, 113, 113, 0.2);
+      color: #fecaca;
+    }
+    .status-soldout::before {
+      background-color: #f87171;
+    }
+
+    .badge-season {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      border-radius: 50px;
+      padding: 3px 8px;
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      background: rgba(14, 13, 12, 0.85);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Details styling */
+    .card-details {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: -8px;
+      z-index: 10;
+      position: relative;
+      transition: transform 0.3s ease;
+    }
+
+    .perfume-card:hover .card-details {
+      transform: translateY(-3px);
+    }
+
+    .brand-name {
+      font-family: var(--font-body);
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      color: var(--primary);
+    }
+
+    .scent-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin: 2px 0 6px 0;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .price-value {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .view-arrow {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--primary);
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: all 0.3s ease;
+      display: none;
+    }
+
+    @media (min-width: 640px) {
+      .view-arrow {
+        display: block;
+      }
+    }
+
+    .perfume-card:hover .view-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Out of stock card styling */
+    .perfume-card.soldout-state {
+      opacity: 0.5;
+      filter: grayscale(1);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── PRELOADER IDENT ─── -->
+  <div id="preloader">
+    <div class="preloader-glow"></div>
+    <div class="preloader-content">
+      <!-- top line -->
+      <div class="preloader-line"></div>
+      
+      <!-- top diamond -->
+      <div class="preloader-diamond"></div>
+      
+      <!-- RIVERA Stagger Letters -->
+      <div class="preloader-brand">
+        <span>R</span>
+        <span>I</span>
+        <span>V</span>
+        <span>E</span>
+        <span>R</span>
+        <span>A</span>
+      </div>
+      
+      <div class="preloader-subtitle">Perfume House</div>
+      
+      <!-- bottom diamond -->
+      <div class="preloader-diamond-bottom"></div>
+      
+      <!-- bottom line -->
+      <div class="preloader-line-bottom"></div>
+      
+      <!-- thin progress bar -->
+      <div class="preloader-progress-track">
+        <div class="preloader-progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MAIN CONTENT ─── -->
+  <header>
+    <div class="container header-content">
+      <div class="logo-section">
+        <!-- Renders public/logo.svg if found locally, else displays clean fallback -->
+        <object data="public/logo.svg" type="image/svg+xml" class="logo-img">
+          <div class="logo-fallback">
+            <div class="logo-fallback-inner"></div>
+          </div>
+        </object>
+        <div>
+          <h1 class="brand-title">RIVERA <span>House</span></h1>
+          <p class="subtitle-small">Exclusive Perfume Vault</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Dynamic filters -->
+    <section class="filter-panel">
+      <div class="search-box">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Search fragrance, brand, category..." 
+          class="search-input"
+        >
+      </div>
+      
+      <div class="tag-filters">
+        <button class="filter-btn active" data-category="all">All Vaults</button>
+        <button class="filter-btn" data-category="casual">Casual</button>
+        <button class="filter-btn" data-category="date night">Date Night</button>
+        <button class="filter-btn" data-category="statement">Statement</button>
+      </div>
+    </section>
+
+    <!-- Catalog Display Grid -->
+    <section class="catalog-grid" id="catalogGrid">
+      <!-- Injected dynamically by JS -->
+    </section>
+
+  </main>
+
+  <!-- Interactive JavaScript -->
+  <script>
+    // Hardcoded JSON of perfume stock matching the database precisely
+    const PERFUME_DATA = [
+      {
+        "brand": "French Avenue",
+        "scent_name": "Vulcan Baie",
+        "season": "Casual",
+        "target_sale_price": 1749,
+        "image_url": "https://zmlauqxxktmhyjxqovek.supabase.co/storage/v1/object/public/perfume_images/1784154275521-eg8an6.webp",
+        "quantity": 5
+      },
+      {
+        "brand": "French Avenue",
+        "scent_name": "Liquid Brun",
+        "season": "Date Night",
+        "target_sale_price": 1799,
+        "image_url": "https://zmlauqxxktmhyjxqovek.supabase.co/storage/v1/object/public/perfume_images/1784154223574-r4iqkr.webp",
+        "quantity": 2
+      },
+      {
+        "brand": "Rasasi",
+        "scent_name": "Hawas Ice",
+        "season": "Casual",
+        "target_sale_price": 1999,
+        "image_url": "https://zmlauqxxktmhyjxqovek.supabase.co/storage/v1/object/public/perfume_images/1784153890746-t6qaem.png",
+        "quantity": 2
+      },
+      {
+        "brand": "Rasasi",
+        "scent_name": "Hawas Kobra",
+        "season": "Casual",
+        "target_sale_price": 1999,
+        "image_url": "https://zmlauqxxktmhyjxqovek.supabase.co/storage/v1/object/public/perfume_images/1784154532288-nk1r0l.png",
+        "quantity": 2
+      },
+      {
+        "brand": "Maison Alhambra",
+        "scent_name": "Delilah Blanc",
+        "season": "Casual",
+        "target_sale_price": 1799,
+        "image_url": "https://zmlauqxxktmhyjxqovek.supabase.co/storage/v1/object/public/perfume_images/1784154192746-bba7i5.webp",
+        "quantity": 5
+      },
+      {
+        "brand": "Rayhaan",
+        "scent_name": "Elixir",
+        "season": "Date Night",
+        "target_sale_price": 1699,
+        "image_url": "https://zmlauqxxktmhyjxqovek.supabase.co/storage/v1/object/public/perfume_images/1784154076313-r76gp1.png",
+        "quantity": 3
+      },
+      {
+        "brand": "Rayhaan",
+        "scent_name": "Lion",
+        "season": "Statement",
+        "target_sale_price": 1699,
+        "image_url": "https://zmlauqxxktmhyjxqovek.supabase.co/storage/v1/object/public/perfume_images/1784154050513-5n80cf.png",
+        "quantity": 3
+      },
+      {
+        "brand": "Armaf",
+        "scent_name": "club de nuit intense man",
+        "season": "Statement",
+        "target_sale_price": 2299,
+        "image_url": "https://zmlauqxxktmhyjxqovek.supabase.co/storage/v1/object/public/perfume_images/1784169925564-thbi36.webp",
+        "quantity": 3
+      },
+      {
+        "brand": "Khadlaj",
+        "scent_name": "Shiyaaka Snow",
+        "season": "Casual",
+        "target_sale_price": 2299,
+        "image_url": "https://zmlauqxxktmhyjxqovek.supabase.co/storage/v1/object/public/perfume_images/1784154118464-38jsgn.webp",
+        "quantity": 2
+      }
+    ];
+
+    // Format utility
+    function formatPhp(value) {
+      return new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP"
+      }).format(value);
+    }
+
+    // ─── Preloader Choreography & Session storage logic ───
+    document.addEventListener("DOMContentLoaded", () => {
+      const loader = document.getElementById("preloader");
+      
+      const seen = sessionStorage.getItem("rivera-preloader-seen");
+      if (seen === "true") {
+        // Skip preloader screen entirely on page refresh
+        loader.style.display = "none";
+      } else {
+        // Run full choreo, then flag seen
+        sessionStorage.setItem("rivera-preloader-seen", "true");
+        setTimeout(() => {
+          loader.classList.add("dismissed");
+          setTimeout(() => {
+            loader.style.display = "none";
+          }, 800);
+        }, 2600);
+      }
+      
+      // Render Initial Catalog
+      renderCatalog(PERFUME_DATA);
+      setupInteractions();
+    });
+
+    // ─── Render dynamic list of cards ───
+    function renderCatalog(items) {
+      const grid = document.getElementById("catalogGrid");
+      grid.innerHTML = "";
+
+      if (items.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 80px 0;">No fragrances match your filters.</div>`;
+        return;
+      }
+
+      // Sort: in stock first, out of stock (qty = 0) at the end
+      const sorted = [...items].sort((a, b) => {
+        if (a.quantity === 0 && b.quantity > 0) return 1;
+        if (a.quantity > 0 && b.quantity === 0) return -1;
+        return 0;
+      });
+
+      sorted.forEach((p, idx) => {
+        const inStock = p.quantity > 0;
+        const statusClass = inStock ? "status-instock" : "status-soldout";
+        const statusLabel = inStock ? (p.quantity <= 5 ? `Low · ${p.quantity}` : "In Stock") : "Sold Out";
+        const isSoldoutClass = inStock ? "" : "soldout-state";
+        
+        const card = document.createElement("article");
+        card.className = `perfume-card ${isSoldoutClass}`;
+        card.dataset.index = idx;
+        
+        card.innerHTML = `
+          <div class="card-image-wrapper">
+            ${p.image_url 
+              ? `<img src="${p.image_url}" alt="${p.brand} ${p.scent_name}" class="card-image" loading="lazy">`
+              : `<div class="card-image" style="background: var(--border); display: flex; align-items: center; justify-center: center; color: rgba(255,255,255,0.05); font-size: 0.8rem;">No Image</div>`
+            }
+            <div class="card-image-gradient"></div>
+            
+            <div class="badge-status ${statusClass}">
+              ${statusLabel}
+            </div>
+            
+            ${p.season ? `<div class="badge-season">${p.season}</div>` : ""}
+          </div>
+          
+          <div class="card-details">
+            <p class="brand-name">${p.brand}</p>
+            <h3 class="scent-title" title="${p.scent_name}">${p.scent_name}</h3>
+            <div class="price-row">
+              <span class="price-value">${formatPhp(p.target_sale_price)}</span>
+              <span class="view-arrow">View &rarr;</span>
+            </div>
+          </div>
+        `;
+        
+        // 3D Tilt Card Interaction & Touch active glow
+        bindCardGestures(card);
+        grid.appendChild(card);
+      });
+    }
+
+    // ─── 3D Tilt + Tap Glow Handlers ───
+    function bindCardGestures(card) {
+      // Mobile click / tap trigger (glow animation for 800ms)
+      card.addEventListener("click", () => {
+        card.classList.add("is-glowing");
+        setTimeout(() => {
+          card.classList.remove("is-glowing");
+        }, 800);
+      });
+
+      // Desktop 3D Tilt effect
+      card.addEventListener("mousemove", (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        
+        // Apply rotation transforms
+        card.style.transform = `perspective(900px) rotateX(${y * -8}deg) rotateY(${x * 8}deg)`;
+      });
+
+      card.addEventListener("mouseleave", () => {
+        card.style.transform = "perspective(900px) rotateX(0deg) rotateY(0deg)";
+      });
+    }
+
+    // ─── Search & Category Filtering logic ───
+    function setupInteractions() {
+      const searchInput = document.getElementById("searchInput");
+      const filterBtns = document.querySelectorAll(".filter-btn");
+
+      let currentCategory = "all";
+      let searchQuery = "";
+
+      function filterItems() {
+        const filtered = PERFUME_DATA.filter(p => {
+          const matchSearch = 
+            p.brand.toLowerCase().includes(searchQuery) ||
+            p.scent_name.toLowerCase().includes(searchQuery) ||
+            (p.season && p.season.toLowerCase().includes(searchQuery));
+          
+          const matchCategory = 
+            currentCategory === "all" ||
+            (p.season && p.season.toLowerCase() === currentCategory.toLowerCase());
+          
+          return matchSearch && matchCategory;
+        });
+
+        renderCatalog(filtered);
+      }
+
+      // Input changes
+      searchInput.addEventListener("input", (e) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        filterItems();
+      });
+
+      // Filter category selections
+      filterBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          filterBtns.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentCategory = btn.dataset.category;
+          filterItems();
+        });
+      });
+    }
+  </script>
+</body>
+</html>

@@ -9,6 +9,14 @@ import { inferPerfumeTag } from "@/lib/perfume-tags";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
+// Detect touch-primary devices once at module load — avoids per-render checks.
+// On touch devices we skip the 3D tilt entirely: it has no effect without a
+// mouse and can cause subpixel transform shifts that break tap hit-testing on
+// the last card in the grid.
+const isTouchDevice =
+  typeof window !== "undefined" &&
+  (navigator.maxTouchPoints > 0 || "ontouchstart" in window);
+
 export default function PerfumeCard({
   perfume,
   index,
@@ -29,6 +37,7 @@ export default function PerfumeCard({
     onClick?.();
   };
 
+  // --- 3D tilt (mouse-only) ---
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
@@ -52,6 +61,11 @@ export default function PerfumeCard({
     mouseY.set(0);
   };
 
+  // Only apply perspective tilt on non-touch (pointer) devices
+  const tiltStyle = isTouchDevice
+    ? {}
+    : { rotateX, rotateY, transformPerspective: 900 };
+
   return (
     <motion.article
       ref={cardRef}
@@ -61,11 +75,13 @@ export default function PerfumeCard({
       viewport={{ once: true, margin: "-60px" }}
       exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.25 } }}
       transition={{ duration: 0.7, delay: Math.min(index * 0.07, 0.56), ease }}
-      onMouseMove={handleMouse}
-      onMouseLeave={resetMouse}
+      onMouseMove={isTouchDevice ? undefined : handleMouse}
+      onMouseLeave={isTouchDevice ? undefined : resetMouse}
       onClick={handleTap}
-      style={{ rotateX, rotateY, transformPerspective: 900 }}
-      className={`card-shimmer group relative cursor-pointer overflow-hidden rounded-[1.1rem] border border-border bg-card transition-[border-color] duration-500 hover:border-primary/25 ${
+      style={tiltStyle}
+      // touch-action: manipulation removes the 300ms click delay on mobile
+      // and prevents scroll from being blocked by tap-hold.
+      className={`card-shimmer group relative cursor-pointer overflow-hidden rounded-[1.1rem] border border-border bg-card transition-[border-color] duration-500 hover:border-primary/25 [touch-action:manipulation] ${
         clickedGlow ? "is-glowing" : ""
       } ${!inStock ? "opacity-50 grayscale" : ""}`}
     >
@@ -76,9 +92,12 @@ export default function PerfumeCard({
               src={perfume.image_url}
               alt={`${perfume.brand} ${perfume.scent_name}`}
               fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              // 2-col mobile → each card is ~50vw; 3-col tablet → ~33vw; 4-col desktop → 25vw
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover"
+              // Eagerly load first 4 cards; lazy-load the rest
               priority={index < 4}
+              loading={index < 4 ? "eager" : "lazy"}
             />
           </motion.div>
         ) : (

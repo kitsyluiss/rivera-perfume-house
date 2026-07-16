@@ -328,8 +328,8 @@ export default function CatalogView({
         </motion.p>
       </header>
 
-      <section className="mx-auto max-w-7xl px-4 pb-20 pt-2 sm:px-6">
-        <AnimatePresence mode="popLayout">
+      <section className="mx-auto max-w-7xl px-4 pb-20 pt-2 sm:px-6 [touch-action:pan-y]">
+        <AnimatePresence mode="wait">
           {filtered.length === 0 ? (
             <motion.p
               key="empty"
@@ -343,7 +343,11 @@ export default function CatalogView({
                 : "No fragrances match your search."}
             </motion.p>
           ) : (
-            <motion.div layout transition={{ duration: 0.4, ease }} className="w-full grid grid-cols-2 gap-3 landscape:grid-cols-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+            // NOTE: No `layout` on this wrapper — Framer Motion layout transforms
+            // on the grid container can corrupt getBoundingClientRect() for the
+            // last card on mobile, making it unclickable. Cards carry layout
+            // themselves via their own `layout` prop.
+            <div className="w-full grid grid-cols-2 gap-3 landscape:grid-cols-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((perfume, index) => (
                 <PerfumeCard
                   key={perfume.id}
@@ -352,7 +356,7 @@ export default function CatalogView({
                   onClick={() => setSelectedPerfume(perfume)}
                 />
               ))}
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
       </section>

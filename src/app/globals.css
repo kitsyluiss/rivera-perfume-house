@@ -137,6 +137,8 @@ input[type="search"] {
   border-radius: 50%;
   filter: blur(80px);
   animation: mesh-drift 18s ease-in-out infinite;
+  /* Promote to own compositing layer only on capable devices */
+  will-change: transform;
 }
 
 .bg-gradient-mesh::before {
@@ -154,6 +156,28 @@ input[type="search"] {
   right: 5%;
   background: radial-gradient(circle, hsl(38 44% 61% / 0.04), transparent 70%);
   animation-delay: -7s;
+}
+
+/* On small screens, reduce blur radius and orb size to cut GPU cost */
+@media (max-width: 640px) {
+  .bg-gradient-mesh::before {
+    width: 300px;
+    height: 300px;
+    filter: blur(50px);
+  }
+  .bg-gradient-mesh::after {
+    width: 250px;
+    height: 250px;
+    filter: blur(40px);
+  }
+}
+
+/* Stop animation entirely when user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .bg-gradient-mesh::before,
+  .bg-gradient-mesh::after {
+    animation: none;
+  }
 }
 
 /* Shimmer for card hover glow */
@@ -191,4 +215,14 @@ input[type="search"] {
 .card-shimmer.is-glowing::before {
   opacity: 1;
   animation: shimmer 2.5s ease-in-out infinite;
+}
+
+/* Stop shimmer animation if the OS requests reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .card-shimmer:hover::before,
+  .card-shimmer:active::before,
+  .card-shimmer.is-glowing::before {
+    animation: none;
+    opacity: 0.6;
+  }
 }
