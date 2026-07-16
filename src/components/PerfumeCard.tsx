@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
-import { Badge } from "@/components/ui/badge";
 import { Perfume } from "@/lib/types";
 import { formatPhp } from "@/lib/format";
 import { inferPerfumeTag } from "@/lib/perfume-tags";
@@ -89,25 +88,6 @@ export default function PerfumeCard({
         )}
 
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card via-card/60 to-transparent pointer-events-none" />
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8, y: -4 }}
-          whileInView={{ opacity: 1, scale: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: Math.min(index * 0.07, 0.56) + 0.35, duration: 0.4, ease }}
-        >
-          <Badge
-            variant="outline"
-            className={`absolute right-2 top-2 border text-[8px] sm:text-[10px] uppercase tracking-[0.12em] sm:tracking-[0.15em] font-body backdrop-blur-md px-1.5 py-0.5 sm:px-2.5 sm:py-1 ${
-              inStock
-                ? "border-emerald-500/20 bg-emerald-950/60 text-emerald-300/90"
-                : "border-red-500/20 bg-red-950/60 text-red-300/90"
-            }`}
-          >
-            <span className={`mr-1 inline-block h-1 w-1 sm:mr-1.5 sm:h-1.5 sm:w-1.5 rounded-full ${inStock ? "bg-emerald-400" : "bg-red-400"}`} />
-            {inStock ? (perfume.quantity <= 5 ? `Low · ${perfume.quantity}` : "In Stock") : "Sold Out"}
-          </Badge>
-        </motion.div>
 
         <div className="absolute bottom-2 left-2 z-10 rounded-full border border-border bg-card/85 px-2 py-0.5 text-[8px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.18em] text-muted-foreground backdrop-blur-md">
           {tag}
