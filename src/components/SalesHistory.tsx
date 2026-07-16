@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -17,6 +17,33 @@ import { formatPhp } from "@/lib/format";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
+type SaleSortKey = "brand" | "date" | "quantity_sold" | "total" | "profit";
+type SortDir = "asc" | "desc";
+
+function SortIcon({ col, active, dir }: { col: string; active: string; dir: SortDir }) {
+  if (col !== active) return <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-30" />;
+  return dir === "asc"
+    ? <ArrowUp className="ml-1 inline h-3 w-3 text-primary" />
+    : <ArrowDown className="ml-1 inline h-3 w-3 text-primary" />;
+}
+
+function SortableHead({
+  col, active, dir, onSort, className, children,
+}: {
+  col: SaleSortKey; active: SaleSortKey | null; dir: SortDir;
+  onSort: (col: SaleSortKey) => void; className?: string; children: React.ReactNode;
+}) {
+  return (
+    <TableHead
+      className={`cursor-pointer select-none whitespace-nowrap ${className ?? ""}`}
+      onClick={() => onSort(col)}
+    >
+      {children}
+      <SortIcon col={col} active={active ?? ""} dir={dir} />
+    </TableHead>
+  );
+}
+
 export default function SalesHistory({
   sales,
   loading,
@@ -28,6 +55,50 @@ export default function SalesHistory({
 }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmReversal, setConfirmReversal] = useState<Sale | null>(null);
+  const [sortKey, setSortKey] = useState<SaleSortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("desc"); // newest first by default
+
+  const handleSort = (col: SaleSortKey) => {
+    if (sortKey === col) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(col);
+      setSortDir(col === "date" ? "desc" : "asc");
+    }
+  };
+
+  const sorted = useMemo(() => {
+    const base = [...sales];
+    if (!sortKey) {
+      // Default: newest first
+      return base.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+    return base.sort((a, b) => {
+      let av: number | string;
+      let bv: number | string;
+      if (sortKey === "brand") {
+        av = a.brand ?? "";
+        bv = b.brand ?? "";
+      } else if (sortKey === "date") {
+        av = new Date(a.created_at).getTime();
+        bv = new Date(b.created_at).getTime();
+      } else if (sortKey === "quantity_sold") {
+        av = a.quantity_sold;
+        bv = b.quantity_sold;
+      } else if (sortKey === "total") {
+        av = a.quantity_sold * a.unit_price;
+        bv = b.quantity_sold * b.unit_price;
+      } else {
+        // profit
+        av = a.quantity_sold * (a.unit_price - a.cost_at_sale);
+        bv = b.quantity_sold * (b.unit_price - b.cost_at_sale);
+      }
+      if (typeof av === "string" && typeof bv === "string") {
+        return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+      }
+      return sortDir === "asc" ? (av as number) - (bv as number) : (bv as number) - (av as number);
+    });
+  }, [sales, sortKey, sortDir]);
 
   const executeDelete = async (sale: Sale) => {
     setDeletingId(sale.id);
@@ -60,9 +131,38 @@ export default function SalesHistory({
 
   return (
     <>
+      {/* Mobile sort bar */}
+      <div className="flex flex-wrap gap-2 pb-2 md:hidden">
+        {([
+          ["brand", "Brand"],
+          ["date", "Date"],
+          ["quantity_sold", "Qty"],
+          ["total", "Total"],
+          ["profit", "Profit"],
+        ] as [SaleSortKey, string][]).map(([col, label]) => (
+          <button
+            key={col}
+            type="button"
+            onClick={() => handleSort(col)}
+            className={`flex items-center gap-1 rounded-full border px-3 py-1 text-[9px] uppercase tracking-[0.15em] transition-colors ${
+              sortKey === col
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-primary/25 hover:text-foreground"
+            }`}
+          >
+            {label}
+            {sortKey === col ? (
+              sortDir === "asc" ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />
+            ) : (
+              <ArrowUpDown className="h-2.5 w-2.5 opacity-40" />
+            )}
+          </button>
+        ))}
+      </div>
+
       {/* ── Mobile card list ─────────────────────────────── */}
       <div className="space-y-3 md:hidden">
-        {sales.map((sale) => {
+        {sorted.map((sale) => {
           const total = sale.quantity_sold * sale.unit_price;
           const profit = sale.quantity_sold * (sale.unit_price - sale.cost_at_sale);
           const date = new Date(sale.created_at);
@@ -146,18 +246,18 @@ export default function SalesHistory({
           <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground">Product</TableHead>
-                <TableHead className="text-right text-muted-foreground">Qty</TableHead>
+                <SortableHead col="brand" active={sortKey} dir={sortDir} onSort={handleSort} className="text-muted-foreground">Product</SortableHead>
+                <SortableHead col="quantity_sold" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Qty</SortableHead>
                 <TableHead className="text-right text-muted-foreground">Unit Price</TableHead>
-                <TableHead className="text-right text-muted-foreground">Total</TableHead>
-                <TableHead className="text-right text-muted-foreground">Profit</TableHead>
+                <SortableHead col="total" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Total</SortableHead>
+                <SortableHead col="profit" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Profit</SortableHead>
                 <TableHead className="text-muted-foreground">Customer</TableHead>
-                <TableHead className="text-muted-foreground">Date</TableHead>
+                <SortableHead col="date" active={sortKey} dir={sortDir} onSort={handleSort} className="text-muted-foreground">Date</SortableHead>
                 <TableHead className="w-12 text-muted-foreground" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sales.map((sale) => {
+              {sorted.map((sale) => {
                 const total = sale.quantity_sold * sale.unit_price;
                 const profit =
                   sale.quantity_sold * (sale.unit_price - sale.cost_at_sale);

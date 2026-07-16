@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Loader2, Trash2, ShoppingCart, ChevronDown, Camera } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Camera, ChevronDown, Loader2, ShoppingCart, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -25,6 +25,33 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ImageUpload from "@/components/ImageUpload";
+
+type InvSortKey = "brand" | "scent_name" | "quantity" | "cost_price" | "target_sale_price" | "profit" | "added_by";
+type SortDir = "asc" | "desc";
+
+function SortIcon({ col, active, dir }: { col: string; active: string; dir: SortDir }) {
+  if (col !== active) return <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-30" />;
+  return dir === "asc"
+    ? <ArrowUp className="ml-1 inline h-3 w-3 text-primary" />
+    : <ArrowDown className="ml-1 inline h-3 w-3 text-primary" />;
+}
+
+function SortableHead({
+  col, active, dir, onSort, className, children,
+}: {
+  col: InvSortKey; active: InvSortKey | null; dir: SortDir;
+  onSort: (col: InvSortKey) => void; className?: string; children: React.ReactNode;
+}) {
+  return (
+    <TableHead
+      className={`cursor-pointer select-none whitespace-nowrap ${className ?? ""}`}
+      onClick={() => onSort(col)}
+    >
+      {children}
+      <SortIcon col={col} active={active ?? ""} dir={dir} />
+    </TableHead>
+  );
+}
 
 function EditableCell({
   value,
@@ -197,6 +224,47 @@ export default function InventoryTable({
   const [photoTarget, setPhotoTarget] = useState<Perfume | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [sortKey, setSortKey] = useState<InvSortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  const handleSort = (col: InvSortKey) => {
+    if (sortKey === col) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(col);
+      setSortDir("asc");
+    }
+  };
+
+  const sorted = useMemo(() => {
+    const base = [...perfumes];
+    if (!sortKey) {
+      // Default: out-of-stock last
+      return base.sort((a, b) => {
+        if (a.quantity === 0 && b.quantity > 0) return 1;
+        if (a.quantity > 0 && b.quantity === 0) return -1;
+        return 0;
+      });
+    }
+    return base.sort((a, b) => {
+      let av: number | string;
+      let bv: number | string;
+      if (sortKey === "profit") {
+        av = a.quantity * (a.target_sale_price - a.cost_price);
+        bv = b.quantity * (b.target_sale_price - b.cost_price);
+      } else if (sortKey === "added_by") {
+        av = a.added_by ?? "";
+        bv = b.added_by ?? "";
+      } else {
+        av = a[sortKey];
+        bv = b[sortKey];
+      }
+      if (typeof av === "string" && typeof bv === "string") {
+        return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+      }
+      return sortDir === "asc" ? (av as number) - (bv as number) : (bv as number) - (av as number);
+    });
+  }, [perfumes, sortKey, sortDir]);
 
   const handleUpdate = (id: string, field: string) => async (nextValue: number) => {
     await updatePerfume(id, { [field]: nextValue });
@@ -269,8 +337,38 @@ export default function InventoryTable({
   return (
     <>
       {/* ── Mobile card list ─────────────────────────────── */}
+      {/* Mobile sort bar */}
+      <div className="flex flex-wrap gap-2 pb-2 md:hidden">
+        {([
+          ["brand", "Brand"],
+          ["added_by", "Admin"],
+          ["quantity", "Qty"],
+          ["cost_price", "Cost"],
+          ["target_sale_price", "Price"],
+          ["profit", "Profit"],
+        ] as [InvSortKey, string][]).map(([col, label]) => (
+          <button
+            key={col}
+            type="button"
+            onClick={() => handleSort(col)}
+            className={`flex items-center gap-1 rounded-full border px-3 py-1 text-[9px] uppercase tracking-[0.15em] transition-colors ${
+              sortKey === col
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-primary/25 hover:text-foreground"
+            }`}
+          >
+            {label}
+            {sortKey === col ? (
+              sortDir === "asc" ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />
+            ) : (
+              <ArrowUpDown className="h-2.5 w-2.5 opacity-40" />
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-3 md:hidden">
-        {perfumes.map((perfume) => {
+        {sorted.map((perfume) => {
           const profit = perfume.quantity * (perfume.target_sale_price - perfume.cost_price);
           const tag = inferPerfumeTag(perfume);
 
@@ -396,26 +494,26 @@ export default function InventoryTable({
         })}
       </div>
 
-      {/* ── Desktop table ─────────────────────────────────── */}
+              {/* ── Desktop table ─────────────────────────────────── */}
       <div className="hidden overflow-hidden rounded-[1.1rem] border border-border md:block">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead className="w-10 text-muted-foreground" />
-                <TableHead className="text-muted-foreground">Brand</TableHead>
-                <TableHead className="text-muted-foreground">Scent</TableHead>
+                <SortableHead col="brand" active={sortKey} dir={sortDir} onSort={handleSort} className="text-muted-foreground">Brand</SortableHead>
+                <SortableHead col="scent_name" active={sortKey} dir={sortDir} onSort={handleSort} className="text-muted-foreground">Scent</SortableHead>
                 <TableHead className="text-muted-foreground">Category</TableHead>
-                <TableHead className="text-muted-foreground">Added By</TableHead>
-                <TableHead className="text-right text-muted-foreground">Qty</TableHead>
-                <TableHead className="text-right text-muted-foreground">Cost (PHP)</TableHead>
-                <TableHead className="text-right text-muted-foreground">Target (PHP)</TableHead>
-                <TableHead className="text-right text-muted-foreground">Profit</TableHead>
+                <SortableHead col="added_by" active={sortKey} dir={sortDir} onSort={handleSort} className="text-muted-foreground">Added By</SortableHead>
+                <SortableHead col="quantity" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Qty</SortableHead>
+                <SortableHead col="cost_price" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Cost (PHP)</SortableHead>
+                <SortableHead col="target_sale_price" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Target (PHP)</SortableHead>
+                <SortableHead col="profit" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Profit</SortableHead>
                 <TableHead className="w-12 text-muted-foreground" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {perfumes.map((perfume) => {
+              {sorted.map((perfume) => {
                 const profit = perfume.quantity * (perfume.target_sale_price - perfume.cost_price);
                 const tag = inferPerfumeTag(perfume);
 

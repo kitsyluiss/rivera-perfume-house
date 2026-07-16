@@ -79,9 +79,10 @@ export default function PerfumeCard({
       onMouseLeave={isTouchDevice ? undefined : resetMouse}
       onClick={handleTap}
       style={tiltStyle}
-      // touch-action: manipulation removes the 300ms click delay on mobile
-      // and prevents scroll from being blocked by tap-hold.
-      className={`card-shimmer group relative cursor-pointer overflow-hidden rounded-[1.1rem] border border-border bg-card transition-[border-color] duration-500 hover:border-primary/25 [touch-action:manipulation] ${
+      // On touch devices we skip the 3D tilt entirely: it has no effect without a
+      // mouse and can cause subpixel transform shifts that break tap hit-testing on
+      // the last card in the grid.
+      className={`card-shimmer group relative cursor-pointer overflow-hidden rounded-[1.1rem] border border-border bg-card transition-[border-color] duration-500 hover:border-primary/25 ${
         clickedGlow ? "is-glowing" : ""
       } ${!inStock ? "opacity-50 grayscale" : ""}`}
     >

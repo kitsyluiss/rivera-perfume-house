@@ -183,7 +183,7 @@ export default function CatalogView({
       )}
 
       <main
-        className="bg-gradient-mesh relative min-h-screen overflow-x-hidden transition-opacity duration-500"
+        className="bg-gradient-mesh relative min-h-screen overflow-x-clip transition-opacity duration-500"
         style={{ opacity: preloaderDone ? 1 : 0 }}
       >
       <motion.div
@@ -328,7 +328,7 @@ export default function CatalogView({
         </motion.p>
       </header>
 
-      <section className="mx-auto max-w-7xl px-4 pb-20 pt-2 sm:px-6 [touch-action:pan-y]">
+      <section className="mx-auto max-w-7xl px-4 pb-20 pt-2 sm:px-6">
         <AnimatePresence mode="wait">
           {filtered.length === 0 ? (
             <motion.p

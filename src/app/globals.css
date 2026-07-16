@@ -58,8 +58,15 @@
     @apply border-border;
   }
 
+  html {
+    /* clip (not hidden) — clips horizontal overflow without creating a new
+       scroll container, which would otherwise cause scroll-blocking */
+    overflow-x: clip;
+  }
+
   body {
     @apply bg-background text-foreground font-body;
+    overflow-x: clip;
     font-feature-settings: "liga" 1, "kern" 1;
     background-image:
       radial-gradient(circle at top, rgba(197, 161, 91, 0.08), transparent 40%),
