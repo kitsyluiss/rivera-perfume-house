@@ -162,6 +162,62 @@ export async function updatePerfume(id: string, updates: Record<string, unknown>
   revalidatePath("/admin");
 }
 
+export async function updatePerfumePhoto(id: string, image: File) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  // Get current perfume info to resolve old image and match name/brand
+  const { data: perfume, error: fetchError } = await supabase
+    .from("perfumes")
+    .select("brand, scent_name, image_url")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !perfume) throw new Error("Perfume not found");
+
+  // Optional: delete old image from storage if it exists
+  if (perfume.image_url) {
+    try {
+      const oldFileName = perfume.image_url.split("/").pop();
+      if (oldFileName) {
+        await supabase.storage.from("perfume_images").remove([oldFileName]);
+      }
+    } catch {
+      // Ignore storage deletion errors
+    }
+  }
+
+  // Upload new image
+  const ext = image.name.split(".").pop();
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("perfume_images")
+    .upload(fileName, image, { cacheControl: "3600", upsert: false });
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("perfume_images").getPublicUrl(fileName);
+
+  // Update image url for all records sharing the same brand and scent name
+  const { error: updateError } = await supabase
+    .from("perfumes")
+    .update({ image_url: publicUrl })
+    .eq("brand", perfume.brand)
+    .eq("scent_name", perfume.scent_name);
+
+  if (updateError) throw new Error(updateError.message);
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+}
+
 export async function deletePerfume(id: string, imageUrl?: string | null) {
   const supabase = await createClient();
   const {

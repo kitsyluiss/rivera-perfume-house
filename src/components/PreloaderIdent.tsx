@@ -26,12 +26,25 @@ export default function PreloaderIdent({
 }: {
   onComplete: () => void;
 }) {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const seen = sessionStorage.getItem("rivera-preloader-seen");
+      if (seen === "true") {
+        onComplete();
+      } else {
+        setVisible(true);
+        sessionStorage.setItem("rivera-preloader-seen", "true");
+      }
+    }
+  }, [onComplete]);
+
+  useEffect(() => {
+    if (!visible) return;
     const t = setTimeout(() => setVisible(false), 2600);
     return () => clearTimeout(t);
-  }, []);
+  }, [visible]);
 
   return (
     <AnimatePresence onExitComplete={onComplete}>

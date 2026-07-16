@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Trash2, ShoppingCart, ChevronDown } from "lucide-react";
+import { Loader2, Trash2, ShoppingCart, ChevronDown, Camera } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -13,11 +13,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Perfume } from "@/lib/types";
-import { deletePerfume, updatePerfume } from "@/lib/actions";
+import { deletePerfume, updatePerfume, updatePerfumePhoto } from "@/lib/actions";
 import { formatPhp } from "@/lib/format";
 import { toast } from "sonner";
 import { inferPerfumeTag, PERFUME_TAGS, type PerfumeTag } from "@/lib/perfume-tags";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import ImageUpload from "@/components/ImageUpload";
 
 function EditableCell({
   value,
@@ -187,10 +194,29 @@ export default function InventoryTable({
 }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Perfume | null>(null);
+  const [photoTarget, setPhotoTarget] = useState<Perfume | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const handleUpdate = (id: string, field: string) => async (nextValue: number) => {
     await updatePerfume(id, { [field]: nextValue });
     onUpdate();
+  };
+
+  const handlePhotoUpdate = async () => {
+    if (!photoTarget || !photoFile) return;
+    setUploadingPhoto(true);
+    try {
+      await updatePerfumePhoto(photoTarget.id, photoFile);
+      toast.success("Photo updated successfully");
+      setPhotoFile(null);
+      setPhotoTarget(null);
+      onUpdate();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update photo");
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   const executeDelete = async (perfume: Perfume) => {
@@ -255,16 +281,28 @@ export default function InventoryTable({
             >
               {/* Top row: image + name + actions */}
               <div className="flex items-start gap-3">
-                {perfume.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={perfume.image_url}
-                    alt={perfume.scent_name}
-                    className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                  />
-                ) : (
-                  <div className="h-12 w-12 shrink-0 rounded-lg bg-secondary" />
-                )}
+                <button
+                  type="button"
+                  onClick={() => setPhotoTarget(perfume)}
+                  className="group relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-secondary hover:border-primary/50 transition-colors"
+                  title="Update photo"
+                >
+                  {perfume.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={perfume.image_url}
+                      alt={perfume.scent_name}
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-secondary flex items-center justify-center">
+                      <Camera className="h-4 w-4 text-muted-foreground/60" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Camera className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                </button>
 
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-primary">{perfume.brand}</p>
@@ -384,16 +422,28 @@ export default function InventoryTable({
                 return (
                   <TableRow key={perfume.id} className="border-border">
                     <TableCell className="w-14">
-                      {perfume.image_url ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          src={perfume.image_url}
-                          alt={perfume.scent_name}
-                          className="h-11 w-11 shrink-0 rounded-md object-cover"
-                        />
-                      ) : (
-                        <div className="h-11 w-11 shrink-0 rounded-md bg-secondary" />
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setPhotoTarget(perfume)}
+                        className="group relative h-11 w-11 shrink-0 overflow-hidden rounded-md border border-border bg-secondary hover:border-primary/50 transition-colors cursor-pointer"
+                        title="Update photo"
+                      >
+                        {perfume.image_url ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={perfume.image_url}
+                            alt={perfume.scent_name}
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-secondary flex items-center justify-center">
+                            <Camera className="h-4 w-4 text-muted-foreground/60" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <Camera className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                      </button>
                     </TableCell>
                     <TableCell className="font-medium">{perfume.brand}</TableCell>
                     <TableCell>{perfume.scent_name}</TableCell>
@@ -496,6 +546,61 @@ export default function InventoryTable({
           if (confirmDelete) void executeDelete(confirmDelete);
         }}
       />
+
+      <Dialog
+        open={!!photoTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPhotoTarget(null);
+            setPhotoFile(null);
+          }
+        }}
+      >
+        <DialogContent className="border-border bg-card text-foreground sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-light tracking-wide text-foreground">
+              Update Photo
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-xs text-muted-foreground">
+              Update the photo for{" "}
+              <span className="text-primary">
+                {photoTarget?.brand} &mdash; {photoTarget?.scent_name}
+              </span>
+              . This will update the image across all entries in the inventory.
+            </p>
+            <ImageUpload file={photoFile} onFileChange={setPhotoFile} />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setPhotoTarget(null);
+                  setPhotoFile(null);
+                }}
+                disabled={uploadingPhoto}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handlePhotoUpdate}
+                disabled={!photoFile || uploadingPhoto}
+              >
+                {uploadingPhoto ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  "Save Photo"
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
