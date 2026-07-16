@@ -113,7 +113,7 @@ export default function PreloaderIdent({
             />
 
             {/* RIVERA — letter cascade */}
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center" style={{ paddingLeft: "0.45em" }}>
               {BRAND.map((ch, i) => (
                 <motion.span
                   key={i}
@@ -146,6 +146,7 @@ export default function PreloaderIdent({
                 fontSize: "clamp(0.5rem, 1vw, 0.58rem)",
                 fontWeight: 300,
                 letterSpacing: "0.42em",
+                paddingLeft: "0.42em",
                 textTransform: "uppercase" as const,
                 color: "#7e725b",
               }}

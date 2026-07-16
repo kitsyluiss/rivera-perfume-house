@@ -213,7 +213,7 @@ export default function CatalogView({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease }}
-          className="font-display overflow-hidden text-5xl font-light leading-none tracking-[0.18em] text-primary sm:text-7xl md:text-8xl"
+          className="font-display overflow-hidden text-5xl font-light leading-none tracking-[0.18em] pl-[0.18em] text-primary sm:text-7xl md:text-8xl"
         >
           {"RIVERA".split("").map((char, index) => (
             <motion.span
@@ -231,7 +231,7 @@ export default function CatalogView({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.7 }}
-          className="mt-3 text-[9px] uppercase tracking-[0.28em] text-muted-foreground sm:mt-4 sm:text-xs"
+          className="mt-3 text-[9px] uppercase tracking-[0.28em] pl-[0.28em] text-muted-foreground sm:mt-4 sm:text-xs"
         >
           Curated luxury fragrances
         </motion.p>
