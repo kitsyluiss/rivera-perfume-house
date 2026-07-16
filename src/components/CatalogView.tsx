@@ -249,24 +249,20 @@ export default function CatalogView({
           className="mx-auto mt-8 flex max-w-2xl flex-col items-center gap-4 sm:mt-10 sm:gap-5"
         >
           {/* Search + brand filter */}
-          <div className="relative flex w-full max-w-xl items-center gap-3">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by brand or scent..."
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="h-11 rounded-none border-0 border-b border-border bg-transparent pl-7 text-sm text-foreground placeholder:text-muted-foreground transition-all duration-300 focus-visible:border-b-primary focus-visible:ring-0 sm:h-13"
-              />
-            </div>
-            <div className="relative shrink-0">
+          <div className="relative flex w-full max-w-xl items-center">
+            <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by brand or scent..."
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className="h-11 w-full rounded-none border-0 border-b border-border bg-transparent pl-7 pr-10 text-sm text-foreground placeholder:text-muted-foreground transition-all duration-300 focus-visible:border-b-primary focus-visible:ring-0 sm:h-13"
+            />
+            <div className="absolute right-0 top-1/2 -translate-y-1/2">
               <button
                 type="button"
                 onClick={() => setBrandOpen((o) => !o)}
-                className={`flex h-11 w-11 items-center justify-center rounded-full border text-muted-foreground transition sm:h-13 sm:w-13 ${
-                  brandFilter !== "all"
-                    ? "border-primary/40 text-primary"
-                    : "border-border hover:text-foreground"
+                className={`flex h-8 w-8 items-center justify-center text-muted-foreground transition hover:text-foreground ${
+                  brandFilter !== "all" ? "text-primary" : ""
                 }`}
                 aria-label="Filter by brand"
               >
