@@ -23,28 +23,34 @@ const BRAND = "RIVERA".split("");
 
 export default function PreloaderIdent({
   onComplete,
+  alwaysShow = false,
 }: {
-  onComplete: () => void;
+  onComplete?: () => void;
+  alwaysShow?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (alwaysShow) {
+      setVisible(true);
+      return;
+    }
     if (typeof window !== "undefined") {
       const seen = sessionStorage.getItem("rivera-preloader-seen");
       if (seen === "true") {
-        onComplete();
+        onComplete?.();
       } else {
         setVisible(true);
         sessionStorage.setItem("rivera-preloader-seen", "true");
       }
     }
-  }, [onComplete]);
+  }, [onComplete, alwaysShow]);
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || alwaysShow) return;
     const t = setTimeout(() => setVisible(false), 2600);
     return () => clearTimeout(t);
-  }, [visible]);
+  }, [visible, alwaysShow]);
 
   return (
     <AnimatePresence onExitComplete={onComplete}>
