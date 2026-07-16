@@ -96,14 +96,14 @@ function BrandDropdown({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex h-10 w-full min-w-[160px] items-center justify-between gap-3 rounded-full border border-primary/20 bg-card px-4 text-sm text-foreground transition hover:border-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        className="flex h-10 items-center justify-between gap-1.5 px-1 text-[9px] uppercase tracking-[0.18em] text-muted-foreground transition hover:text-foreground focus:outline-none focus-visible:text-foreground sm:text-[10px]"
       >
         <span className="truncate">{label}</span>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2, ease: "easeInOut" }}
         >
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <ChevronDown className="h-3.5 w-3.5 shrink-0" />
         </motion.span>
       </button>
 
@@ -262,17 +262,17 @@ export default function CatalogView({
         >
           {/* Search */}
           <div className="relative w-full max-w-xl">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by brand or scent..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="h-11 rounded-full border-primary/20 bg-card pl-11 text-sm text-foreground placeholder:text-muted-foreground backdrop-blur-md transition-all duration-300 focus-visible:border-primary/50 focus-visible:ring-primary/40 sm:h-13"
+              className="h-11 rounded-none border-0 border-b border-border bg-transparent pl-7 text-sm text-foreground placeholder:text-muted-foreground transition-all duration-300 focus-visible:border-b-primary focus-visible:ring-0 sm:h-13"
             />
           </div>
 
           {/* Brand + Category on the same row */}
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
             {/* Brand dropdown */}
             <BrandDropdown
               brands={brands}
@@ -280,18 +280,15 @@ export default function CatalogView({
               onChange={setBrandFilter}
             />
 
-            {/* Divider */}
-            <span className="hidden h-5 w-px bg-border sm:block" />
-
             {/* Category pills */}
-            <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setTagFilter("all")}
-                className={`rounded-full border px-3 py-1.5 text-[9px] uppercase tracking-[0.18em] transition sm:px-3.5 sm:py-2 sm:text-[10px] ${
+                className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] transition sm:py-2 sm:text-[10px] ${
                   tagFilter === "all"
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 All
@@ -303,10 +300,10 @@ export default function CatalogView({
                     key={tag.value}
                     type="button"
                     onClick={() => setTagFilter(tag.value.toLowerCase())}
-                    className={`rounded-full border px-3 py-1.5 text-[9px] uppercase tracking-[0.18em] transition sm:px-3.5 sm:py-2 sm:text-[10px] ${
+                    className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] transition sm:py-2 sm:text-[10px] ${
                       active
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {tag.value}
