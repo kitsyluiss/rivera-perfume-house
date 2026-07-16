@@ -11,12 +11,14 @@ export interface FragranceNotes {
 }
 
 export interface FragranceDNA {
+  description: string;
   accords: Accord[];
   notes: FragranceNotes;
 }
 
 const DNA_DICTIONARY: Record<string, FragranceDNA> = {
   "hawas ice": {
+    description: "A vibrant, icy blast of crisp apple and sweet plum that settles into a refreshing, mossy-wood finish. It is pure, mouth-watering energy built for the peak heat.",
     accords: [
       { name: "Fruity", value: 100, color: "fruity" },
       { name: "Citrus", value: 90, color: "citrus" },
@@ -36,6 +38,7 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
     }
   },
   "hawas kobra": {
+    description: "An invigorating, sharp strike of zesty ginger, sparkling citrus, and green tea, wrapped elegantly in a smooth, musky amber base.",
     accords: [
       { name: "Citrus", value: 100, color: "citrus" },
       { name: "Fresh Spicy", value: 90, color: "fresh_spicy" },
@@ -55,6 +58,7 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
     }
   },
   "vulcan baie": {
+    description: "A dark, boozy cocktail of crushed red berries, sharp vodka, and fresh rosemary, ultimately grounded by rich incense and sandalwood.",
     accords: [
       { name: "Fruity", value: 100, color: "fruity" },
       { name: "Sweet", value: 90, color: "sweet" },
@@ -70,6 +74,7 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
     }
   },
   "shiyaaka snow": {
+    description: "A crisp, cooling rush of mandarin and pink pepper that dries down into a clean, earthy, and highly professional blend of cardamom and vetiver.",
     accords: [
       { name: "Citrus", value: 100, color: "citrus" },
       { name: "Fresh Spicy", value: 90, color: "fresh_spicy" },
@@ -89,6 +94,7 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
     }
   },
   "liquid brun": {
+    description: "A decadent, enveloping cloud of bourbon vanilla, roasted praline, and warm cinnamon. It is rich, exceptionally sweet, and undeniably cozy.",
     accords: [
       { name: "Sweet", value: 100, color: "sweet" },
       { name: "Warm Spicy", value: 95, color: "warm_spicy" },
@@ -108,6 +114,7 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
     }
   },
   "lion": {
+    description: "A smooth, alluring contrast of fresh lavender and sweet pear, perfectly balanced by a warm, masculine foundation of vanilla and cedarwood.",
     accords: [
       { name: "Aromatic", value: 100, color: "aromatic" },
       { name: "Vanilla", value: 95, color: "vanilla" },
@@ -127,6 +134,7 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
     }
   },
   "elixir": {
+    description: "A creamy, herbaceous dream where fresh mint and clean lavender melt seamlessly into a deeply rich, sweet base of tonka bean and vanilla.",
     accords: [
       { name: "Vanilla", value: 100, color: "vanilla" },
       { name: "Aromatic", value: 65, color: "aromatic" },
@@ -144,6 +152,7 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
     }
   },
   "delilah blanc": {
+    description: "Soft, elegant, and effortlessly clean. A gentle, soapy breeze of white peach, delicate orange blossom, and powdery musk.",
     accords: [
       { name: "Citrus", value: 100, color: "citrus" },
       { name: "Musky", value: 60, color: "musky" },
@@ -162,6 +171,7 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
     }
   },
   "club de nuit intense man": {
+    description: "A bold, smoky powerhouse of sharp lemon, tart pineapple, and smoldering birch wood. It is loud, unapologetic, and the ultimate statement of confidence.",
     accords: [
       { name: "Citrus", value: 100, color: "citrus" },
       { name: "Fruity", value: 75, color: "fruity" },
@@ -190,6 +200,7 @@ export function getFragranceDNA(scentName: string): FragranceDNA {
   
   // Safe default fallback for custom fragrances
   return {
+    description: "A beautifully balanced luxury fragrance crafted with premium essences.",
     accords: [
       { name: "Fresh", value: 75, color: "fresh" },
       { name: "Citrus", value: 65, color: "citrus" },

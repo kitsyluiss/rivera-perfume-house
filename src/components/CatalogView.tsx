@@ -427,7 +427,7 @@ export default function CatalogView({
                       {selectedPerfume.scent_name}
                     </h2>
                     
-                    <div className="flex flex-wrap gap-2 mb-6">
+                    <div className="flex flex-wrap gap-2 mb-2">
                       <span className="rounded-full border border-primary/25 px-3.5 py-1 text-[9px] uppercase tracking-[0.15em] text-primary">
                         {inferPerfumeTag(selectedPerfume)}
                       </span>
@@ -435,6 +435,10 @@ export default function CatalogView({
                         {selectedPerfume.quantity > 0 ? "Available" : "Unavailable"}
                       </span>
                     </div>
+
+                    <p className="text-xs font-light leading-relaxed text-muted-foreground/80 italic font-body mb-6">
+                      &ldquo;{getFragranceDNA(selectedPerfume.scent_name).description}&rdquo;
+                    </p>
 
                     <div className="mb-6">
                       <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
