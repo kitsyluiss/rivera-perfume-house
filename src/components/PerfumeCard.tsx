@@ -1,0 +1,127 @@
+"use client";
+
+import { useRef } from "react";
+import Image from "next/image";
+import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import { Badge } from "@/components/ui/badge";
+import { Perfume } from "@/lib/types";
+import { formatPhp } from "@/lib/format";
+import { inferPerfumeTag } from "@/lib/perfume-tags";
+
+const ease = [0.22, 1, 0.36, 1] as const;
+
+export default function PerfumeCard({
+  perfume,
+  index,
+}: {
+  perfume: Perfume;
+  index: number;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const inStock = perfume.quantity > 0;
+  const tag = inferPerfumeTag(perfume);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [8, -8]), {
+    stiffness: 250,
+    damping: 25,
+  });
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), {
+    stiffness: 250,
+    damping: 25,
+  });
+
+  const handleMouse = (event: React.MouseEvent) => {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    mouseX.set((event.clientX - rect.left) / rect.width - 0.5);
+    mouseY.set((event.clientY - rect.top) / rect.height - 0.5);
+  };
+
+  const resetMouse = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
+  return (
+    <motion.article
+      ref={cardRef}
+      layout
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.25 } }}
+      transition={{ duration: 0.7, delay: Math.min(index * 0.07, 0.56), ease }}
+      onMouseMove={handleMouse}
+      onMouseLeave={resetMouse}
+      style={{ rotateX, rotateY, transformPerspective: 900 }}
+      className={`card-shimmer group relative cursor-pointer overflow-hidden rounded-[1.1rem] border border-border bg-card transition-[border-color] duration-500 hover:border-primary/25 ${
+        !inStock ? "opacity-50 grayscale" : ""
+      }`}
+    >
+      <div className="relative aspect-[4/5] overflow-hidden bg-secondary">
+        {perfume.image_url ? (
+          <motion.div className="relative h-full w-full" whileHover={{ scale: 1.06 }} transition={{ duration: 0.65, ease }}>
+            <Image
+              src={perfume.image_url}
+              alt={`${perfume.brand} ${perfume.scent_name}`}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              className="object-cover"
+              priority={index < 4}
+            />
+          </motion.div>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground/30">
+            No image
+          </div>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card via-card/60 to-transparent pointer-events-none" />
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8, y: -4 }}
+          whileInView={{ opacity: 1, scale: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: Math.min(index * 0.07, 0.56) + 0.35, duration: 0.4, ease }}
+        >
+          <Badge
+            variant="outline"
+            className={`absolute right-2 top-2 border text-[8px] sm:text-[10px] uppercase tracking-[0.12em] sm:tracking-[0.15em] font-body backdrop-blur-md px-1.5 py-0.5 sm:px-2.5 sm:py-1 ${
+              inStock
+                ? "border-emerald-500/20 bg-emerald-950/60 text-emerald-300/90"
+                : "border-red-500/20 bg-red-950/60 text-red-300/90"
+            }`}
+          >
+            <span className={`mr-1 inline-block h-1 w-1 sm:mr-1.5 sm:h-1.5 sm:w-1.5 rounded-full ${inStock ? "bg-emerald-400" : "bg-red-400"}`} />
+            {inStock ? (perfume.quantity <= 5 ? `Low · ${perfume.quantity}` : "In Stock") : "Sold Out"}
+          </Badge>
+        </motion.div>
+
+        <div className="absolute bottom-2 left-2 z-10 rounded-full border border-border bg-card/85 px-2 py-0.5 text-[8px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.18em] text-muted-foreground backdrop-blur-md">
+          {tag}
+        </div>
+      </div>
+
+      <div className="relative z-10 -mt-2 p-3 pb-4.5 sm:p-5">
+        <motion.div initial={false} whileHover={{ y: -3 }} transition={{ duration: 0.3, ease }}>
+          <p className="mb-1 text-[8px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-primary font-body">
+            {perfume.brand}
+          </p>
+          <h3 className="mb-1.5 text-sm font-medium leading-snug text-foreground font-display sm:text-[1.25rem] truncate">
+            {perfume.scent_name}
+          </h3>
+          <div className="flex items-end justify-between">
+            <p className="font-display text-base leading-none text-foreground sm:text-2xl">
+              {formatPhp(perfume.target_sale_price)}
+            </p>
+            <motion.span initial={{ opacity: 0, x: -6 }} whileHover={{ opacity: 1, x: 0 }} className="hidden text-[10px] uppercase tracking-[0.15em] text-primary font-body sm:block">
+              View →
+            </motion.span>
+          </div>
+        </motion.div>
+      </div>
+    </motion.article>
+  );
+}

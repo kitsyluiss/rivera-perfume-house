@@ -1,0 +1,338 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  BarChart3,
+  DollarSign,
+  Package,
+  Plus,
+  ShoppingCart,
+  TrendingUp,
+} from "lucide-react";
+import dynamic from "next/dynamic";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { getPerfumes, getSales, signOut } from "@/lib/actions";
+import { Perfume, Sale } from "@/lib/types";
+import InventoryTable from "@/components/InventoryTable";
+import SalesDashboard from "@/components/SalesDashboard";
+import AnimatedNumber from "@/components/AnimatedNumber";
+import { formatPhp } from "@/lib/format";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import PreloaderIdent from "@/components/PreloaderIdent";
+
+const AddPerfumeForm = dynamic(() => import("@/components/AddPerfumeForm"), {
+  ssr: false,
+});
+const SellDialog = dynamic(() => import("@/components/SellDialog"), {
+  ssr: false,
+});
+import { LogOut } from "lucide-react";
+
+const ease = [0.22, 1, 0.36, 1] as const;
+const php = (n: number) => formatPhp(n);
+
+type Tab = "inventory" | "sales";
+
+function StatsGrid({
+  stats,
+}: {
+  stats: { label: string; value: number; icon: React.ElementType; format?: (n: number) => string }[];
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 w-full">
+      {stats.map((stat, index) => (
+        <motion.div
+          key={stat.label}
+          className="w-full block"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.05 + index * 0.07, ease }}
+        >
+          <Card className="group relative overflow-hidden border-border bg-card w-full">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            <div className="relative z-10 p-6 sm:p-7">
+              <div className="mb-2.5 flex items-center justify-between">
+                <span className="font-body text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                  {stat.label}
+                </span>
+                <stat.icon className="h-4 w-4 text-primary/60" />
+              </div>
+              <p className="font-display text-xl text-foreground tabular-nums sm:text-2xl">
+                <AnimatedNumber value={stat.value} format={stat.format} />
+              </p>
+            </div>
+          </Card>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+export default function AdminDashboard() {
+  const [preloaderDone, setPreloaderDone] = useState(false);
+  const [perfumes, setPerfumes] = useState<Perfume[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [loadingPerfumes, setLoadingPerfumes] = useState(true);
+  const [loadingSales, setLoadingSales] = useState(true);
+  const [addOpen, setAddOpen] = useState(false);
+  const [sellOpen, setSellOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("inventory");
+  const [selectedPerfume, setSelectedPerfume] = useState<Perfume | null>(null);
+  const router = useRouter();
+
+  const fetchPerfumes = useCallback(async () => {
+    try {
+      const data = await getPerfumes();
+      setPerfumes(data ?? []);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to load inventory");
+    } finally {
+      setLoadingPerfumes(false);
+    }
+  }, []);
+
+  const fetchSales = useCallback(async () => {
+    try {
+      const data = await getSales();
+      setSales(data ?? []);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to load sales history");
+    } finally {
+      setLoadingSales(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchPerfumes();
+    void fetchSales();
+  }, [fetchPerfumes, fetchSales]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out");
+    router.refresh();
+  };
+
+  // ── Inventory stats ──────────────────────────────────
+  const totalSKUs = perfumes.length;
+  const totalUnits = perfumes.reduce((sum, p) => sum + p.quantity, 0);
+  const inventoryCost = perfumes.reduce(
+    (sum, p) => sum + p.quantity * p.cost_price,
+    0
+  );
+  const projectedRevenue = perfumes.reduce(
+    (sum, p) => sum + p.quantity * p.target_sale_price,
+    0
+  );
+  const projectedProfit = projectedRevenue - inventoryCost;
+
+  const inventoryStats = [
+    { label: "Total SKUs", value: totalSKUs, icon: Package },
+    { label: "Total Units", value: totalUnits, icon: BarChart3 },
+    { label: "Inventory Cost", value: inventoryCost, icon: DollarSign, format: php },
+    { label: "Projected Profit", value: projectedProfit, icon: TrendingUp, format: php },
+  ];
+
+  // ── Sales stats ──────────────────────────────────────
+  const totalSalesRevenue = sales.reduce(
+    (sum, s) => sum + s.quantity_sold * s.unit_price,
+    0
+  );
+  const totalSalesCost = sales.reduce(
+    (sum, s) => sum + s.quantity_sold * s.cost_at_sale,
+    0
+  );
+  const totalSalesProfit = totalSalesRevenue - totalSalesCost;
+  const totalUnitsSold = sales.reduce((sum, s) => sum + s.quantity_sold, 0);
+
+  const salesStats = [
+    { label: "Total Sales", value: sales.length, icon: ShoppingCart },
+    { label: "Units Sold", value: totalUnitsSold, icon: BarChart3 },
+    { label: "Revenue", value: totalSalesRevenue, icon: DollarSign, format: php },
+    { label: "Profit", value: totalSalesProfit, icon: TrendingUp, format: php },
+  ];
+
+  const currentStats = tab === "inventory" ? inventoryStats : salesStats;
+
+  return (
+    <>
+      {!preloaderDone && (
+        <PreloaderIdent onComplete={() => setPreloaderDone(true)} />
+      )}
+
+      <div
+        className="min-h-screen transition-opacity duration-500"
+        style={{ opacity: preloaderDone ? 1 : 0 }}
+      >
+      <motion.header
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease }}
+        className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3 sm:px-5 sm:py-3.5 lg:px-6"
+      >
+        <h1 className="text-base tracking-wide text-foreground sm:text-xl lg:text-2xl">
+          Inventory <span className="text-primary">Dashboard</span>
+        </h1>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleSignOut}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">Sign Out</span>
+          <span className="sm:hidden">Out</span>
+        </Button>
+      </motion.header>
+
+      <div className="mx-auto max-w-7xl space-y-5 px-4 py-5 sm:space-y-6 sm:px-5 sm:py-6 lg:px-6 lg:py-7">
+
+        {/* Stats row — swaps between inventory and sales */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            className="w-full block pt-3 sm:pt-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25, ease }}
+          >
+            <StatsGrid stats={currentStats} />
+          </motion.div>
+        </AnimatePresence>
+
+        <Separator className="bg-border" />
+
+        {/* Tab navigation */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="flex items-center gap-1.5 rounded-full border border-border bg-card/60 p-1 backdrop-blur-md self-center sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setTab("inventory")}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] uppercase tracking-[0.18em] transition-colors sm:gap-2 sm:px-4 sm:text-xs ${
+                tab === "inventory"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+            >
+              <Package className="h-3.5 w-3.5" />
+              Inventory
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("sales")}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] uppercase tracking-[0.18em] transition-colors sm:gap-2 sm:px-4 sm:text-xs ${
+                tab === "sales"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+            >
+              <ShoppingCart className="h-3.5 w-3.5" />
+              Sales
+            </button>
+          </div>
+
+          <motion.div 
+            className="w-full sm:w-auto"
+            whileHover={{ scale: 1.01 }} 
+            whileTap={{ scale: 0.99 }}
+          >
+            {tab === "inventory" ? (
+              <Button
+                onClick={() => setAddOpen(true)}
+                className="w-full h-9 px-3 text-[10px] uppercase tracking-wider sm:h-10 sm:px-4 sm:text-xs sm:w-auto"
+              >
+                <Plus className="mr-1.5 h-4 w-4 sm:mr-2" />
+                Add New
+              </Button>
+            ) : (
+              <Button
+                onClick={() => setSellOpen(true)}
+                className="w-full h-9 px-3 text-[10px] uppercase tracking-wider sm:h-10 sm:px-4 sm:text-xs sm:w-auto"
+              >
+                <Plus className="mr-1.5 h-4 w-4 sm:mr-2" />
+                Sell
+              </Button>
+            )}
+          </motion.div>
+        </div>
+
+        {/* Tab content */}
+        <AnimatePresence mode="wait">
+          {tab === "inventory" ? (
+            <motion.div
+              key="inventory"
+              className="w-full"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.35, ease }}
+              id="inventory-list"
+            >
+              <InventoryTable
+                perfumes={[...perfumes].sort((a, b) => {
+                  if (a.quantity === 0 && b.quantity > 0) return 1;
+                  if (a.quantity > 0 && b.quantity === 0) return -1;
+                  return 0;
+                })}
+                loading={loadingPerfumes}
+                onUpdate={fetchPerfumes}
+                onSell={(perfume) => {
+                  setSelectedPerfume(perfume);
+                  setSellOpen(true);
+                }}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="sales"
+              className="w-full"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.35, ease }}
+            >
+              <SalesDashboard
+                perfumes={perfumes}
+                sales={sales}
+                loading={loadingSales}
+                onUpdate={fetchSales}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AddPerfumeForm
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          existingPerfumes={perfumes}
+          onSuccess={() => {
+            fetchPerfumes();
+            setAddOpen(false);
+          }}
+        />
+
+        <SellDialog
+          open={sellOpen}
+          onOpenChange={(open) => {
+            setSellOpen(open);
+            if (!open) setSelectedPerfume(null);
+          }}
+          perfumes={perfumes}
+          preselectedPerfume={selectedPerfume}
+          onSuccess={() => {
+            fetchPerfumes();
+            fetchSales();
+            setSellOpen(false);
+            setSelectedPerfume(null);
+          }}
+        />
+      </div>
+    </div>
+    </>
+  );
+}
