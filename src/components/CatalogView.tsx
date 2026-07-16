@@ -96,14 +96,14 @@ function BrandDropdown({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between gap-1.5 px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] text-muted-foreground transition hover:text-foreground focus:outline-none focus-visible:text-foreground sm:py-2 sm:text-[10px]"
+        className="flex items-center justify-between gap-1.5 px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none text-muted-foreground transition hover:text-foreground focus:outline-none focus-visible:text-foreground sm:py-2 sm:text-[10px]"
       >
         <span className="truncate">{label}</span>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2, ease: "easeInOut" }}
         >
-          <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+          <ChevronDown className="h-3 w-3 shrink-0" />
         </motion.span>
       </button>
 
@@ -272,7 +272,7 @@ export default function CatalogView({
           </div>
 
           {/* Brand + Category on the same row */}
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
+          <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-5">
             {/* Brand dropdown */}
             <BrandDropdown
               brands={brands}
@@ -281,11 +281,11 @@ export default function CatalogView({
             />
 
             {/* Category pills */}
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-center sm:gap-3">
               <button
                 type="button"
                 onClick={() => setTagFilter("all")}
-                className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] transition sm:py-2 sm:text-[10px] ${
+                className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none transition sm:py-2 sm:text-[10px] ${
                   tagFilter === "all"
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
@@ -300,7 +300,7 @@ export default function CatalogView({
                     key={tag.value}
                     type="button"
                     onClick={() => setTagFilter(tag.value.toLowerCase())}
-                    className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] transition sm:py-2 sm:text-[10px] ${
+                    className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none transition sm:py-2 sm:text-[10px] ${
                       active
                         ? "text-primary"
                         : "text-muted-foreground hover:text-foreground"
