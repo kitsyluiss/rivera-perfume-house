@@ -96,7 +96,7 @@ function BrandDropdown({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex h-10 items-center justify-between gap-1.5 px-1 text-[9px] uppercase tracking-[0.18em] text-muted-foreground transition hover:text-foreground focus:outline-none focus-visible:text-foreground sm:text-[10px]"
+        className="flex items-center justify-between gap-1.5 px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] text-muted-foreground transition hover:text-foreground focus:outline-none focus-visible:text-foreground sm:py-2 sm:text-[10px]"
       >
         <span className="truncate">{label}</span>
         <motion.span
