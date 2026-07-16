@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +18,14 @@ export default function PerfumeCard({
   index: number;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [clickedGlow, setClickedGlow] = useState(false);
   const inStock = perfume.quantity > 0;
   const tag = inferPerfumeTag(perfume);
+
+  const handleTap = () => {
+    setClickedGlow(true);
+    setTimeout(() => setClickedGlow(false), 800);
+  };
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -55,10 +61,11 @@ export default function PerfumeCard({
       transition={{ duration: 0.7, delay: Math.min(index * 0.07, 0.56), ease }}
       onMouseMove={handleMouse}
       onMouseLeave={resetMouse}
+      onClick={handleTap}
       style={{ rotateX, rotateY, transformPerspective: 900 }}
       className={`card-shimmer group relative cursor-pointer overflow-hidden rounded-[1.1rem] border border-border bg-card transition-[border-color] duration-500 hover:border-primary/25 ${
-        !inStock ? "opacity-50 grayscale" : ""
-      }`}
+        clickedGlow ? "is-glowing" : ""
+      } ${!inStock ? "opacity-50 grayscale" : ""}`}
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-secondary">
         {perfume.image_url ? (
