@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useScroll, useSpring } from "motion/react";
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, Filter, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PerfumeCard from "@/components/PerfumeCard";
 import { Perfume } from "@/lib/types";
@@ -69,77 +69,64 @@ function BrandDropdown({
   brands,
   value,
   onChange,
+  onClose,
+  align = "center",
 }: {
   brands: string[];
   value: string;
   onChange: (v: string) => void;
+  onClose?: () => void;
+  align?: "left" | "center" | "right";
 }) {
-  const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
   useEffect(() => {
-    if (!open) return;
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
+        onClose?.();
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+  }, [onClose]);
 
-  const label = value === "all" ? "All Brands" : value;
+  const alignClass =
+    align === "right"
+      ? "right-0"
+      : align === "left"
+        ? "left-0"
+        : "left-1/2 -translate-x-1/2";
 
   return (
     <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between gap-1.5 px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none text-muted-foreground transition hover:text-foreground focus:outline-none focus-visible:text-foreground sm:py-2 sm:text-[10px]"
-      >
-        <span className="truncate">{label}</span>
-        <motion.span
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2, ease: "easeInOut" }}
-        >
-          <ChevronDown className="h-3 w-3 shrink-0" />
-        </motion.span>
-      </button>
-
       <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.97 }}
-            transition={{ duration: 0.18, ease }}
-            className="absolute left-1/2 top-[calc(100%+6px)] z-[200] w-56 -translate-x-1/2 overflow-hidden rounded-xl border border-primary/15 bg-card shadow-xl shadow-black/20 backdrop-blur-md"
-          >
-            <div className="max-h-64 overflow-y-auto py-1">
-              {["all", ...brands].map((brand) => (
-                <button
-                  key={brand}
-                  type="button"
-                  onClick={() => {
-                    onChange(brand);
-                    setOpen(false);
-                  }}
-                  className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors ${
-                    value === brand
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground hover:bg-secondary/60"
-                  }`}
-                >
-                  {brand === "all" ? "All Brands" : brand}
-                  {value === brand && (
-                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
+        <motion.div
+          initial={{ opacity: 0, y: -6, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -6, scale: 0.97 }}
+          transition={{ duration: 0.18, ease }}
+          className={`absolute ${alignClass} top-[calc(100%+8px)] z-[200] w-56 overflow-hidden rounded-xl border border-primary/15 bg-card shadow-xl shadow-black/20 backdrop-blur-md`}
+        >
+          <div className="max-h-64 overflow-y-auto py-1">
+            {["all", ...brands].map((brand) => (
+              <button
+                key={brand}
+                type="button"
+                onClick={() => onChange(brand)}
+                className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors ${
+                  value === brand
+                    ? "bg-primary/10 text-primary"
+                    : "text-foreground hover:bg-secondary/60"
+                }`}
+              >
+                {brand === "all" ? "All Brands" : brand}
+                {value === brand && (
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                )}
+              </button>
+            ))}
+          </div>
+        </motion.div>
       </AnimatePresence>
     </div>
   );
@@ -154,6 +141,7 @@ export default function CatalogView({
   const [query, setQuery] = useState("");
   const [selectedPerfume, setSelectedPerfume] = useState<Perfume | null>(null);
   const [brandFilter, setBrandFilter] = useState("all");
+  const [brandOpen, setBrandOpen] = useState(false);
   const [tagFilter, setTagFilter] = useState("all");
 
   const { scrollYProgress } = useScroll();
@@ -223,7 +211,7 @@ export default function CatalogView({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease }}
-          className="font-display overflow-hidden text-3xl font-light leading-none tracking-[0.18em] text-primary sm:text-5xl md:text-6xl"
+          className="font-display overflow-hidden text-5xl font-light leading-none tracking-[0.18em] text-primary sm:text-7xl md:text-8xl"
         >
           {"RIVERA".split("").map((char, index) => (
             <motion.span
@@ -260,57 +248,77 @@ export default function CatalogView({
           transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
           className="mx-auto mt-8 flex max-w-2xl flex-col items-center gap-4 sm:mt-10 sm:gap-5"
         >
-          {/* Search */}
-          <div className="relative w-full max-w-xl">
-            <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by brand or scent..."
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="h-11 rounded-none border-0 border-b border-border bg-transparent pl-7 text-sm text-foreground placeholder:text-muted-foreground transition-all duration-300 focus-visible:border-b-primary focus-visible:ring-0 sm:h-13"
-            />
-          </div>
-
-          {/* Brand + Category on the same row */}
-          <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-5">
-            {/* Brand dropdown */}
-            <BrandDropdown
-              brands={brands}
-              value={brandFilter}
-              onChange={setBrandFilter}
-            />
-
-            {/* Category pills */}
-            <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-center sm:gap-3">
+          {/* Search + brand filter */}
+          <div className="relative flex w-full max-w-xl items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by brand or scent..."
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                className="h-11 rounded-none border-0 border-b border-border bg-transparent pl-7 text-sm text-foreground placeholder:text-muted-foreground transition-all duration-300 focus-visible:border-b-primary focus-visible:ring-0 sm:h-13"
+              />
+            </div>
+            <div className="relative shrink-0">
               <button
                 type="button"
-                onClick={() => setTagFilter("all")}
-                className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none transition sm:py-2 sm:text-[10px] ${
-                  tagFilter === "all"
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                onClick={() => setBrandOpen((o) => !o)}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border text-muted-foreground transition sm:h-13 sm:w-13 ${
+                  brandFilter !== "all"
+                    ? "border-primary/40 text-primary"
+                    : "border-border hover:text-foreground"
                 }`}
+                aria-label="Filter by brand"
               >
-                All
+                <Filter className="h-4 w-4" />
               </button>
-              {PERFUME_TAGS.map((tag) => {
-                const active = tagFilter === tag.value.toLowerCase();
-                return (
-                  <button
-                    key={tag.value}
-                    type="button"
-                    onClick={() => setTagFilter(tag.value.toLowerCase())}
-                    className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none transition sm:py-2 sm:text-[10px] ${
-                      active
-                        ? "text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {tag.value}
-                  </button>
-                );
-              })}
+              <AnimatePresence>
+                {brandOpen && (
+                  <BrandDropdown
+                    brands={brands}
+                    value={brandFilter}
+                    onChange={(v) => {
+                      setBrandFilter(v);
+                      setBrandOpen(false);
+                    }}
+                    onClose={() => setBrandOpen(false)}
+                    align="right"
+                  />
+                )}
+              </AnimatePresence>
             </div>
+          </div>
+
+          {/* Category pills — single wrapping row */}
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setTagFilter("all")}
+              className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none transition sm:py-2 sm:text-[10px] ${
+                tagFilter === "all"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All
+            </button>
+            {PERFUME_TAGS.map((tag) => {
+              const active = tagFilter === tag.value.toLowerCase();
+              return (
+                <button
+                  key={tag.value}
+                  type="button"
+                  onClick={() => setTagFilter(tag.value.toLowerCase())}
+                  className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none transition sm:py-2 sm:text-[10px] ${
+                    active
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tag.value}
+                </button>
+              );
+            })}
           </div>
         </motion.div>
 
