@@ -105,7 +105,7 @@ function BrandDropdown({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -6, scale: 0.97 }}
           transition={{ duration: 0.18, ease }}
-          className={`absolute ${alignClass} top-[calc(100%+8px)] z-[200] w-56 overflow-hidden rounded-xl border border-primary/15 bg-card shadow-xl shadow-black/20 backdrop-blur-md`}
+          className={`absolute ${alignClass} top-[calc(100%+8px)] z-[1000] w-56 overflow-hidden rounded-xl border border-primary/15 bg-card shadow-xl shadow-black/20 backdrop-blur-md`}
         >
           <div className="max-h-64 overflow-y-auto py-1">
             {["all", ...brands].map((brand) => (
@@ -249,7 +249,7 @@ export default function CatalogView({
           className="mx-auto mt-8 flex max-w-2xl flex-col items-center gap-4 sm:mt-10 sm:gap-5"
         >
           {/* Search + brand filter */}
-          <div className="relative flex w-full max-w-xl items-center">
+          <div className="relative z-[1000] flex w-full max-w-xl items-center">
             <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by brand or scent..."
