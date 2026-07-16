@@ -24,6 +24,19 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="dark">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (sessionStorage.getItem('rivera-preloader-seen') === 'true') {
+                  document.documentElement.classList.add('preloader-seen');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <Navbar isLoggedIn={!!session} />
         {children}

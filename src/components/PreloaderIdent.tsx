@@ -28,7 +28,7 @@ export default function PreloaderIdent({
   onComplete?: () => void;
   alwaysShow?: boolean;
 }) {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     if (alwaysShow) {
@@ -38,6 +38,7 @@ export default function PreloaderIdent({
     if (typeof window !== "undefined") {
       const seen = sessionStorage.getItem("rivera-preloader-seen");
       if (seen === "true") {
+        setVisible(false);
         onComplete?.();
       } else {
         setVisible(true);
@@ -57,7 +58,7 @@ export default function PreloaderIdent({
       {visible && (
         <motion.div
           key="preloader-ident"
-          className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
+          className="preloader-overlay fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
           style={{ background: "#080706" }}
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
