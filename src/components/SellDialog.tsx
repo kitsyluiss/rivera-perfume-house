@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -39,6 +39,15 @@ export default function SellDialog({
   const [customerName, setCustomerName] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const quantityRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus quantity when perfume is already chosen
+  useEffect(() => {
+    if (open && preselectedPerfume) {
+      const t = setTimeout(() => quantityRef.current?.focus(), 120);
+      return () => clearTimeout(t);
+    }
+  }, [open, preselectedPerfume]);
 
   const selectedPerfume =
     preselectedPerfume ?? perfumes.find((p) => p.id === perfumeId) ?? null;
@@ -130,7 +139,16 @@ export default function SellDialog({
 
         <Separator className="bg-border" />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5"
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+              e.preventDefault();
+              if (selectedPerfume) void handleSubmit(e as unknown as React.FormEvent);
+            }
+          }}
+        >
           {/* Perfume selector */}
           {!preselectedPerfume && (
             <div className="space-y-2">
@@ -170,6 +188,7 @@ export default function SellDialog({
             <div className="space-y-2">
               <Label className="text-foreground">Quantity</Label>
               <Input
+                ref={quantityRef}
                 type="number"
                 min="1"
                 max={selectedPerfume?.quantity ?? 999}

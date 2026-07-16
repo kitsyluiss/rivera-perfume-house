@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import {
+  AlertTriangle,
   BarChart3,
   DollarSign,
   Package,
@@ -15,6 +16,7 @@ import dynamic from "next/dynamic";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getPerfumes, getSales, signOut } from "@/lib/actions";
+import { createClient } from "@/lib/supabase/client";
 import { Perfume, Sale } from "@/lib/types";
 import InventoryTable from "@/components/InventoryTable";
 import SalesDashboard from "@/components/SalesDashboard";
@@ -111,6 +113,26 @@ export default function AdminDashboard() {
     void fetchSales();
   }, [fetchPerfumes, fetchSales]);
 
+  // ── Supabase Realtime — auto-refresh on remote changes ────────────
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("admin-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "perfumes" },
+        () => void fetchPerfumes()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "sales" },
+        () => void fetchSales()
+      )
+      .subscribe();
+
+    return () => { void supabase.removeChannel(channel); };
+  }, [fetchPerfumes, fetchSales]);
+
   const handleSignOut = async () => {
     await signOut();
     toast.success("Signed out");
@@ -118,6 +140,7 @@ export default function AdminDashboard() {
   };
 
   // ── Inventory stats ──────────────────────────────────
+  const lowStockItems = perfumes.filter((p) => p.quantity === 1);
   const totalSKUs = perfumes.length;
   const totalUnits = perfumes.reduce((sum, p) => sum + p.quantity, 0);
   const inventoryCost = perfumes.reduce(
@@ -206,6 +229,29 @@ export default function AdminDashboard() {
         </AnimatePresence>
 
         <Separator className="bg-border" />
+
+        {/* ── Low-stock banner ─────────────────────────────────────── */}
+        <AnimatePresence>
+          {lowStockItems.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-amber-300">
+                  {lowStockItems.length} item{lowStockItems.length !== 1 ? "s" : ""} running low
+                </p>
+                <p className="mt-0.5 text-[11px] text-amber-400/70 truncate">
+                  {lowStockItems.map((p) => `${p.brand} — ${p.scent_name}`).join(" · ")}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Tab navigation */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">

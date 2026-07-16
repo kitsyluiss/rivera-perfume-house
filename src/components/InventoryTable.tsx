@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpDown, ArrowUp, ArrowDown, Camera, ChevronDown, Loader2, ShoppingCart, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Camera, ChevronDown, Loader2, Search, ShoppingCart, Trash2, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -226,6 +226,16 @@ export default function InventoryTable({
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [sortKey, setSortKey] = useState<InvSortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [searchRaw, setSearchRaw] = useState("");
+  const [search, setSearch] = useState("");
+
+  // Debounce search input 200 ms
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = useCallback((val: string) => {
+    setSearchRaw(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setSearch(val), 200);
+  }, []);
 
   const handleSort = (col: InvSortKey) => {
     if (sortKey === col) {
@@ -237,9 +247,16 @@ export default function InventoryTable({
   };
 
   const sorted = useMemo(() => {
-    const base = [...perfumes];
+    const q = search.toLowerCase();
+    const base = [...perfumes].filter((p) => {
+      if (!q) return true;
+      return (
+        p.brand.toLowerCase().includes(q) ||
+        p.scent_name.toLowerCase().includes(q) ||
+        (p.added_by ?? "").toLowerCase().includes(q)
+      );
+    });
     if (!sortKey) {
-      // Default: out-of-stock last
       return base.sort((a, b) => {
         if (a.quantity === 0 && b.quantity > 0) return 1;
         if (a.quantity > 0 && b.quantity === 0) return -1;
@@ -264,7 +281,7 @@ export default function InventoryTable({
       }
       return sortDir === "asc" ? (av as number) - (bv as number) : (bv as number) - (av as number);
     });
-  }, [perfumes, sortKey, sortDir]);
+  }, [perfumes, sortKey, sortDir, search]);
 
   const handleUpdate = (id: string, field: string) => async (nextValue: number) => {
     await updatePerfume(id, { [field]: nextValue });
@@ -302,8 +319,45 @@ export default function InventoryTable({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      <div className="space-y-3">
+        {/* Mobile skeleton */}
+        <div className="md:hidden space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="h-12 w-12 shrink-0 rounded-lg bg-secondary animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-2.5 w-16 rounded-full bg-secondary animate-pulse" />
+                  <div className="h-3.5 w-32 rounded-full bg-secondary animate-pulse" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 border-t border-border pt-3">
+                {[...Array(3)].map((_, j) => (
+                  <div key={j} className="space-y-1.5">
+                    <div className="h-2 w-8 rounded-full bg-secondary animate-pulse" />
+                    <div className="h-3.5 w-14 rounded-full bg-secondary animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Desktop skeleton */}
+        <div className="hidden md:block overflow-hidden rounded-[1.1rem] border border-border">
+          <div className="divide-y divide-border">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3">
+                <div className="h-10 w-10 rounded-md bg-secondary animate-pulse shrink-0" />
+                <div className="h-3 w-24 rounded-full bg-secondary animate-pulse" />
+                <div className="h-3 w-28 rounded-full bg-secondary animate-pulse" />
+                <div className="h-3 w-16 rounded-full bg-secondary animate-pulse ml-auto" />
+                <div className="h-3 w-20 rounded-full bg-secondary animate-pulse" />
+                <div className="h-3 w-20 rounded-full bg-secondary animate-pulse" />
+                <div className="h-3 w-20 rounded-full bg-secondary animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -336,6 +390,27 @@ export default function InventoryTable({
 
   return (
     <>
+      {/* ── Search bar ─────────────────────────────────────── */}
+      <div className="relative mb-3">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Search brand, scent or admin…"
+          value={searchRaw}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          className="h-9 w-full rounded-lg border border-border bg-secondary pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary/40 transition-colors"
+        />
+        {searchRaw && (
+          <button
+            type="button"
+            onClick={() => handleSearchChange("")}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
       {/* ── Mobile card list ─────────────────────────────── */}
       {/* Mobile sort bar */}
       <div className="flex flex-wrap gap-2 pb-2 md:hidden">
@@ -368,14 +443,25 @@ export default function InventoryTable({
       </div>
 
       <div className="space-y-3 md:hidden">
+        {sorted.length === 0 && (
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            No results for &ldquo;{search}&rdquo;
+          </div>
+        )}
         {sorted.map((perfume) => {
           const profit = perfume.quantity * (perfume.target_sale_price - perfume.cost_price);
+          const margin = perfume.target_sale_price > 0
+            ? ((perfume.target_sale_price - perfume.cost_price) / perfume.target_sale_price) * 100
+            : 0;
+          const isLowStock = perfume.quantity === 1;
           const tag = inferPerfumeTag(perfume);
 
           return (
             <div
               key={perfume.id}
-              className="rounded-xl border border-border bg-card p-4"
+              className={`rounded-xl border bg-card p-4 ${
+                isLowStock ? "border-amber-500/40" : "border-border"
+              }`}
             >
               {/* Top row: image + name + actions */}
               <div className="flex items-start gap-3">
@@ -407,6 +493,12 @@ export default function InventoryTable({
                   <p className="truncate text-sm font-medium text-foreground">{perfume.scent_name}</p>
                   <div className="mt-0.5 flex items-center gap-1.5">
                     <p className="text-[10px] text-muted-foreground">{tag}</p>
+                    {isLowStock && (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[8px] font-medium text-amber-400 border border-amber-500/25">
+                        <AlertTriangle className="h-2 w-2" />
+                        Low
+                      </span>
+                    )}
                     {perfume.added_by && (
                       <>
                         <span className="text-[9px] text-muted-foreground/40">·</span>
@@ -483,11 +575,19 @@ export default function InventoryTable({
                 </div>
               </div>
 
-              <div className="mt-2 flex items-center justify-between">
-                <p className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground">Profit</p>
-                <p className={`text-sm font-medium ${profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                  {formatPhp(profit)}
-                </p>
+              <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground">Profit</p>
+                  <p className={`text-sm font-medium ${profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                    {formatPhp(profit)}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground">Margin</p>
+                  <p className={`text-sm font-medium ${margin >= 0 ? "text-emerald-400/80" : "text-red-400"}`}>
+                    {margin.toFixed(1)}%
+                  </p>
+                </div>
               </div>
             </div>
           );
@@ -509,16 +609,31 @@ export default function InventoryTable({
                 <SortableHead col="cost_price" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Cost (PHP)</SortableHead>
                 <SortableHead col="target_sale_price" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Target (PHP)</SortableHead>
                 <SortableHead col="profit" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Profit</SortableHead>
+                <TableHead className="text-right text-muted-foreground">Margin %</TableHead>
                 <TableHead className="w-12 text-muted-foreground" />
               </TableRow>
             </TableHeader>
             <TableBody>
+              {sorted.length === 0 && search && (
+                <TableRow>
+                  <TableCell colSpan={11} className="py-12 text-center text-sm text-muted-foreground">
+                    No results for &ldquo;{search}&rdquo;
+                  </TableCell>
+                </TableRow>
+              )}
               {sorted.map((perfume) => {
                 const profit = perfume.quantity * (perfume.target_sale_price - perfume.cost_price);
+                const margin = perfume.target_sale_price > 0
+                  ? ((perfume.target_sale_price - perfume.cost_price) / perfume.target_sale_price) * 100
+                  : 0;
+                const isLowStock = perfume.quantity === 1;
                 const tag = inferPerfumeTag(perfume);
 
                 return (
-                  <TableRow key={perfume.id} className="border-border">
+                  <TableRow
+                    key={perfume.id}
+                    className={`border-border ${isLowStock ? "bg-amber-500/[0.03]" : ""}`}
+                  >
                     <TableCell className="w-14">
                       <button
                         type="button"
@@ -590,6 +705,11 @@ export default function InventoryTable({
                       }`}
                     >
                       {formatPhp(profit)}
+                    </TableCell>
+                    <TableCell className={`text-right text-sm ${
+                      margin >= 0 ? "text-emerald-400/70" : "text-red-400"
+                    }`}>
+                      {margin.toFixed(1)}%
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">

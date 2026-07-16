@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Trash2 } from "lucide-react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Search, Trash2, Undo2, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Sale } from "@/lib/types";
 import { deleteSale } from "@/lib/actions";
 import { formatPhp } from "@/lib/format";
+import { relativeTime, fullDate } from "@/lib/relative-time";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
@@ -57,6 +58,15 @@ export default function SalesHistory({
   const [confirmReversal, setConfirmReversal] = useState<Sale | null>(null);
   const [sortKey, setSortKey] = useState<SaleSortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("desc"); // newest first by default
+  const [searchRaw, setSearchRaw] = useState("");
+  const [search, setSearch] = useState("");
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = useCallback((val: string) => {
+    setSearchRaw(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setSearch(val), 200);
+  }, []);
 
   const handleSort = (col: SaleSortKey) => {
     if (sortKey === col) {
@@ -68,9 +78,16 @@ export default function SalesHistory({
   };
 
   const sorted = useMemo(() => {
-    const base = [...sales];
+    const q = search.toLowerCase();
+    const base = [...sales].filter((s) => {
+      if (!q) return true;
+      return (
+        (s.brand ?? "").toLowerCase().includes(q) ||
+        (s.scent_name ?? "").toLowerCase().includes(q) ||
+        (s.customer_name ?? "").toLowerCase().includes(q)
+      );
+    });
     if (!sortKey) {
-      // Default: newest first
       return base.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
     return base.sort((a, b) => {
@@ -89,7 +106,6 @@ export default function SalesHistory({
         av = a.quantity_sold * a.unit_price;
         bv = b.quantity_sold * b.unit_price;
       } else {
-        // profit
         av = a.quantity_sold * (a.unit_price - a.cost_at_sale);
         bv = b.quantity_sold * (b.unit_price - b.cost_at_sale);
       }
@@ -98,7 +114,7 @@ export default function SalesHistory({
       }
       return sortDir === "asc" ? (av as number) - (bv as number) : (bv as number) - (av as number);
     });
-  }, [sales, sortKey, sortDir]);
+  }, [sales, sortKey, sortDir, search]);
 
   const executeDelete = async (sale: Sale) => {
     setDeletingId(sale.id);
@@ -113,10 +129,75 @@ export default function SalesHistory({
     }
   };
 
+  // Undo-toast reversal: schedules deletion after 5s; Undo cancels it.
+  const handleReversalWithUndo = (sale: Sale) => {
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      setDeletingId(sale.id);
+      try {
+        await deleteSale(sale.id);
+        onUpdate();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to reverse sale");
+      } finally {
+        setDeletingId(null);
+      }
+    }, 5000);
+
+    toast(`Reversing sale of ${sale.brand ?? ""} — ${sale.scent_name ?? ""}`, {
+      description: "Inventory will be restored.",
+      duration: 5000,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          cancelled = true;
+          clearTimeout(timer);
+        },
+      },
+      icon: <Undo2 className="h-4 w-4 text-amber-400" />,
+    });
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      <div className="space-y-3">
+        <div className="md:hidden space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="h-11 w-11 shrink-0 rounded-lg bg-secondary animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-24 rounded-full bg-secondary animate-pulse" />
+                  <div className="h-2.5 w-16 rounded-full bg-secondary animate-pulse" />
+                </div>
+                <div className="h-2.5 w-16 rounded-full bg-secondary animate-pulse" />
+              </div>
+              <div className="grid grid-cols-3 gap-2 border-t border-border pt-3">
+                {[...Array(3)].map((_, j) => (
+                  <div key={j} className="space-y-1.5">
+                    <div className="h-2 w-8 rounded-full bg-secondary animate-pulse" />
+                    <div className="h-3.5 w-14 rounded-full bg-secondary animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="hidden md:block overflow-hidden rounded-[1.1rem] border border-border">
+          <div className="divide-y divide-border">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3">
+                <div className="h-9 w-9 rounded bg-secondary animate-pulse shrink-0" />
+                <div className="h-3 w-28 rounded-full bg-secondary animate-pulse" />
+                <div className="h-3 w-16 rounded-full bg-secondary animate-pulse ml-auto" />
+                <div className="h-3 w-20 rounded-full bg-secondary animate-pulse" />
+                <div className="h-3 w-20 rounded-full bg-secondary animate-pulse" />
+                <div className="h-3 w-24 rounded-full bg-secondary animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -131,6 +212,27 @@ export default function SalesHistory({
 
   return (
     <>
+      {/* Search bar */}
+      <div className="relative mb-3">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Search brand, scent or customer…"
+          value={searchRaw}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          className="h-9 w-full rounded-lg border border-border bg-secondary pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary/40 transition-colors"
+        />
+        {searchRaw && (
+          <button
+            type="button"
+            onClick={() => handleSearchChange("")}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
       {/* Mobile sort bar */}
       <div className="flex flex-wrap gap-2 pb-2 md:hidden">
         {([
@@ -162,10 +264,14 @@ export default function SalesHistory({
 
       {/* ── Mobile card list ─────────────────────────────── */}
       <div className="space-y-3 md:hidden">
+        {sorted.length === 0 && (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            {search ? `No results for “${search}”` : "No sales recorded yet."}
+          </div>
+        )}
         {sorted.map((sale) => {
           const total = sale.quantity_sold * sale.unit_price;
           const profit = sale.quantity_sold * (sale.unit_price - sale.cost_at_sale);
-          const date = new Date(sale.created_at);
 
           return (
             <div
@@ -194,18 +300,17 @@ export default function SalesHistory({
                 </div>
 
                 <div className="flex shrink-0 flex-col items-end gap-1">
-                  <p className="text-[10px] text-muted-foreground">
-                    {date.toLocaleDateString("en-PH", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                  <p
+                    className="text-[10px] text-muted-foreground cursor-default"
+                    title={fullDate(sale.created_at)}
+                  >
+                    {relativeTime(sale.created_at)}
                   </p>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-red-400"
-                    onClick={() => setConfirmReversal(sale)}
+                    onClick={() => handleReversalWithUndo(sale)}
                     disabled={deletingId === sale.id}
                     title="Reverse sale"
                   >
@@ -306,19 +411,18 @@ export default function SalesHistory({
                     <TableCell className="text-muted-foreground">
                       {sale.customer_name ?? "—"}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {date.toLocaleDateString("en-PH", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                    <TableCell
+                      className="whitespace-nowrap text-muted-foreground cursor-default"
+                      title={fullDate(sale.created_at)}
+                    >
+                      {relativeTime(sale.created_at)}
                     </TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-red-400"
-                        onClick={() => setConfirmReversal(sale)}
+                        onClick={() => handleReversalWithUndo(sale)}
                         disabled={deletingId === sale.id}
                         title="Reverse sale"
                       >
