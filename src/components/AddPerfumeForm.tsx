@@ -144,14 +144,14 @@ export default function AddPerfumeForm({
           </DialogDescription>
         </DialogHeader>
 
-        <Separator className="bg-border" />
+        <Separator className="bg-border my-1" />
 
         {/* Mode toggle */}
-        <div className="flex items-center gap-1.5 rounded-full border border-border bg-card/60 p-1">
+        <div className="flex items-center gap-1.5 rounded-full border border-border bg-card/60 p-1.5 mb-2">
           <button
             type="button"
             onClick={() => { setMode("new"); setRestockSource(null); }}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[10px] uppercase tracking-[0.18em] transition-colors ${
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-[10px] uppercase tracking-[0.18em] transition-colors ${
               mode === "new"
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
@@ -163,7 +163,7 @@ export default function AddPerfumeForm({
           <button
             type="button"
             onClick={() => setMode("restock")}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[10px] uppercase tracking-[0.18em] transition-colors ${
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-[10px] uppercase tracking-[0.18em] transition-colors ${
               mode === "restock"
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
@@ -176,30 +176,30 @@ export default function AddPerfumeForm({
 
         {/* Restock search */}
         {mode === "restock" && !restockSource && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Input
               placeholder="Search brand or scent name…"
               value={restockSearch}
               onChange={(e) => setRestockSearch(e.target.value)}
-              className="border-border bg-secondary text-foreground"
+              className="border-border bg-secondary text-foreground h-11"
               autoFocus
             />
-            <div className="space-y-1.5 rounded-xl border border-border bg-card p-2 max-h-[260px] overflow-y-auto scrollbar-none">
+            <div className="space-y-2 rounded-xl border border-border bg-card p-2.5 max-h-[260px] overflow-y-auto scrollbar-none">
               {searchResults.length === 0 ? (
-                <p className="py-4 text-center text-xs text-muted-foreground">No matches found</p>
+                <p className="py-6 text-center text-xs text-muted-foreground">No matches found</p>
               ) : (
                 searchResults.map((p) => (
                   <button
                     key={p.id}
                     type="button"
                     onClick={() => selectRestock(p)}
-                    className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-secondary"
+                    className="flex w-full items-center gap-3 rounded-lg p-2.5 text-left transition-colors hover:bg-secondary"
                   >
                     {p.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.image_url} alt={p.scent_name} className="h-10 w-10 shrink-0 rounded-md object-cover" />
+                      <img src={p.image_url} alt={p.scent_name} className="h-11 w-11 shrink-0 rounded-md object-cover" />
                     ) : (
-                      <div className="h-10 w-10 shrink-0 rounded-md bg-secondary" />
+                      <div className="h-11 w-11 shrink-0 rounded-md bg-secondary" />
                     )}
                     <div className="min-w-0">
                       <p className="text-[10px] uppercase tracking-[0.2em] text-primary">{p.brand}</p>
@@ -215,7 +215,7 @@ export default function AddPerfumeForm({
 
         {/* Selected restock source banner */}
         {mode === "restock" && restockSource && (
-          <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+          <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3.5 mb-2">
             {restockSource.image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={restockSource.image_url} alt={restockSource.scent_name} className="h-12 w-12 shrink-0 rounded-lg object-cover" />
@@ -239,7 +239,7 @@ export default function AddPerfumeForm({
 
         {/* Main form — shown when: new mode, OR restock with source selected */}
         {(mode === "new" || restockSource) && (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Image upload — in restock mode, show existing image as preview */}
             {mode === "new" && (
               <ImageUpload file={image} onFileChange={setImage} />
@@ -251,7 +251,7 @@ export default function AddPerfumeForm({
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label className="text-foreground">Brand</Label>
                 <Input
@@ -259,7 +259,7 @@ export default function AddPerfumeForm({
                   onChange={(e) => setBrand(e.target.value)}
                   required
                   placeholder="Chanel"
-                  className="border-border bg-secondary text-foreground"
+                  className="border-border bg-secondary text-foreground h-11"
                   readOnly={mode === "restock" && !!restockSource}
                 />
               </div>
@@ -270,7 +270,7 @@ export default function AddPerfumeForm({
                   onChange={(e) => setScentName(e.target.value)}
                   required
                   placeholder="Noir 5"
-                  className="border-border bg-secondary text-foreground"
+                  className="border-border bg-secondary text-foreground h-11"
                   readOnly={mode === "restock" && !!restockSource}
                 />
               </div>
@@ -285,7 +285,7 @@ export default function AddPerfumeForm({
                     key={option.value}
                     type="button"
                     onClick={() => setTag(option.value)}
-                    className={`rounded-full border px-3 py-2 text-[11px] uppercase tracking-[0.18em] transition-all duration-150 ${
+                    className={`rounded-full border px-3 py-2.5 text-[11px] uppercase tracking-[0.18em] transition-all duration-150 ${
                       tag === option.value
                         ? "border-primary bg-primary text-primary-foreground shadow-[0_0_10px_hsl(38_44%_61%/0.2)]"
                         : "border-border bg-secondary text-muted-foreground hover:border-primary/40 hover:text-foreground"
@@ -298,15 +298,15 @@ export default function AddPerfumeForm({
               {(() => {
                 const selected = PERFUME_TAGS.find((o) => o.value === tag);
                 return selected ? (
-                  <div className="space-y-0.5 rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-muted-foreground">
-                    <div><span className="text-foreground/60">Best for:</span> {selected.bestFor}</div>
-                    <div><span className="text-foreground/60">The vibe:</span> {selected.vibe}</div>
+                  <div className="space-y-1 rounded-lg border border-border bg-card/50 px-3.5 py-2.5 text-xs text-muted-foreground">
+                    <div><span className="text-foreground/60 font-medium">Best for:</span> {selected.bestFor}</div>
+                    <div><span className="text-foreground/60 font-medium">The vibe:</span> {selected.vibe}</div>
                   </div>
                 ) : null;
               })()}
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label className="text-foreground">Quantity</Label>
                 <Input
@@ -316,7 +316,7 @@ export default function AddPerfumeForm({
                   onChange={(e) => setQuantity(e.target.value)}
                   required
                   autoFocus={mode === "restock" && !!restockSource}
-                  className="border-border bg-secondary text-foreground"
+                  className="border-border bg-secondary text-foreground h-11"
                   placeholder={mode === "restock" ? "Your qty" : ""}
                 />
               </div>
@@ -329,7 +329,7 @@ export default function AddPerfumeForm({
                   value={costPrice}
                   onChange={(e) => setCostPrice(e.target.value)}
                   required
-                  className="border-border bg-secondary text-foreground"
+                  className="border-border bg-secondary text-foreground h-11"
                 />
               </div>
               <div className="space-y-2">
@@ -341,12 +341,12 @@ export default function AddPerfumeForm({
                   value={targetPrice}
                   onChange={(e) => setTargetPrice(e.target.value)}
                   required
-                  className="border-border bg-secondary text-foreground"
+                  className="border-border bg-secondary text-foreground h-11"
                 />
               </div>
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full text-xs uppercase tracking-wider">
+            <Button type="submit" disabled={loading} className="w-full text-xs uppercase tracking-wider h-11 mt-2">
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : mode === "restock" ? (
