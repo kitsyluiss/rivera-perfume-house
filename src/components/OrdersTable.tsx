@@ -231,24 +231,60 @@ export default function OrdersTable({
                         )}
                         
                         {order.status === 'paid' && (
-                          <Button
-                            size="sm"
-                            onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id, 'shipped'); }}
-                            disabled={updatingId === order.id}
-                          >
-                            Mark Shipped
-                          </Button>
+                          <div className="flex flex-wrap gap-2 items-center">
+                            <Button
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id, 'shipped'); }}
+                              disabled={updatingId === order.id}
+                            >
+                              Mark Shipped
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id, 'cancelled'); }}
+                              disabled={updatingId === order.id}
+                              className="text-destructive hover:bg-destructive/10"
+                            >
+                              Reverse & Cancel
+                            </Button>
+                          </div>
                         )}
 
                         {order.status === 'shipped' && (
-                          <Button
-                            size="sm"
-                            onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id, 'delivered'); }}
-                            disabled={updatingId === order.id}
-                            className="bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30"
-                          >
-                            Mark Delivered
-                          </Button>
+                          <div className="flex flex-wrap gap-2 items-center">
+                            <Button
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id, 'delivered'); }}
+                              disabled={updatingId === order.id}
+                              className="bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30"
+                            >
+                              Mark Delivered
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id, 'cancelled'); }}
+                              disabled={updatingId === order.id}
+                              className="text-destructive hover:bg-destructive/10"
+                            >
+                              Reverse & Cancel
+                            </Button>
+                          </div>
+                        )}
+
+                        {order.status === 'delivered' && (
+                          <div className="flex flex-wrap gap-2 items-center">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id, 'cancelled'); }}
+                              disabled={updatingId === order.id}
+                              className="text-destructive hover:bg-destructive/10"
+                            >
+                              Reverse & Cancel
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </div>

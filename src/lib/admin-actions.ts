@@ -53,7 +53,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     throw new Error("Unauthorized: Admin only");
   }
 
-  // If changing to 'paid', we need to deduct inventory and record sales
+  // If changing to 'paid', we need to record sales
   if (status === "paid") {
     // 1. Get current order to make sure it wasn't already paid
     const { data: order } = await supabase
@@ -63,7 +63,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
       .single();
 
     if (order && order.status === "pending_verification") {
-      // 2. Deduct inventory and create sale records
+      // 2. Create sale records (inventory already deducted at checkout)
       for (const item of order.items || []) {
         const perfumeId = item.perfume_id;
         
@@ -78,8 +78,32 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
             customer_name: `Order #${orderId.split("-")[0].toUpperCase()}`,
             notes: "Website Order"
           });
+        }
+      }
+    }
+  }
 
-          // Deduct inventory
+  // If changing to 'cancelled', we need to restock inventory and remove sales if it was paid
+  if (status === "cancelled") {
+    const { data: order } = await supabase
+      .from("orders")
+      .select("status, items:order_items(*)")
+      .eq("id", orderId)
+      .single();
+
+    if (order && order.status !== "cancelled") {
+      // If it was already paid, shipped, or delivered, we must delete the sales records
+      if (["paid", "shipped", "delivered"].includes(order.status)) {
+        await supabase
+          .from("sales")
+          .delete()
+          .eq("customer_name", `Order #${orderId.split("-")[0].toUpperCase()}`);
+      }
+
+      // Restock inventory for all items
+      for (const item of order.items || []) {
+        const perfumeId = item.perfume_id;
+        if (perfumeId) {
           const { data: perfume } = await supabase
             .from("perfumes")
             .select("quantity")
@@ -89,7 +113,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
           if (perfume) {
             await supabase
               .from("perfumes")
-              .update({ quantity: Math.max(0, perfume.quantity - item.quantity) })
+              .update({ quantity: perfume.quantity + item.quantity })
               .eq("id", perfumeId);
           }
         }
