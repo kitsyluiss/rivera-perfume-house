@@ -35,16 +35,24 @@ export default function CheckoutPage() {
         getCartItems(),
         getAddresses()
       ]);
-      setItems(cartData as unknown as CartItem[]);
-      setAddresses(addressData as unknown as Address[]);
-      if (addressData.length > 0) {
-        setSelectedAddress(addressData[0].id);
+      if (Array.isArray(cartData)) {
+        setItems(cartData as unknown as CartItem[]);
+        if (cartData.length === 0) {
+          router.push("/cart");
+        }
+      } else {
+        toast.error((cartData as any).error || "Failed to load cart items");
+      }
+
+      if (Array.isArray(addressData)) {
+        setAddresses(addressData as unknown as Address[]);
+        if (addressData.length > 0) {
+          setSelectedAddress(addressData[0].id);
+        } else {
+          setShowAddressForm(true);
+        }
       } else {
         setShowAddressForm(true);
-      }
-      
-      if (cartData.length === 0) {
-        router.push("/cart");
       }
     } catch (e: any) {
       if (e.message.includes("logged in") || e.message.includes("session")) {
