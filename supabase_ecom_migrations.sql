@@ -78,6 +78,11 @@ CREATE POLICY "Admins view all profiles" ON profiles FOR SELECT USING (
 DROP POLICY IF EXISTS "Manage own addresses" ON addresses;
 CREATE POLICY "Manage own addresses" ON addresses FOR ALL TO authenticated USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins manage all addresses" ON addresses;
+CREATE POLICY "Admins manage all addresses" ON addresses FOR ALL TO authenticated USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+
 -- Cart Policies
 DROP POLICY IF EXISTS "Manage own cart" ON cart_items;
 CREATE POLICY "Manage own cart" ON cart_items FOR ALL TO authenticated USING (auth.uid() = user_id);

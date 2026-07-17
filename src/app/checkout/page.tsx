@@ -61,9 +61,16 @@ export default function CheckoutPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     try {
-      const newAddress = await saveAddress(formData);
-      setAddresses([newAddress, ...addresses]);
-      setSelectedAddress(newAddress.id);
+      const result = await saveAddress(formData);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      const newAddress = result.data;
+      if (newAddress) {
+        setAddresses([newAddress, ...addresses]);
+        setSelectedAddress(newAddress.id);
+      }
       setShowAddressForm(false);
       toast.success("Address saved");
     } catch (error) {
