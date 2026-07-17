@@ -42,6 +42,10 @@ export default function FlashSaleDialog({
     "Weekend Sale",
   ];
 
+  const isActive = perfume?.flash_sale_price != null && 
+    perfume?.flash_sale_end != null && 
+    new Date(perfume.flash_sale_end) > new Date();
+
   useEffect(() => {
     if (open && perfume) {
       setSalePrice(perfume.flash_sale_price ? String(perfume.flash_sale_price) : "");
@@ -252,7 +256,7 @@ export default function FlashSaleDialog({
           </div>
           
           <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-            {perfume.flash_sale_price && (
+            {isActive && (
               <Button type="button" variant="destructive" onClick={handleCancelSale} disabled={loading} className="mr-auto bg-destructive/10 text-destructive hover:bg-destructive/20 border-none">
                 End Sale Now
               </Button>
@@ -262,7 +266,7 @@ export default function FlashSaleDialog({
             </Button>
             <Button type="submit" disabled={loading || !isValidPrice} className="bg-primary text-primary-foreground">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {perfume.flash_sale_price ? "Update Flash Sale" : "Set Flash Sale"}
+              {isActive ? "Update Flash Sale" : "Set Flash Sale"}
             </Button>
           </div>
         </form>
