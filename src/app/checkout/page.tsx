@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion } from "motion/react";
 import { Loader2, ArrowLeft, CheckCircle2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ export default function CheckoutPage() {
   
   const [loading, setLoading] = useState(true);
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const router = useRouter();
 
@@ -70,17 +72,23 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
+    setCheckoutError(null);
     if (!selectedAddress) {
-      toast.error("Please select a shipping address");
+      setCheckoutError("Please select a shipping address");
       return;
     }
 
     setPlacingOrder(true);
     try {
-      const orderId = await createOrder(selectedAddress);
-      router.push(`/checkout/success?order_id=${orderId}`);
+      const result = await createOrder(selectedAddress);
+      if (result?.error) {
+        setCheckoutError(result.error);
+      } else if (result?.orderId) {
+        router.push(`/checkout/success?order_id=${result.orderId}`);
+      }
     } catch (e: any) {
-      toast.error(e.message || "Failed to place order");
+      setCheckoutError(e.message || "Failed to place order");
+    } finally {
       setPlacingOrder(false);
     }
   };
@@ -264,13 +272,29 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <Button
-              onClick={handlePlaceOrder}
-              disabled={placingOrder || !selectedAddress || showAddressForm}
-              className="w-full h-12 text-xs uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {placingOrder ? <Loader2 className="h-4 w-4 animate-spin" /> : "Place Order"}
-            </Button>
+            <div className="flex flex-col gap-2">
+              <motion.div
+                animate={checkoutError ? { x: [-5, 5, -5, 5, 0] } : {}}
+                transition={{ duration: 0.4 }}
+              >
+                <Button
+                  onClick={handlePlaceOrder}
+                  disabled={placingOrder || !selectedAddress || showAddressForm}
+                  className="w-full h-12 text-xs uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {placingOrder ? <Loader2 className="h-4 w-4 animate-spin" /> : "Place Order"}
+                </Button>
+              </motion.div>
+              {checkoutError && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xs text-destructive font-medium text-center"
+                >
+                  {checkoutError}
+                </motion.p>
+              )}
+            </div>
           </div>
         </div>
       </div>

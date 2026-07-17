@@ -16,6 +16,7 @@ export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [cartErrors, setCartErrors] = useState<Record<string, string>>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -24,14 +25,18 @@ export default function CartPage() {
 
   const loadCart = async () => {
     try {
-      const data = await getCartItems();
-      setItems(data as unknown as CartItem[]);
-    } catch (e: any) {
-      if (e.message.includes("not logged in") || e.message.includes("session")) {
-        router.push("/login");
+      const result: any = await getCartItems();
+      if (result?.error) {
+        if (result.error.includes("not logged in") || result.error.includes("session")) {
+          router.push("/login");
+        } else {
+          toast.error("Failed to load cart");
+        }
       } else {
-        toast.error("Failed to load cart");
+        setItems(result as unknown as CartItem[]);
       }
+    } catch (e: any) {
+      toast.error("Failed to load cart");
     } finally {
       setLoading(false);
     }
@@ -41,25 +46,35 @@ export default function CartPage() {
     const newQty = Number(current) + Number(delta);
     if (newQty < 1) return;
     
+    setCartErrors(prev => ({ ...prev, [id]: "" }));
     setActionLoading(`update-${id}`);
     try {
-      await updateCartQuantity(id, newQty);
-      setItems((prev) => prev.map((item) => item.id === id ? { ...item, quantity: newQty } : item));
+      const result = await updateCartQuantity(id, newQty);
+      if (result?.error) {
+        setCartErrors(prev => ({ ...prev, [id]: result.error }));
+      } else {
+        setItems((prev) => prev.map((item) => item.id === id ? { ...item, quantity: newQty } : item));
+      }
     } catch (e: any) {
-      toast.error("Failed to update quantity");
+      setCartErrors(prev => ({ ...prev, [id]: e.message || "Failed to update quantity" }));
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleRemove = async (id: string) => {
+    setCartErrors(prev => ({ ...prev, [id]: "" }));
     setActionLoading(`remove-${id}`);
     try {
-      await removeFromCart(id);
-      setItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success("Item removed from cart");
+      const result = await removeFromCart(id);
+      if (result?.error) {
+        setCartErrors(prev => ({ ...prev, [id]: result.error }));
+      } else {
+        setItems((prev) => prev.filter((item) => item.id !== id));
+        toast.success("Item removed from cart");
+      }
     } catch (e: any) {
-      toast.error("Failed to remove item");
+      setCartErrors(prev => ({ ...prev, [id]: e.message || "Failed to remove item" }));
     } finally {
       setActionLoading(null);
     }
@@ -167,39 +182,52 @@ export default function CartPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center gap-3 rounded-full border border-border bg-background px-1 py-1">
+                    <div className="flex flex-col mt-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 rounded-full border border-border bg-background px-1 py-1">
+                          <button
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
+                            disabled={actionLoading === `update-${item.id}` || item.quantity <= 1}
+                            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-secondary disabled:opacity-50 transition-colors"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="w-4 text-center text-xs font-medium tabular-nums">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
+                            disabled={actionLoading === `update-${item.id}` || (item.perfume && item.quantity >= item.perfume.quantity)}
+                            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-secondary disabled:opacity-50 transition-colors"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+
                         <button
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
-                          disabled={actionLoading === `update-${item.id}` || item.quantity <= 1}
-                          className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-secondary disabled:opacity-50 transition-colors"
+                          onClick={() => handleRemove(item.id)}
+                          disabled={actionLoading === `remove-${item.id}`}
+                          className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+                          title="Remove item"
                         >
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <span className="w-4 text-center text-xs font-medium tabular-nums">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
-                          disabled={actionLoading === `update-${item.id}` || (item.perfume && item.quantity >= item.perfume.quantity)}
-                          className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-secondary disabled:opacity-50 transition-colors"
-                        >
-                          <Plus className="h-3 w-3" />
+                          {actionLoading === `remove-${item.id}` ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
-
-                      <button
-                        onClick={() => handleRemove(item.id)}
-                        disabled={actionLoading === `remove-${item.id}`}
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
-                        title="Remove item"
-                      >
-                        {actionLoading === `remove-${item.id}` ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </button>
+                      
+                      {cartErrors[item.id] && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0, x: [-2, 2, -2, 2, 0] }}
+                          transition={{ duration: 0.3 }}
+                          className="text-xs text-destructive font-medium mt-2"
+                        >
+                          {cartErrors[item.id]}
+                        </motion.p>
+                      )}
                     </div>
                   </div>
                 </motion.div>

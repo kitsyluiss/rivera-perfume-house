@@ -147,6 +147,7 @@ export default function CatalogView({
   const [query, setQuery] = useState("");
   const [selectedPerfume, setSelectedPerfume] = useState<Perfume | null>(null);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const router = useRouter();
   const [brandFilter, setBrandFilter] = useState("all");
   const [brandOpen, setBrandOpen] = useState(false);
@@ -501,38 +502,52 @@ export default function CatalogView({
                       </span>
                     </div>
                       
-                      <div className="mt-8 flex gap-3">
-                        <Button
-                          onClick={async () => {
-                            if (!selectedPerfume) return;
-                            setIsAddingToCart(true);
-                            try {
-                              await addToCart(selectedPerfume.id, 1);
-                              toast.success("Added to cart!");
-                            } catch (e: any) {
-                              if (e.message.includes("logged in")) {
-                                toast.error("Please log in to add to cart");
-                                router.push("/login");
-                              } else {
-                                toast.error(e.message || "Failed to add to cart");
-                              }
-                            } finally {
-                              setIsAddingToCart(false);
-                            }
-                          }}
-                          disabled={isAddingToCart || selectedPerfume.quantity === 0}
-                          className="w-full h-12 text-xs uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                      <div className="mt-8 flex flex-col gap-2">
+                        <motion.div
+                          animate={actionError ? { x: [-5, 5, -5, 5, 0] } : {}}
+                          transition={{ duration: 0.4 }}
                         >
-                          {isAddingToCart ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : selectedPerfume.quantity === 0 ? (
-                            "Out of Stock"
-                          ) : (
-                            <>
-                              <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-                            </>
-                          )}
-                        </Button>
+                          <Button
+                            onClick={async () => {
+                              if (!selectedPerfume) return;
+                              setIsAddingToCart(true);
+                              setActionError(null);
+                              try {
+                                const result = await addToCart(selectedPerfume.id, 1);
+                                if (result?.error) {
+                                  setActionError(result.error);
+                                } else {
+                                  toast.success("Added to cart!");
+                                }
+                              } catch (e: any) {
+                                setActionError(e.message || "Failed to add to cart");
+                              } finally {
+                                setIsAddingToCart(false);
+                              }
+                            }}
+                            disabled={isAddingToCart || selectedPerfume.quantity === 0}
+                            className="w-full h-12 text-xs uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                          >
+                            {isAddingToCart ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : selectedPerfume.quantity === 0 ? (
+                              "Out of Stock"
+                            ) : (
+                              <>
+                                <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                              </>
+                            )}
+                          </Button>
+                        </motion.div>
+                        {actionError && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-xs text-destructive font-medium text-center"
+                          >
+                            {actionError}
+                          </motion.p>
+                        )}
                       </div>
                   </div>
                 </div>
