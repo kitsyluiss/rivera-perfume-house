@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { CheckCircle2, ExternalLink, ArrowRight, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { getActivePaymentMethods, PaymentMethod } from "@/lib/payment-actions";
 import { useEffect, useState, use } from "react";
 
@@ -35,6 +35,7 @@ function CheckoutSuccessPage({
   paymentMethods: PaymentMethod[];
   loading: boolean;
 }) {
+  const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
   const orderId = searchParams.order_id;
   const shortOrderId = orderId ? orderId.split("-")[0].toUpperCase() : "UNKNOWN";
 
@@ -68,36 +69,66 @@ function CheckoutSuccessPage({
           {loading ? (
             <div className="flex justify-center p-8"><span className="text-muted-foreground text-sm">Loading payment options...</span></div>
           ) : paymentMethods.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2">
-              {paymentMethods.map((method) => (
-                <div key={method.id} className="flex flex-col rounded-xl border border-border bg-secondary/30 overflow-hidden">
-                  <div className="p-5 flex-1">
-                    <h3 className="font-medium text-foreground mb-4 flex items-center gap-2">
-                      <div className="h-6 w-6 rounded bg-primary/20 flex items-center justify-center text-primary text-[10px] font-bold">
-                        <Wallet className="h-3 w-3" />
-                      </div>
-                      {method.provider_name}
-                    </h3>
-                    <div className="space-y-3 text-sm">
-                      <div>
-                        <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Account Name</p>
-                        <p className="font-medium">{method.account_name}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Account Number</p>
-                        <p className="font-medium font-mono text-lg tracking-widest text-primary break-all">{method.account_number}</p>
-                      </div>
-                    </div>
-                  </div>
-                  {method.qr_code_url && (
-                    <div className="border-t border-border/50 bg-card p-4 flex justify-center items-center">
-                      <div className="bg-white p-2 rounded-lg inline-block">
-                        <img src={method.qr_code_url} alt={`${method.provider_name} QR`} className="w-32 h-32 object-contain mix-blend-multiply" />
+            <div className="flex flex-col gap-4 max-w-lg mx-auto">
+              {paymentMethods.map((method) => {
+                const isSelected = selectedMethodId === method.id;
+                return (
+                  <motion.div 
+                    key={method.id} 
+                    layout
+                    className={`flex flex-col rounded-xl border transition-colors cursor-pointer overflow-hidden ${
+                      isSelected ? "border-primary bg-secondary/30" : "border-border bg-card hover:border-primary/50 hover:bg-secondary/10"
+                    }`}
+                    onClick={() => setSelectedMethodId(isSelected ? null : method.id)}
+                  >
+                    <div className="p-5 flex items-center justify-between">
+                      <h3 className="font-medium text-foreground flex items-center gap-3">
+                        <div className={`h-8 w-8 rounded flex items-center justify-center text-[10px] font-bold transition-colors ${
+                          isSelected ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
+                        }`}>
+                          <Wallet className="h-4 w-4" />
+                        </div>
+                        <span className="text-lg">{method.provider_name}</span>
+                      </h3>
+                      <div className={`text-xs uppercase tracking-wider font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>
+                        {isSelected ? "Selected" : "Select"}
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                    
+                    <AnimatePresence>
+                      {isSelected && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="border-t border-border/50"
+                        >
+                          <div className="p-5 pt-4">
+                            <div className="space-y-4 text-sm mb-5">
+                              <div>
+                                <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Account Name</p>
+                                <p className="font-medium text-base">{method.account_name}</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Account Number</p>
+                                <p className="font-medium font-mono text-xl tracking-widest text-primary break-all">{method.account_number}</p>
+                              </div>
+                            </div>
+                            
+                            {method.qr_code_url && (
+                              <div className="bg-white/5 p-4 rounded-xl flex justify-center items-center">
+                                <div className="bg-white p-2 rounded-lg inline-block shadow-sm">
+                                  <img src={method.qr_code_url} alt={`${method.provider_name} QR`} className="w-40 h-40 object-contain mix-blend-multiply" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center p-8 border border-dashed border-border rounded-xl">
