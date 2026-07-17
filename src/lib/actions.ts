@@ -322,6 +322,9 @@ export async function setFlashSale(id: string, flashSalePrice: number | null, fl
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "admin") throw new Error("Unauthorized: Admins only");
 
+  const { data: perfume } = await supabase.from("perfumes").select("brand, scent_name").eq("id", id).single();
+  if (!perfume) throw new Error("Perfume not found");
+
   const { error } = await supabase
     .from("perfumes")
     .update({ 
@@ -330,10 +333,43 @@ export async function setFlashSale(id: string, flashSalePrice: number | null, fl
       flash_sale_stock: flashSaleStock ?? null,
       flash_sale_name: flashSaleName ?? null
     })
-    .eq("id", id);
+    .eq("brand", perfume.brand)
+    .eq("scent_name", perfume.scent_name);
 
   if (error) throw new Error(error.message);
   
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/cart");
+  revalidatePath("/checkout");
+}
+
+export async function setBulkFlashSale(ids: string[], discountPercent: number, flashSaleEnd: string | null, flashSaleName?: string | null) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (profile?.role !== "admin") throw new Error("Unauthorized: Admins only");
+
+  // Fetch target perfumes to get their brands and scents
+  const { data: perfumes } = await supabase.from("perfumes").select("brand, scent_name, target_sale_price").in("id", ids);
+  if (!perfumes || perfumes.length === 0) return;
+
+  // We want to apply the discount to ALL rows that match the selected brands + scent names
+  for (const perfume of perfumes) {
+    const discountedPrice = Math.floor(perfume.target_sale_price * (1 - discountPercent / 100));
+    
+    await supabase.from("perfumes").update({
+      flash_sale_price: discountedPrice,
+      flash_sale_end: flashSaleEnd,
+      flash_sale_stock: null, // Bulk doesn't set specific stock limits
+      flash_sale_name: flashSaleName ?? null
+    })
+    .eq("brand", perfume.brand)
+    .eq("scent_name", perfume.scent_name);
+  }
+
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/cart");

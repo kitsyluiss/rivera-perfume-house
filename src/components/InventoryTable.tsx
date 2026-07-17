@@ -26,6 +26,37 @@ import {
 } from "@/components/ui/dialog";
 import ImageUpload from "@/components/ImageUpload";
 import FlashSaleDialog from "@/components/FlashSaleDialog";
+import BulkFlashSaleDialog from "@/components/BulkFlashSaleDialog";
+import { useCountdown } from "@/hooks/useCountdown";
+import { motion, AnimatePresence } from "motion/react";
+
+function FlashSaleButton({ perfume, onClick }: { perfume: Perfume, onClick: () => void }) {
+  const hasFlashSale = perfume.flash_sale_price != null && 
+    perfume.flash_sale_end != null && 
+    new Date(perfume.flash_sale_end) > new Date() &&
+    (perfume.flash_sale_stock == null || perfume.flash_sale_stock > 0);
+
+  const { timeLeft, isExpired } = useCountdown(hasFlashSale ? perfume.flash_sale_end! : null);
+
+  const isActive = hasFlashSale && !isExpired;
+
+  return (
+    <Button
+      variant="ghost"
+      size={isActive ? "sm" : "icon"}
+      className={`h-8 transition-colors ${
+        isActive 
+          ? "px-2 border border-yellow-500/50 text-yellow-500 hover:text-yellow-600 hover:border-yellow-500/80 animate-pulse bg-yellow-500/10" 
+          : "w-8 text-muted-foreground hover:text-yellow-500"
+      }`}
+      onClick={onClick}
+      title="Flash Sale"
+    >
+      <Zap className={`h-4 w-4 ${isActive ? "mr-1.5" : ""}`} />
+      {isActive && timeLeft && <span className="font-mono text-[10px] tracking-wider">{timeLeft}</span>}
+    </Button>
+  );
+}
 
 type InvSortKey = "brand" | "scent_name" | "quantity" | "cost_price" | "target_sale_price" | "profit" | "added_by";
 type SortDir = "asc" | "desc";
@@ -223,9 +254,11 @@ export default function InventoryTable({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Perfume | null>(null);
   const [photoTarget, setPhotoTarget] = useState<Perfume | null>(null);
-  const [flashSaleTarget, setFlashSaleTarget] = useState<Perfume | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [flashSaleTarget, setFlashSaleTarget] = useState<Perfume | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showBulkFlashSale, setShowBulkFlashSale] = useState(false);
   const [sortKey, setSortKey] = useState<InvSortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [searchRaw, setSearchRaw] = useState("");
@@ -241,10 +274,24 @@ export default function InventoryTable({
 
   const handleSort = (col: InvSortKey) => {
     if (sortKey === col) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
     } else {
       setSortKey(col);
       setSortDir("asc");
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = (data: Perfume[]) => {
+    if (selectedIds.length === data.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(data.map(p => p.id));
     }
   };
 
@@ -615,6 +662,14 @@ export default function InventoryTable({
           <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="w-10 text-muted-foreground text-center">
+                  <input 
+                    type="checkbox" 
+                    className="h-4 w-4 rounded border-border bg-secondary accent-primary cursor-pointer"
+                    checked={selectedIds.length === sorted.length && sorted.length > 0}
+                    onChange={() => toggleSelectAll(sorted)}
+                  />
+                </TableHead>
                 <TableHead className="w-10 text-muted-foreground" />
                 <SortableHead col="brand" active={sortKey} dir={sortDir} onSort={handleSort} className="text-muted-foreground">Brand</SortableHead>
                 <SortableHead col="scent_name" active={sortKey} dir={sortDir} onSort={handleSort} className="text-muted-foreground">Scent</SortableHead>
@@ -647,8 +702,18 @@ export default function InventoryTable({
                 return (
                   <TableRow
                     key={perfume.id}
-                    className={`border-border ${isLowStock ? "bg-amber-500/[0.03]" : ""}`}
+                    className={`border-border transition-colors ${
+                      selectedIds.includes(perfume.id) ? "bg-primary/5" : isLowStock ? "bg-amber-500/[0.03]" : ""
+                    }`}
                   >
+                    <TableCell className="w-10 text-center">
+                      <input 
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-border bg-secondary accent-primary cursor-pointer"
+                        checked={selectedIds.includes(perfume.id)}
+                        onChange={() => toggleSelection(perfume.id)}
+                      />
+                    </TableCell>
                     <TableCell className="w-14">
                       <button
                         type="button"
@@ -739,19 +804,10 @@ export default function InventoryTable({
                             <ShoppingCart className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`h-8 w-8 transition-colors ${
-                            perfume.flash_sale_price 
-                              ? "text-yellow-500 hover:text-yellow-600" 
-                              : "text-muted-foreground hover:text-yellow-500"
-                          }`}
-                          onClick={() => setFlashSaleTarget(perfume)}
-                          title="Flash Sale"
-                        >
-                          <Zap className="h-4 w-4" />
-                        </Button>
+                        <FlashSaleButton 
+                          perfume={perfume} 
+                          onClick={() => setFlashSaleTarget(perfume)} 
+                        />
                         <Button
                           variant="ghost"
                           size="icon"
@@ -856,6 +912,49 @@ export default function InventoryTable({
         perfume={flashSaleTarget}
         onSuccess={onUpdate}
       />
+
+      <BulkFlashSaleDialog 
+        open={showBulkFlashSale}
+        onOpenChange={setShowBulkFlashSale}
+        selectedIds={selectedIds}
+        onSuccess={() => {
+          setSelectedIds([]);
+          onUpdate();
+        }}
+      />
+
+      {/* ── Bulk Actions Bar ───────────────────────────────── */}
+      <AnimatePresence>
+        {selectedIds.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-full border border-border bg-card/95 px-6 py-3 shadow-2xl backdrop-blur-xl"
+          >
+            <span className="text-sm font-medium text-foreground">
+              {selectedIds.length} selected
+            </span>
+            <div className="h-4 w-[1px] bg-border" />
+            <Button
+              size="sm"
+              onClick={() => setShowBulkFlashSale(true)}
+              className="h-8 rounded-full bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border border-yellow-500/20"
+            >
+              <Zap className="mr-1.5 h-3.5 w-3.5" />
+              Bulk Flash Sale
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setSelectedIds([])}
+              className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

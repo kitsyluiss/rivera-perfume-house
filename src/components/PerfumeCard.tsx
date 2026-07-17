@@ -6,6 +6,7 @@ import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { Perfume } from "@/lib/types";
 import { formatPhp } from "@/lib/format";
 import { inferPerfumeTag } from "@/lib/perfume-tags";
+import { useCountdown } from "@/hooks/useCountdown";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -36,8 +37,10 @@ export default function PerfumeCard({
     new Date(perfume.flash_sale_end) > new Date() &&
     (perfume.flash_sale_stock == null || perfume.flash_sale_stock > 0);
     
-  const displayPrice = hasFlashSale ? perfume.flash_sale_price! : perfume.target_sale_price;
-  const percentOff = hasFlashSale 
+  const { timeLeft, isExpired } = useCountdown(hasFlashSale ? perfume.flash_sale_end! : null);
+
+  const displayPrice = hasFlashSale && !isExpired ? perfume.flash_sale_price! : perfume.target_sale_price;
+  const percentOff = hasFlashSale && !isExpired
     ? Math.round(((perfume.target_sale_price - displayPrice) / perfume.target_sale_price) * 100) 
     : 0;
 
@@ -123,10 +126,17 @@ export default function PerfumeCard({
           <div className="rounded-full bg-card/85 px-2 py-0.5 text-[8px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.18em] text-muted-foreground backdrop-blur-md">
             {tag}
           </div>
-          {hasFlashSale && (
-            <div className="rounded-full bg-primary/90 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-primary-foreground backdrop-blur-md flex items-center gap-1">
-              {perfume.flash_sale_name && <span>{perfume.flash_sale_name} •</span>}
-              <span>-{percentOff}% OFF</span>
+          {hasFlashSale && !isExpired && (
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
+              <div className="rounded-full bg-primary/90 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-primary-foreground backdrop-blur-md flex items-center gap-1 w-max">
+                {perfume.flash_sale_name && <span>{perfume.flash_sale_name} •</span>}
+                <span>-{percentOff}% OFF</span>
+              </div>
+              {timeLeft && (
+                <div className="rounded-full bg-black/60 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-white backdrop-blur-md flex items-center w-max font-mono tracking-wider">
+                  ⏱ {timeLeft}
+                </div>
+              )}
             </div>
           )}
         </div>

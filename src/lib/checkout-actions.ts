@@ -134,15 +134,49 @@ export async function createOrder(addressId: string | null) {
       new Date(perfume.flash_sale_end) > new Date() &&
       (perfume.flash_sale_stock == null || perfume.flash_sale_stock > 0);
 
-    const updateData: any = { quantity: perfume.quantity - item.quantity };
+    let remainingToDeduct = item.quantity;
+    
+    // First, try to deduct from the primary perfume_id
+    const primaryDeduction = Math.min(perfume.quantity, remainingToDeduct);
+    const updateData: any = { quantity: perfume.quantity - primaryDeduction };
+    
     if (hasFlashSale && perfume.flash_sale_stock != null) {
-      updateData.flash_sale_stock = Math.max(0, perfume.flash_sale_stock - item.quantity);
+      updateData.flash_sale_stock = Math.max(0, perfume.flash_sale_stock - primaryDeduction);
     }
 
     await supabase
       .from("perfumes")
       .update(updateData)
       .eq("id", item.perfume_id);
+      
+    remainingToDeduct -= primaryDeduction;
+
+    // If there's still more to deduct (because storefront grouped identical items)
+    if (remainingToDeduct > 0) {
+      const { data: otherRows } = await supabase
+        .from("perfumes")
+        .select("*")
+        .eq("brand", perfume.brand)
+        .eq("scent_name", perfume.scent_name)
+        .neq("id", item.perfume_id)
+        .gt("quantity", 0)
+        .order("created_at", { ascending: true });
+
+      if (otherRows) {
+        for (const row of otherRows) {
+          if (remainingToDeduct <= 0) break;
+          const deduction = Math.min(row.quantity, remainingToDeduct);
+          const otherUpdate: any = { quantity: row.quantity - deduction };
+          
+          if (hasFlashSale && row.flash_sale_stock != null) {
+            otherUpdate.flash_sale_stock = Math.max(0, row.flash_sale_stock - deduction);
+          }
+
+          await supabase.from("perfumes").update(otherUpdate).eq("id", row.id);
+          remainingToDeduct -= deduction;
+        }
+      }
+    }
   }
 
   // 5. Clear Cart
