@@ -27,8 +27,6 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const [success, setSuccess] = useState(false);
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
@@ -40,8 +38,6 @@ export default function SignUpPage() {
       
       if (result?.error) {
         toast.error(result.error);
-      } else if (result?.requiresEmailConfirmation) {
-        setSuccess(true);
       } else {
         toast.success("Account created successfully!");
         router.push("/");
@@ -82,26 +78,7 @@ export default function SignUpPage() {
             transition={{ duration: 0.8, delay: 0.3, ease }}
             className="h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent"
           />
-          {success ? (
-            <div className="px-6 py-12 sm:px-8 text-center flex flex-col items-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Mail className="h-8 w-8" />
-              </div>
-              <h2 className="font-display text-2xl tracking-wide text-foreground mb-4">
-                Check Your Email
-              </h2>
-              <p className="text-muted-foreground mb-8 text-sm">
-                We've sent a verification link to <strong>{email}</strong>. Please click the link to confirm your account before logging in.
-              </p>
-              <Link href="/login" className="w-full">
-                <Button className="w-full h-11 text-xs uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90">
-                  Return to Login
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <>
-              <CardHeader className="pt-8 text-center">
+          <CardHeader className="pt-8 text-center">
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -193,8 +170,6 @@ export default function SignUpPage() {
                   </Link>
                 </p>
               </div>
-            </>
-          )}
         </Card>
       </motion.div>
     </div>

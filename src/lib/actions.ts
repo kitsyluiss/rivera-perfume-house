@@ -54,11 +54,17 @@ export async function signUp(email: string, password: string, name: string, redi
     return { error: "Email address already registered" };
   }
 
-  // Note: We no longer try to insert into `profiles` here.
-  // Unconfirmed users do not have a valid session to bypass RLS.
-  // The profile will be created upon first login in the `signIn` function.
+  if (data.session && data.user) {
+    // If email confirmation is disabled, the user is logged in immediately.
+    // We can insert their profile now since they have a valid session.
+    await supabase.from("profiles").upsert({
+      id: data.user.id,
+      display_name: name.trim(),
+      role: "customer",
+    });
+  }
 
-  return { success: true, requiresEmailConfirmation: !data.session };
+  return { success: true };
 }
 
 export async function signOut() {
