@@ -31,16 +31,21 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signIn(email, password);
-      toast.success("Welcome back!");
-      router.push("/");
-      router.refresh();
-    } catch (error: any) {
-      if (error.message.includes("Email not confirmed")) {
-        toast.error("Please check your inbox and click the verification link before logging in.");
+      const result = await signIn(email, password);
+      
+      if (result?.error) {
+        if (result.error.includes("Email not confirmed")) {
+          toast.error("Please check your inbox and click the verification link before logging in.");
+        } else {
+          toast.error(result.error);
+        }
       } else {
-        toast.error(error instanceof Error ? error.message : "Sign in failed");
+        toast.success("Welcome back!");
+        router.push("/");
+        router.refresh();
       }
+    } catch (error: any) {
+      toast.error(error instanceof Error ? error.message : "Sign in failed");
     } finally {
       setLoading(false);
     }

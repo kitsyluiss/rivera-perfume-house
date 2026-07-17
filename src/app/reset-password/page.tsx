@@ -57,11 +57,20 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      await updatePassword(password);
-      setSuccess(true);
-      toast.success("Password updated successfully!");
+      const result = await updatePassword(password);
+      if (result?.error) {
+        toast.error(result.error);
+      } else {
+        setSuccess(true);
+        toast.success("Password updated successfully!");
+        
+        // Redirect to login after a short delay
+        setTimeout(() => {
+          router.push("/login");
+          router.refresh();
+        }, 3000);
+      }
     } catch (error: any) {
-      setErrorState(error instanceof Error ? error.message : "Failed to update password");
       toast.error(error instanceof Error ? error.message : "Failed to update password");
     } finally {
       setLoading(false);

@@ -37,7 +37,10 @@ export default function SignUpPage() {
       // Create redirect URL back to the site
       const redirectUrl = `${window.location.origin}/login`;
       const result = await signUp(email, password, name, redirectUrl);
-      if (result?.requiresEmailConfirmation) {
+      
+      if (result?.error) {
+        toast.error(result.error);
+      } else if (result?.requiresEmailConfirmation) {
         setSuccess(true);
       } else {
         toast.success("Account created successfully!");

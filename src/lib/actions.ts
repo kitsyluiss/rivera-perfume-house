@@ -9,7 +9,7 @@ import type { Perfume, Sale } from "@/lib/types";
 export async function signIn(email: string, password: string) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw new Error(error.message);
+  if (error) return { error: error.message };
 
   // Create profile upon first login if it doesn't exist
   if (data.user) {
@@ -28,12 +28,13 @@ export async function signIn(email: string, password: string) {
       });
     }
   }
+  return { success: true };
 }
 
 export async function signUp(email: string, password: string, name: string, redirectUrl: string) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    throw new Error("Invalid email format");
+    return { error: "Invalid email format" };
   }
 
   const supabase = await createClient();
@@ -47,17 +48,17 @@ export async function signUp(email: string, password: string, name: string, redi
       emailRedirectTo: redirectUrl,
     },
   });
-  if (signUpError) throw new Error(signUpError.message);
+  if (signUpError) return { error: signUpError.message };
   
   if (data.user && data.user.identities && data.user.identities.length === 0) {
-    throw new Error("Email address already registered");
+    return { error: "Email address already registered" };
   }
 
   // Note: We no longer try to insert into `profiles` here.
   // Unconfirmed users do not have a valid session to bypass RLS.
   // The profile will be created upon first login in the `signIn` function.
 
-  return { requiresEmailConfirmation: !data.session };
+  return { success: true, requiresEmailConfirmation: !data.session };
 }
 
 export async function signOut() {
@@ -70,7 +71,8 @@ export async function sendPasswordReset(email: string, redirectUrl: string) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: redirectUrl,
   });
-  if (error) throw new Error(error.message);
+  if (error) return { error: error.message };
+  return { success: true };
 }
 
 export async function updatePassword(password: string) {
@@ -78,7 +80,8 @@ export async function updatePassword(password: string) {
   const { error } = await supabase.auth.updateUser({
     password: password,
   });
-  if (error) throw new Error(error.message);
+  if (error) return { error: error.message };
+  return { success: true };
 }
 
 // ─── Profile ───────────────────────────────────────────────────────────────────

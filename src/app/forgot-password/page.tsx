@@ -33,9 +33,14 @@ export default function ForgotPasswordPage() {
     try {
       // Create redirect URL to the reset-password page
       const redirectUrl = `${window.location.origin}/reset-password`;
-      await sendPasswordReset(email, redirectUrl);
-      setSuccess(true);
-      toast.success("Reset link sent successfully!");
+      const result = await sendPasswordReset(email, redirectUrl);
+      
+      if (result?.error) {
+        toast.error(result.error);
+      } else {
+        setSuccess(true);
+        toast.success("Reset link sent successfully!");
+      }
     } catch (error: any) {
       toast.error(error instanceof Error ? error.message : "Failed to send reset link");
     } finally {
