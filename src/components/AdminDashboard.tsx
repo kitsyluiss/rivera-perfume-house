@@ -164,7 +164,16 @@ export default function AdminDashboard() {
   };
 
   // ── Inventory stats ──────────────────────────────────
-  const lowStockItems = perfumes.filter((p) => p.quantity === 1);
+  const groupedStock = perfumes.reduce((acc, p) => {
+    const key = `${p.brand.toLowerCase()}||${p.scent_name.toLowerCase()}`;
+    if (!acc[key]) {
+      acc[key] = { brand: p.brand, scent_name: p.scent_name, totalQuantity: 0 };
+    }
+    acc[key].totalQuantity += p.quantity;
+    return acc;
+  }, {} as Record<string, { brand: string; scent_name: string; totalQuantity: number }>);
+  
+  const lowStockItems = Object.values(groupedStock).filter((item) => item.totalQuantity < 5);
   const totalSKUs = perfumes.length;
   const totalUnits = perfumes.reduce((sum, p) => sum + p.quantity, 0);
   const inventoryCost = perfumes.reduce(
