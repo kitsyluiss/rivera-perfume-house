@@ -110,8 +110,11 @@ export async function createOrder(addressId: string | null) {
       order_id: order.id,
       perfume_id: item.perfume_id,
       quantity: item.quantity,
-      price: price,
+      unit_price: price,
       cost_price: perfume.cost_price,
+      brand: perfume.brand,
+      scent_name: perfume.scent_name,
+      image_url: perfume.image_url,
     };
   });
 
