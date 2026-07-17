@@ -461,7 +461,8 @@ export default function CatalogView({
                       {(() => {
                         const hasFlashSale = selectedPerfume.flash_sale_price != null && 
                           selectedPerfume.flash_sale_end != null && 
-                          new Date(selectedPerfume.flash_sale_end) > new Date();
+                          new Date(selectedPerfume.flash_sale_end) > new Date() &&
+                          (selectedPerfume.flash_sale_stock == null || selectedPerfume.flash_sale_stock > 0);
                         
                         if (hasFlashSale) {
                           return (
@@ -472,9 +473,16 @@ export default function CatalogView({
                               <p className="font-display text-xl text-muted-foreground line-through decoration-muted-foreground/40">
                                 {formatPhp(selectedPerfume.target_sale_price)}
                               </p>
-                              <span className="rounded-md bg-primary/20 px-2 py-1 text-[10px] font-bold text-primary">
-                                -{Math.round(((selectedPerfume.target_sale_price - selectedPerfume.flash_sale_price!) / selectedPerfume.target_sale_price) * 100)}%
-                              </span>
+                              <div className="flex items-center gap-1">
+                                {selectedPerfume.flash_sale_name && (
+                                  <span className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">
+                                    {selectedPerfume.flash_sale_name}
+                                  </span>
+                                )}
+                                <span className="rounded-md bg-primary/20 px-2 py-1 text-[10px] font-bold text-primary">
+                                  -{Math.round(((selectedPerfume.target_sale_price - selectedPerfume.flash_sale_price!) / selectedPerfume.target_sale_price) * 100)}%
+                                </span>
+                              </div>
                             </div>
                           );
                         }

@@ -33,7 +33,8 @@ export default function PerfumeCard({
   
   const hasFlashSale = perfume.flash_sale_price != null && 
     perfume.flash_sale_end != null && 
-    new Date(perfume.flash_sale_end) > new Date();
+    new Date(perfume.flash_sale_end) > new Date() &&
+    (perfume.flash_sale_stock == null || perfume.flash_sale_stock > 0);
     
   const displayPrice = hasFlashSale ? perfume.flash_sale_price! : perfume.target_sale_price;
   const percentOff = hasFlashSale 
@@ -123,8 +124,9 @@ export default function PerfumeCard({
             {tag}
           </div>
           {hasFlashSale && (
-            <div className="rounded-full bg-primary/90 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-primary-foreground backdrop-blur-md">
-              -{percentOff}% OFF
+            <div className="rounded-full bg-primary/90 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-primary-foreground backdrop-blur-md flex items-center gap-1">
+              {perfume.flash_sale_name && <span>{perfume.flash_sale_name} •</span>}
+              <span>-{percentOff}% OFF</span>
             </div>
           )}
         </div>

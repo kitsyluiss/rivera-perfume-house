@@ -112,7 +112,8 @@ export default function CheckoutPage() {
     if (!item.perfume) return sum;
     const hasFlashSale = item.perfume.flash_sale_price != null && 
       item.perfume.flash_sale_end != null && 
-      new Date(item.perfume.flash_sale_end) > new Date();
+      new Date(item.perfume.flash_sale_end) > new Date() &&
+      (item.perfume.flash_sale_stock == null || item.perfume.flash_sale_stock > 0);
     const price = hasFlashSale ? item.perfume.flash_sale_price! : item.perfume.target_sale_price;
     return sum + price * item.quantity;
   }, 0);
@@ -259,7 +260,8 @@ export default function CheckoutPage() {
                       if (!item.perfume) return null;
                       const hasFlashSale = item.perfume.flash_sale_price != null && 
                         item.perfume.flash_sale_end != null && 
-                        new Date(item.perfume.flash_sale_end) > new Date();
+                        new Date(item.perfume.flash_sale_end) > new Date() &&
+                        (item.perfume.flash_sale_stock == null || item.perfume.flash_sale_stock > 0);
                       
                       const price = hasFlashSale ? item.perfume.flash_sale_price! : item.perfume.target_sale_price;
                       return formatPhp(price * item.quantity);

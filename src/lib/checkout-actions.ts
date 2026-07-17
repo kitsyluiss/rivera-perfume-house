@@ -75,7 +75,8 @@ export async function createOrder(addressId: string | null) {
     const perfume = item.perfume as any;
     const hasFlashSale = perfume.flash_sale_price != null && 
       perfume.flash_sale_end != null && 
-      new Date(perfume.flash_sale_end) > new Date();
+      new Date(perfume.flash_sale_end) > new Date() &&
+      (perfume.flash_sale_stock == null || perfume.flash_sale_stock > 0);
     const price = hasFlashSale ? perfume.flash_sale_price : perfume.target_sale_price;
     return sum + price * item.quantity;
   }, 0);
@@ -103,7 +104,8 @@ export async function createOrder(addressId: string | null) {
     const perfume = item.perfume as any;
     const hasFlashSale = perfume.flash_sale_price != null && 
       perfume.flash_sale_end != null && 
-      new Date(perfume.flash_sale_end) > new Date();
+      new Date(perfume.flash_sale_end) > new Date() &&
+      (perfume.flash_sale_stock == null || perfume.flash_sale_stock > 0);
     const price = hasFlashSale ? perfume.flash_sale_price : perfume.target_sale_price;
     
     return {
@@ -127,9 +129,19 @@ export async function createOrder(addressId: string | null) {
   // 4. Update Stock
   for (const item of cartItems) {
     const perfume = item.perfume as any;
+    const hasFlashSale = perfume.flash_sale_price != null && 
+      perfume.flash_sale_end != null && 
+      new Date(perfume.flash_sale_end) > new Date() &&
+      (perfume.flash_sale_stock == null || perfume.flash_sale_stock > 0);
+
+    const updateData: any = { quantity: perfume.quantity - item.quantity };
+    if (hasFlashSale && perfume.flash_sale_stock != null) {
+      updateData.flash_sale_stock = Math.max(0, perfume.flash_sale_stock - item.quantity);
+    }
+
     await supabase
       .from("perfumes")
-      .update({ quantity: perfume.quantity - item.quantity })
+      .update(updateData)
       .eq("id", item.perfume_id);
   }
 

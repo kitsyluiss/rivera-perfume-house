@@ -14,6 +14,8 @@ export interface Perfume {
   added_by?: string | null; // display_name from profiles join
   flash_sale_price?: number | null;
   flash_sale_end?: string | null;
+  flash_sale_stock?: number | null;
+  flash_sale_name?: string | null;
 }
 
 export interface Profile {

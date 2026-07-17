@@ -310,7 +310,7 @@ export async function deletePerfume(id: string, imageUrl?: string | null) {
   revalidatePath("/admin");
 }
 
-export async function setFlashSale(id: string, flashSalePrice: number | null, flashSaleEnd: string | null) {
+export async function setFlashSale(id: string, flashSalePrice: number | null, flashSaleEnd: string | null, flashSaleStock?: number | null, flashSaleName?: string | null) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -326,7 +326,9 @@ export async function setFlashSale(id: string, flashSalePrice: number | null, fl
     .from("perfumes")
     .update({ 
       flash_sale_price: flashSalePrice, 
-      flash_sale_end: flashSaleEnd 
+      flash_sale_end: flashSaleEnd,
+      flash_sale_stock: flashSaleStock ?? null,
+      flash_sale_name: flashSaleName ?? null
     })
     .eq("id", id);
 

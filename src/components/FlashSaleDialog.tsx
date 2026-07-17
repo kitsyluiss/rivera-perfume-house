@@ -25,11 +25,17 @@ export default function FlashSaleDialog({
   const [loading, setLoading] = useState(false);
   const [salePrice, setSalePrice] = useState("");
   const [hours, setHours] = useState("24");
+  const [minutes, setMinutes] = useState("0");
+  const [stockLimit, setStockLimit] = useState("");
+  const [eventName, setEventName] = useState("");
 
   useEffect(() => {
     if (open && perfume) {
       setSalePrice(perfume.flash_sale_price ? String(perfume.flash_sale_price) : "");
       setHours("24"); // Default 24 hours
+      setMinutes("0");
+      setStockLimit(perfume.flash_sale_stock != null ? String(perfume.flash_sale_stock) : String(perfume.quantity));
+      setEventName(perfume.flash_sale_name || "");
     }
   }, [open, perfume]);
 
@@ -52,8 +58,12 @@ export default function FlashSaleDialog({
     try {
       const endDate = new Date();
       endDate.setHours(endDate.getHours() + Number(hours));
+      endDate.setMinutes(endDate.getMinutes() + Number(minutes));
       
-      await setFlashSale(perfume.id, numSalePrice, endDate.toISOString());
+      const parsedStock = stockLimit ? Number(stockLimit) : null;
+      const finalEventName = eventName.trim() || null;
+
+      await setFlashSale(perfume.id, numSalePrice, endDate.toISOString(), parsedStock, finalEventName);
       toast.success("Flash sale activated!");
       onSuccess();
       onOpenChange(false);
@@ -67,7 +77,7 @@ export default function FlashSaleDialog({
   const handleCancelSale = async () => {
     setLoading(true);
     try {
-      await setFlashSale(perfume.id, null, null);
+      await setFlashSale(perfume.id, null, null, null, null);
       toast.success("Flash sale cancelled");
       onSuccess();
       onOpenChange(false);
@@ -100,6 +110,26 @@ export default function FlashSaleDialog({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="eventName" className="text-foreground">Event Name (Optional)</Label>
+            <select
+              id="eventName"
+              value={eventName}
+              onChange={(e) => setEventName(e.target.value)}
+              className="flex h-11 w-full rounded-md border border-border bg-secondary px-3 py-2 text-base text-foreground font-body focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+            >
+              <option value="">None (Generic Flash Sale)</option>
+              <option value="Payday Sale">Payday Sale</option>
+              <option value="8.8 Sale">8.8 Sale</option>
+              <option value="9.9 Sale">9.9 Sale</option>
+              <option value="10.10 Sale">10.10 Sale</option>
+              <option value="11.11 Sale">11.11 Sale</option>
+              <option value="12.12 Sale">12.12 Sale</option>
+              <option value="Midnight Sale">Midnight Sale</option>
+              <option value="Weekend Sale">Weekend Sale</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="salePrice" className="text-foreground">Flash Sale Price (₱)</Label>
             <Input 
               id="salePrice" 
@@ -112,19 +142,48 @@ export default function FlashSaleDialog({
             />
           </div>
           
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="hours" className="text-foreground">Duration (Hours)</Label>
+              <Input 
+                id="hours" 
+                type="number" 
+                required 
+                min="0"
+                max="168"
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+                className="bg-secondary border-border focus:border-primary/40 h-11 text-base text-foreground font-body"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="minutes" className="text-foreground">Minutes</Label>
+              <Input 
+                id="minutes" 
+                type="number" 
+                required 
+                min="0"
+                max="59"
+                value={minutes}
+                onChange={(e) => setMinutes(e.target.value)}
+                className="bg-secondary border-border focus:border-primary/40 h-11 text-base text-foreground font-body"
+              />
+            </div>
+          </div>
+          
           <div className="space-y-2">
-            <Label htmlFor="hours" className="text-foreground">Duration (Hours)</Label>
+            <Label htmlFor="stockLimit" className="text-foreground">Stock Limit (Optional)</Label>
             <Input 
-              id="hours" 
+              id="stockLimit" 
               type="number" 
-              required 
               min="1"
-              max="168"
-              value={hours}
-              onChange={(e) => setHours(e.target.value)}
+              max={perfume.quantity}
+              value={stockLimit}
+              onChange={(e) => setStockLimit(e.target.value)}
+              placeholder={`Max available: ${perfume.quantity}`}
               className="bg-secondary border-border focus:border-primary/40 h-11 text-base text-foreground font-body"
             />
-            <p className="text-xs text-muted-foreground pt-1">The sale will automatically expire after this time.</p>
+            <p className="text-xs text-muted-foreground pt-1">If this stock reaches 0, the sale will end automatically even if there is time remaining.</p>
           </div>
           
           <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
