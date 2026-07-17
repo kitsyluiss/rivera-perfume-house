@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Camera, ChevronDown, Loader2, Search, ShoppingCart, Trash2, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Camera, ChevronDown, Loader2, Search, ShoppingCart, Trash2, X, Zap } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ImageUpload from "@/components/ImageUpload";
+import FlashSaleDialog from "@/components/FlashSaleDialog";
 
 type InvSortKey = "brand" | "scent_name" | "quantity" | "cost_price" | "target_sale_price" | "profit" | "added_by";
 type SortDir = "asc" | "desc";
@@ -222,6 +223,7 @@ export default function InventoryTable({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Perfume | null>(null);
   const [photoTarget, setPhotoTarget] = useState<Perfume | null>(null);
+  const [flashSaleTarget, setFlashSaleTarget] = useState<Perfume | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [sortKey, setSortKey] = useState<InvSortKey | null>(null);
@@ -323,7 +325,7 @@ export default function InventoryTable({
         {/* Mobile skeleton */}
         <div className="md:hidden space-y-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3">
+            <div key={i} className="rounded-[1.1rem] border border-border bg-card p-4 space-y-3">
               <div className="flex items-start gap-3">
                 <div className="h-12 w-12 shrink-0 rounded-lg bg-secondary animate-pulse" />
                 <div className="flex-1 space-y-2">
@@ -459,7 +461,7 @@ export default function InventoryTable({
           return (
             <div
               key={perfume.id}
-              className={`rounded-xl border bg-card p-4 ${
+              className={`rounded-[1.1rem] border bg-card p-4 ${
                 isLowStock ? "border-amber-500/40" : "border-border"
               }`}
             >
@@ -524,6 +526,19 @@ export default function InventoryTable({
                       <ShoppingCart className="h-4 w-4" />
                     </Button>
                   )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-8 w-8 transition-colors ${
+                      perfume.flash_sale_price 
+                        ? "text-yellow-500 hover:text-yellow-600" 
+                        : "text-muted-foreground hover:text-yellow-500"
+                    }`}
+                    onClick={() => setFlashSaleTarget(perfume)}
+                    title="Flash Sale"
+                  >
+                    <Zap className="h-4 w-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -609,7 +624,7 @@ export default function InventoryTable({
                 <SortableHead col="cost_price" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Cost (PHP)</SortableHead>
                 <SortableHead col="target_sale_price" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Target (PHP)</SortableHead>
                 <SortableHead col="profit" active={sortKey} dir={sortDir} onSort={handleSort} className="text-right text-muted-foreground">Profit</SortableHead>
-                <TableHead className="text-right text-muted-foreground">Margin %</TableHead>
+                <TableHead className="text-right text-muted-foreground whitespace-nowrap">Margin %</TableHead>
                 <TableHead className="w-12 text-muted-foreground" />
               </TableRow>
             </TableHeader>
@@ -727,6 +742,19 @@ export default function InventoryTable({
                         <Button
                           variant="ghost"
                           size="icon"
+                          className={`h-8 w-8 transition-colors ${
+                            perfume.flash_sale_price 
+                              ? "text-yellow-500 hover:text-yellow-600" 
+                              : "text-muted-foreground hover:text-yellow-500"
+                          }`}
+                          onClick={() => setFlashSaleTarget(perfume)}
+                          title="Flash Sale"
+                        >
+                          <Zap className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-red-400"
                           onClick={() => setConfirmDelete(perfume)}
                           disabled={deletingId === perfume.id}
@@ -819,6 +847,15 @@ export default function InventoryTable({
           </div>
         </DialogContent>
       </Dialog>
+
+      <FlashSaleDialog 
+        open={!!flashSaleTarget}
+        onOpenChange={(open) => {
+          if (!open) setFlashSaleTarget(null);
+        }}
+        perfume={flashSaleTarget}
+        onSuccess={onUpdate}
+      />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import { createClient } from "@/lib/supabase/server";
+import { getUserProfile } from "@/lib/actions";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -21,9 +22,12 @@ export default async function RootLayout({
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  
+  const profile = session ? await getUserProfile() : null;
+  const role = profile?.role || 'customer';
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -38,7 +42,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
-        <Navbar isLoggedIn={!!session} />
+        <Navbar isLoggedIn={!!session} role={role} />
         {children}
         <Toaster
           position="bottom-right"

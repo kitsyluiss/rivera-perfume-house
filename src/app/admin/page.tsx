@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import LoginForm from "@/components/LoginForm";
+import { redirect } from "next/navigation";
 import AdminDashboard from "@/components/AdminDashboard";
 
 export const dynamic = "force-dynamic";
@@ -7,11 +7,21 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) {
-    return <LoginForm />;
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    redirect("/unauthorized");
   }
 
   return <AdminDashboard />;

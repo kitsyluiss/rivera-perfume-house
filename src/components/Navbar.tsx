@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, UserCircle } from "lucide-react";
+import { LogOut, UserCircle, ShoppingCart } from "lucide-react";
 import { signOut } from "@/lib/actions";
 import { toast } from "sonner";
 
-export default function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
+export default function Navbar({ isLoggedIn, role }: { isLoggedIn: boolean; role?: string }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -66,7 +66,7 @@ export default function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
               Catalog
             </Link>
 
-            {isLoggedIn && (
+            {isLoggedIn && role === 'admin' && (
               <Link
                 href="/admin#inventory-list"
                 className={`relative rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] transition-all duration-200 ${
@@ -78,27 +78,49 @@ export default function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
                 Dashboard
               </Link>
             )}
+            {isLoggedIn && role === 'customer' && (
+              <Link
+                href="/orders"
+                className={`relative rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] transition-all duration-200 ${
+                  isActive("/orders")
+                    ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(38_44%_61%/0.25)]"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Orders
+              </Link>
+            )}
           </div>
 
-          {/* Auth button */}
-          {isLoggedIn ? (
-            <button
-              type="button"
-              onClick={handleSignOut}
-              title="Sign out"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all duration-200 hover:border-primary/25 hover:bg-primary/8 hover:text-foreground"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-            </button>
-          ) : (
+          {/* Cart Icon & Auth button */}
+          <div className="flex items-center gap-2">
             <Link
-              href="/admin"
-              title="Admin Access"
+              href="/cart"
+              title="Shopping Cart"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all duration-200 hover:border-primary/25 hover:bg-primary/8 hover:text-foreground"
             >
-              <UserCircle className="h-4 w-4" />
+              <ShoppingCart className="h-4 w-4" />
             </Link>
-          )}
+
+            {isLoggedIn ? (
+              <button
+                type="button"
+                onClick={handleSignOut}
+                title="Sign out"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all duration-200 hover:border-primary/25 hover:bg-primary/8 hover:text-foreground"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                title="Log In"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all duration-200 hover:border-primary/25 hover:bg-primary/8 hover:text-foreground"
+              >
+                <UserCircle className="h-4 w-4" />
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Mobile nav */}
@@ -115,7 +137,7 @@ export default function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
               Catalog
             </Link>
 
-            {isLoggedIn && (
+            {isLoggedIn && role === 'admin' && (
               <Link
                 href="/admin#inventory-list"
                 className={`rounded-full px-3 py-1.5 text-[9px] uppercase tracking-[0.18em] transition-all duration-200 ${
@@ -127,26 +149,48 @@ export default function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
                 Admin
               </Link>
             )}
+            {isLoggedIn && role === 'customer' && (
+              <Link
+                href="/orders"
+                className={`rounded-full px-3 py-1.5 text-[9px] uppercase tracking-[0.18em] transition-all duration-200 ${
+                  isActive("/orders")
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground"
+                }`}
+              >
+                Orders
+              </Link>
+            )}
           </div>
 
-          {isLoggedIn ? (
-            <button
-              type="button"
-              onClick={handleSignOut}
-              title="Sign out"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all hover:border-primary/25 hover:text-foreground"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-            </button>
-          ) : (
+          <div className="flex items-center gap-2">
             <Link
-              href="/admin"
-              title="Admin Access"
+              href="/cart"
+              title="Shopping Cart"
               className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all hover:border-primary/25 hover:text-foreground"
             >
-              <UserCircle className="h-4 w-4" />
+              <ShoppingCart className="h-3.5 w-3.5" />
             </Link>
-          )}
+
+            {isLoggedIn ? (
+              <button
+                type="button"
+                onClick={handleSignOut}
+                title="Sign out"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all hover:border-primary/25 hover:text-foreground"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                title="Log In"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all hover:border-primary/25 hover:text-foreground"
+              >
+                <UserCircle className="h-4 w-4" />
+              </Link>
+            )}
+          </div>
         </div>
       </nav>
     </header>

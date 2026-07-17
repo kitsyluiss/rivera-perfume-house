@@ -2,14 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useScroll, useSpring } from "motion/react";
-import { ChevronDown, Filter, Search, X } from "lucide-react";
+import { ChevronDown, Filter, Search, X, ShoppingCart, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import PerfumeCard from "@/components/PerfumeCard";
 import { Perfume } from "@/lib/types";
 import { PERFUME_TAGS, inferPerfumeTag } from "@/lib/perfume-tags";
 import PreloaderIdent from "@/components/PreloaderIdent";
 import { formatPhp } from "@/lib/format";
 import { getFragranceDNA } from "@/lib/fragrance-dna";
+import { addToCart } from "@/lib/cart-actions";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -142,6 +146,8 @@ export default function CatalogView({
   const [preloaderDone, setPreloaderDone] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedPerfume, setSelectedPerfume] = useState<Perfume | null>(null);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const router = useRouter();
   const [brandFilter, setBrandFilter] = useState("all");
   const [brandOpen, setBrandOpen] = useState(false);
   const [tagFilter, setTagFilter] = useState("all");
@@ -451,9 +457,33 @@ export default function CatalogView({
                       <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
                         Price
                       </p>
-                      <p className="font-display text-3xl font-semibold text-foreground">
-                        {formatPhp(selectedPerfume.target_sale_price)}
-                      </p>
+                      {(() => {
+                        const hasFlashSale = selectedPerfume.flash_sale_price != null && 
+                          selectedPerfume.flash_sale_end != null && 
+                          new Date(selectedPerfume.flash_sale_end) > new Date();
+                        
+                        if (hasFlashSale) {
+                          return (
+                            <div className="flex items-center gap-3">
+                              <p className="font-display text-3xl font-semibold text-foreground">
+                                {formatPhp(selectedPerfume.flash_sale_price!)}
+                              </p>
+                              <p className="font-display text-xl text-muted-foreground line-through decoration-muted-foreground/40">
+                                {formatPhp(selectedPerfume.target_sale_price)}
+                              </p>
+                              <span className="rounded-md bg-primary/20 px-2 py-1 text-[10px] font-bold text-primary">
+                                -{Math.round(((selectedPerfume.target_sale_price - selectedPerfume.flash_sale_price!) / selectedPerfume.target_sale_price) * 100)}%
+                              </span>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <p className="font-display text-3xl font-semibold text-foreground">
+                            {formatPhp(selectedPerfume.target_sale_price)}
+                          </p>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex items-center gap-2 mb-8">
@@ -470,6 +500,40 @@ export default function CatalogView({
                           : "Sold Out"}
                       </span>
                     </div>
+                      
+                      <div className="mt-8 flex gap-3">
+                        <Button
+                          onClick={async () => {
+                            if (!selectedPerfume) return;
+                            setIsAddingToCart(true);
+                            try {
+                              await addToCart(selectedPerfume.id, 1);
+                              toast.success("Added to cart!");
+                            } catch (e: any) {
+                              if (e.message.includes("logged in")) {
+                                toast.error("Please log in to add to cart");
+                                router.push("/login");
+                              } else {
+                                toast.error(e.message || "Failed to add to cart");
+                              }
+                            } finally {
+                              setIsAddingToCart(false);
+                            }
+                          }}
+                          disabled={isAddingToCart || selectedPerfume.quantity === 0}
+                          className="w-full h-12 text-xs uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                        >
+                          {isAddingToCart ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : selectedPerfume.quantity === 0 ? (
+                            "Out of Stock"
+                          ) : (
+                            <>
+                              <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                            </>
+                          )}
+                        </Button>
+                      </div>
                   </div>
                 </div>
 

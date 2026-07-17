@@ -30,6 +30,15 @@ export default function PerfumeCard({
   const [clickedGlow, setClickedGlow] = useState(false);
   const inStock = perfume.quantity > 0;
   const tag = inferPerfumeTag(perfume);
+  
+  const hasFlashSale = perfume.flash_sale_price != null && 
+    perfume.flash_sale_end != null && 
+    new Date(perfume.flash_sale_end) > new Date();
+    
+  const displayPrice = hasFlashSale ? perfume.flash_sale_price! : perfume.target_sale_price;
+  const percentOff = hasFlashSale 
+    ? Math.round(((perfume.target_sale_price - displayPrice) / perfume.target_sale_price) * 100) 
+    : 0;
 
   const handleTap = () => {
     setClickedGlow(true);
@@ -109,8 +118,15 @@ export default function PerfumeCard({
 
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card via-card/60 to-transparent pointer-events-none" />
 
-        <div className="absolute bottom-2 left-2 z-10 rounded-full bg-card/85 px-2 py-0.5 text-[8px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.18em] text-muted-foreground backdrop-blur-md">
-          {tag}
+        <div className="absolute bottom-2 left-2 z-10 flex gap-1">
+          <div className="rounded-full bg-card/85 px-2 py-0.5 text-[8px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.18em] text-muted-foreground backdrop-blur-md">
+            {tag}
+          </div>
+          {hasFlashSale && (
+            <div className="rounded-full bg-primary/90 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-primary-foreground backdrop-blur-md">
+              -{percentOff}% OFF
+            </div>
+          )}
         </div>
       </div>
 
@@ -123,9 +139,16 @@ export default function PerfumeCard({
             {perfume.scent_name}
           </h3>
           <div className="flex items-end justify-between">
-            <p className="font-display text-base leading-none text-foreground sm:text-2xl">
-              {formatPhp(perfume.target_sale_price)}
-            </p>
+            <div>
+              <p className="font-display text-base leading-none text-foreground sm:text-2xl">
+                {formatPhp(displayPrice)}
+              </p>
+              {hasFlashSale && (
+                <p className="text-[10px] text-muted-foreground line-through mt-0.5">
+                  {formatPhp(perfume.target_sale_price)}
+                </p>
+              )}
+            </div>
             <motion.span initial={{ opacity: 0, x: -6 }} whileHover={{ opacity: 1, x: 0 }} className="hidden text-[10px] uppercase tracking-[0.15em] text-primary font-body sm:block">
               View →
             </motion.span>

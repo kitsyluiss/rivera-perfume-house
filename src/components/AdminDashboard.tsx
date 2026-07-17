@@ -11,6 +11,7 @@ import {
   Plus,
   ShoppingCart,
   TrendingUp,
+  ClipboardList,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,11 +21,15 @@ import { createClient } from "@/lib/supabase/client";
 import { Perfume, Sale } from "@/lib/types";
 import InventoryTable from "@/components/InventoryTable";
 import SalesDashboard from "@/components/SalesDashboard";
+import OrdersTable from "@/components/OrdersTable";
+import PaymentMethodsTable from "@/components/PaymentMethodsTable";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import { formatPhp } from "@/lib/format";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import PreloaderIdent from "@/components/PreloaderIdent";
+import { getAdminOrders } from "@/lib/admin-actions";
+import { Order } from "@/lib/types";
 
 const AddPerfumeForm = dynamic(() => import("@/components/AddPerfumeForm"), {
   ssr: false,
@@ -37,7 +42,7 @@ import { LogOut } from "lucide-react";
 const ease = [0.22, 1, 0.36, 1] as const;
 const php = (n: number) => formatPhp(n);
 
-type Tab = "inventory" | "sales";
+type Tab = "inventory" | "sales" | "orders" | "payments";
 
 function StatsGrid({
   stats,
@@ -78,8 +83,10 @@ export default function AdminDashboard() {
   const [preloaderDone, setPreloaderDone] = useState(false);
   const [perfumes, setPerfumes] = useState<Perfume[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loadingPerfumes, setLoadingPerfumes] = useState(true);
   const [loadingSales, setLoadingSales] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [sellOpen, setSellOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("inventory");
@@ -108,10 +115,22 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const fetchOrders = useCallback(async () => {
+    try {
+      const data = await getAdminOrders();
+      setOrders(data ?? []);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to load orders");
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, []);
+
   useEffect(() => {
     void fetchPerfumes();
     void fetchSales();
-  }, [fetchPerfumes, fetchSales]);
+    void fetchOrders();
+  }, [fetchPerfumes, fetchSales, fetchOrders]);
 
   // ── Supabase Realtime — auto-refresh on remote changes ────────────
   useEffect(() => {
@@ -128,10 +147,15 @@ export default function AdminDashboard() {
         { event: "*", schema: "public", table: "sales" },
         () => void fetchSales()
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        () => void fetchOrders()
+      )
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
-  }, [fetchPerfumes, fetchSales]);
+  }, [fetchPerfumes, fetchSales, fetchOrders]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -179,7 +203,16 @@ export default function AdminDashboard() {
     { label: "Profit", value: totalSalesProfit, icon: TrendingUp, format: php },
   ];
 
-  const currentStats = tab === "inventory" ? inventoryStats : salesStats;
+  const pendingOrders = orders.filter((o) => o.status === "pending_verification");
+  
+  const orderStats = [
+    { label: "Total Orders", value: orders.length, icon: ClipboardList },
+    { label: "Pending", value: pendingOrders.length, icon: AlertTriangle },
+    { label: "Revenue", value: orders.reduce((sum, o) => o.status === "paid" || o.status === "shipped" || o.status === "delivered" ? sum + o.total : sum, 0), icon: DollarSign, format: php },
+    { label: "Unfulfilled", value: orders.filter((o) => o.status === "paid").length, icon: Package },
+  ];
+
+  const currentStats = tab === "inventory" ? inventoryStats : tab === "sales" ? salesStats : orderStats;
 
   return (
     <>
@@ -255,30 +288,59 @@ export default function AdminDashboard() {
 
         {/* Tab navigation */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <div className="flex items-center gap-1.5 rounded-full border border-border bg-card/60 p-1 backdrop-blur-md self-center sm:self-auto">
+          <div className="flex items-center justify-between gap-1 rounded-xl sm:rounded-full border border-border bg-card/60 p-1 backdrop-blur-md w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setTab("inventory")}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] uppercase tracking-[0.18em] transition-colors sm:gap-2 sm:px-4 sm:text-xs ${
+              className={`flex flex-1 justify-center items-center gap-1.5 rounded-lg sm:rounded-full px-2 py-2 text-[10px] uppercase tracking-[0.18em] transition-colors sm:gap-2 sm:px-4 sm:text-xs ${
                 tab === "inventory"
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
-              <Package className="h-3.5 w-3.5" />
-              Inventory
+              <Package className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden xs:inline sm:inline">Inventory</span>
             </button>
             <button
               type="button"
               onClick={() => setTab("sales")}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] uppercase tracking-[0.18em] transition-colors sm:gap-2 sm:px-4 sm:text-xs ${
+              className={`flex flex-1 justify-center items-center gap-1.5 rounded-lg sm:rounded-full px-2 py-2 text-[10px] uppercase tracking-[0.18em] transition-colors sm:gap-2 sm:px-4 sm:text-xs ${
                 tab === "sales"
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
-              <ShoppingCart className="h-3.5 w-3.5" />
-              Sales
+              <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden xs:inline sm:inline">Sales</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("orders")}
+              className={`flex flex-1 justify-center items-center gap-1.5 rounded-lg sm:rounded-full px-2 py-2 text-[10px] uppercase tracking-[0.18em] transition-colors sm:gap-2 sm:px-4 sm:text-xs ${
+                tab === "orders"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+            >
+              <ClipboardList className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden xs:inline sm:inline">Orders</span>
+              {pendingOrders.length > 0 && (
+                <span className="ml-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
+                  {pendingOrders.length}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("payments")}
+              className={`flex flex-1 justify-center items-center gap-1.5 rounded-lg sm:rounded-full px-2 py-2 text-[10px] uppercase tracking-[0.18em] transition-colors sm:gap-2 sm:px-4 sm:text-xs ${
+                tab === "payments"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+            >
+              <DollarSign className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden xs:inline sm:inline">Payments</span>
             </button>
           </div>
 
@@ -333,7 +395,7 @@ export default function AdminDashboard() {
                 }}
               />
             </motion.div>
-          ) : (
+          ) : tab === "sales" ? (
             <motion.div
               key="sales"
               className="w-full"
@@ -348,6 +410,32 @@ export default function AdminDashboard() {
                 loading={loadingSales}
                 onUpdate={fetchSales}
               />
+            </motion.div>
+          ) : tab === "orders" ? (
+            <motion.div
+              key="orders"
+              className="w-full"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.35, ease }}
+            >
+              <OrdersTable
+                orders={orders}
+                loading={loadingOrders}
+                onUpdate={() => { fetchOrders(); fetchPerfumes(); fetchSales(); }}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="payments"
+              className="w-full"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.35, ease }}
+            >
+              <PaymentMethodsTable />
             </motion.div>
           )}
         </AnimatePresence>

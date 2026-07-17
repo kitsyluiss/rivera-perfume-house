@@ -12,6 +12,35 @@ export async function signIn(email: string, password: string) {
   if (error) throw new Error(error.message);
 }
 
+export async function signUp(email: string, password: string, name: string) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    throw new Error("Invalid email format");
+  }
+
+  const supabase = await createClient();
+  const { error: signUpError, data } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+  if (signUpError) throw new Error(signUpError.message);
+  
+  if (data.user && data.user.identities && data.user.identities.length === 0) {
+    throw new Error("Email address already registered");
+  }
+  
+  if (data.user) {
+    const { error: profileError } = await supabase.from("profiles").upsert({
+      id: data.user.id,
+      display_name: name.trim(),
+      role: 'customer'
+    });
+    if (profileError) throw new Error(profileError.message);
+  }
+
+  return { requiresEmailConfirmation: !data.session };
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
@@ -28,7 +57,7 @@ export async function getUserProfile() {
 
   const { data } = await supabase
     .from("profiles")
-    .select("id, display_name")
+    .select("id, display_name, role")
     .eq("id", user.id)
     .single();
 
@@ -235,6 +264,34 @@ export async function deletePerfume(id: string, imageUrl?: string | null) {
   if (error) throw new Error(error.message);
   revalidatePath("/");
   revalidatePath("/admin");
+}
+
+export async function setFlashSale(id: string, flashSalePrice: number | null, flashSaleEnd: string | null) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+  
+  // Verify user is admin
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (profile?.role !== "admin") throw new Error("Unauthorized: Admins only");
+
+  const { error } = await supabase
+    .from("perfumes")
+    .update({ 
+      flash_sale_price: flashSalePrice, 
+      flash_sale_end: flashSaleEnd 
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+  
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/cart");
+  revalidatePath("/checkout");
 }
 
 // ─── Sales ────────────────────────────────────────────────────────────────────
