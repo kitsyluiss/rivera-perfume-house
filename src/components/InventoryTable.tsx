@@ -665,7 +665,7 @@ export default function InventoryTable({
                 <TableHead className="w-10 text-muted-foreground text-center">
                   <input 
                     type="checkbox" 
-                    className="h-4 w-4 rounded border-border bg-secondary accent-primary cursor-pointer"
+                    className="appearance-none h-[18px] w-[18px] rounded-[4px] border border-border/80 bg-transparent checked:bg-primary checked:border-primary cursor-pointer flex items-center justify-center transition-colors checked:after:content-['✓'] checked:after:text-primary-foreground checked:after:text-[12px] checked:after:font-black"
                     checked={selectedIds.length === sorted.length && sorted.length > 0}
                     onChange={() => toggleSelectAll(sorted)}
                   />
@@ -708,8 +708,8 @@ export default function InventoryTable({
                   >
                     <TableCell className="w-10 text-center">
                       <input 
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-border bg-secondary accent-primary cursor-pointer"
+                        type="checkbox" 
+                        className="appearance-none h-[18px] w-[18px] rounded-[4px] border border-border/80 bg-transparent checked:bg-primary checked:border-primary cursor-pointer flex items-center justify-center transition-colors checked:after:content-['✓'] checked:after:text-primary-foreground checked:after:text-[12px] checked:after:font-black"
                         checked={selectedIds.includes(perfume.id)}
                         onChange={() => toggleSelection(perfume.id)}
                       />

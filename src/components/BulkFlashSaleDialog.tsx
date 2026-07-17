@@ -67,6 +67,26 @@ export default function BulkFlashSaleDialog({
     }
   };
 
+  const handleEndSales = async () => {
+    setLoading(true);
+    try {
+      // Set to null to end sales
+      await setBulkFlashSale(
+        selectedIds,
+        0,
+        null,
+        null
+      );
+      toast.success(`Ended flash sales for ${selectedIds.length} items!`);
+      onSuccess();
+      onOpenChange(false);
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] border-border bg-card/95 backdrop-blur-xl">
@@ -178,13 +198,25 @@ export default function BulkFlashSaleDialog({
             </div>
           </div>
 
-          <Button 
-            type="submit" 
-            disabled={loading} 
-            className="w-full h-12 text-sm font-semibold tracking-wide"
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : `Apply to ${selectedIds.length} Items`}
-          </Button>
+          <div className="flex flex-col gap-2 mt-6">
+            <Button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full h-12 text-sm font-semibold tracking-wide"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : `Apply to ${selectedIds.length} Items`}
+            </Button>
+            
+            <Button 
+              type="button" 
+              variant="outline"
+              disabled={loading}
+              onClick={handleEndSales}
+              className="w-full h-12 text-sm font-semibold tracking-wide text-destructive border-destructive/20 hover:bg-destructive/10 hover:border-destructive/30"
+            >
+              End Sales Now
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
