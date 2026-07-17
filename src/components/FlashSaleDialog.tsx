@@ -45,10 +45,21 @@ export default function FlashSaleDialog({
   useEffect(() => {
     if (open && perfume) {
       setSalePrice(perfume.flash_sale_price ? String(perfume.flash_sale_price) : "");
-      setHours("24"); // Default 24 hours
-      setMinutes("0");
+      
+      if (perfume.flash_sale_end && new Date(perfume.flash_sale_end) > new Date()) {
+        const remainingMs = new Date(perfume.flash_sale_end).getTime() - new Date().getTime();
+        const hrs = Math.floor(remainingMs / (1000 * 60 * 60));
+        const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+        setHours(String(hrs));
+        setMinutes(String(mins));
+      } else {
+        setHours("24");
+        setMinutes("0");
+      }
+      
       setStockLimit(perfume.flash_sale_stock != null ? String(perfume.flash_sale_stock) : String(perfume.quantity));
       setEventName(perfume.flash_sale_name || "");
+      setShowEventDropdown(false);
     }
   }, [open, perfume]);
 
@@ -251,7 +262,7 @@ export default function FlashSaleDialog({
             </Button>
             <Button type="submit" disabled={loading || !isValidPrice} className="bg-primary text-primary-foreground">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Set Flash Sale
+              {perfume.flash_sale_price ? "Update Flash Sale" : "Set Flash Sale"}
             </Button>
           </div>
         </form>

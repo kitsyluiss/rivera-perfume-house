@@ -29,6 +29,22 @@ export async function getCartItems() {
     .order("created_at", { ascending: true });
 
   if (error) return { error: error.message };
+
+  if (data && data.length > 0) {
+    // Fetch total quantity for each brand/scent combo to avoid the duplicate stock bug
+    const { data: allStock } = await supabase.from("perfumes").select("brand, scent_name, quantity");
+    if (allStock) {
+      for (const item of data) {
+        if (item.perfume) {
+          const totalQty = allStock
+            .filter(p => p.brand === (item.perfume as any).brand && p.scent_name === (item.perfume as any).scent_name)
+            .reduce((sum, p) => sum + p.quantity, 0);
+          (item.perfume as any).quantity = totalQty;
+        }
+      }
+    }
+  }
+
   return data ?? [];
 }
 
