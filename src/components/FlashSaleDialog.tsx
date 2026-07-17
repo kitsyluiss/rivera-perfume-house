@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown, Check } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { Perfume } from "@/lib/types";
 import { setFlashSale } from "@/lib/actions";
@@ -28,6 +29,18 @@ export default function FlashSaleDialog({
   const [minutes, setMinutes] = useState("0");
   const [stockLimit, setStockLimit] = useState("");
   const [eventName, setEventName] = useState("");
+  const [showEventDropdown, setShowEventDropdown] = useState(false);
+
+  const EVENT_OPTIONS = [
+    "Payday Sale",
+    "8.8 Sale",
+    "9.9 Sale",
+    "10.10 Sale",
+    "11.11 Sale",
+    "12.12 Sale",
+    "Midnight Sale",
+    "Weekend Sale",
+  ];
 
   useEffect(() => {
     if (open && perfume) {
@@ -109,24 +122,65 @@ export default function FlashSaleDialog({
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
             <Label htmlFor="eventName" className="text-foreground">Event Name (Optional)</Label>
-            <select
-              id="eventName"
-              value={eventName}
-              onChange={(e) => setEventName(e.target.value)}
-              className="flex h-11 w-full rounded-md border border-border bg-secondary px-3 py-2 text-base text-foreground font-body focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
-            >
-              <option value="">None (Generic Flash Sale)</option>
-              <option value="Payday Sale">Payday Sale</option>
-              <option value="8.8 Sale">8.8 Sale</option>
-              <option value="9.9 Sale">9.9 Sale</option>
-              <option value="10.10 Sale">10.10 Sale</option>
-              <option value="11.11 Sale">11.11 Sale</option>
-              <option value="12.12 Sale">12.12 Sale</option>
-              <option value="Midnight Sale">Midnight Sale</option>
-              <option value="Weekend Sale">Weekend Sale</option>
-            </select>
+            <div className="relative">
+              <Input
+                id="eventName"
+                placeholder="e.g. Payday Sale, 8.8 Sale..."
+                value={eventName}
+                onChange={(e) => setEventName(e.target.value)}
+                onFocus={() => setShowEventDropdown(true)}
+                onBlur={() => setTimeout(() => setShowEventDropdown(false), 200)}
+                className="bg-secondary border-border focus:border-primary/40 h-11 text-base text-foreground font-body pr-10"
+              />
+              <button 
+                type="button"
+                onClick={() => setShowEventDropdown(!showEventDropdown)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </div>
+            
+            <AnimatePresence>
+              {showEventDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -5, height: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="absolute z-50 w-full overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+                >
+                  <div className="max-h-[200px] overflow-y-auto scrollbar-none p-1">
+                    {EVENT_OPTIONS.filter(opt => opt.toLowerCase().includes(eventName.toLowerCase())).map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onMouseDown={() => {
+                          setEventName(option);
+                          setShowEventDropdown(false);
+                        }}
+                        className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-secondary text-foreground"
+                      >
+                        {option}
+                        {eventName === option && <Check className="h-3 w-3 text-primary" />}
+                      </button>
+                    ))}
+                    {eventName && !EVENT_OPTIONS.some(opt => opt.toLowerCase() === eventName.toLowerCase()) && (
+                      <button
+                        type="button"
+                        onMouseDown={() => setShowEventDropdown(false)}
+                        className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-secondary text-primary font-medium"
+                      >
+                        Use "{eventName}"
+                        <Check className="h-3 w-3 text-primary" />
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="space-y-2">
