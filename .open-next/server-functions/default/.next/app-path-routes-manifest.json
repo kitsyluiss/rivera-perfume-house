@@ -1,0 +1,15 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/admin/login/page": "/admin/login",
+  "/admin/page": "/admin",
+  "/cart/page": "/cart",
+  "/checkout/page": "/checkout",
+  "/checkout/success/page": "/checkout/success",
+  "/favicon.ico/route": "/favicon.ico",
+  "/login/page": "/login",
+  "/orders/page": "/orders",
+  "/page": "/",
+  "/signup/page": "/signup",
+  "/unauthorized/page": "/unauthorized"
+}

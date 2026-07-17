@@ -18,12 +18,19 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  
-  const profile = session ? await getUserProfile() : null;
+  let session = null;
+  let profile = null;
+
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getSession();
+    session = data.session;
+    profile = session ? await getUserProfile() : null;
+  } catch (error) {
+    // If auth fails (e.g. on edge environments due to cookie issues), gracefully fall back to unauthenticated state.
+    console.error("Auth error in layout:", error);
+  }
+
   const role = profile?.role || 'customer';
 
   return (

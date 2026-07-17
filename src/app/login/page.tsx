@@ -129,6 +129,16 @@ export default function LoginPage() {
                       className="pl-10 border-border bg-secondary/50 text-foreground transition-all duration-200 focus-visible:ring-primary/30"
                     />
                   </div>
+                  {field.id === "password" && (
+                    <div className="flex justify-end pt-1">
+                      <Link
+                        href="/forgot-password"
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
+                  )}
                 </motion.div>
               ))}
 

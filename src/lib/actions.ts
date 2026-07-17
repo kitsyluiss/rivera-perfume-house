@@ -46,6 +46,22 @@ export async function signOut() {
   await supabase.auth.signOut();
 }
 
+export async function sendPasswordReset(email: string, redirectUrl: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: redirectUrl,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function updatePassword(password: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({
+    password: password,
+  });
+  if (error) throw new Error(error.message);
+}
+
 // ─── Profile ───────────────────────────────────────────────────────────────────
 
 export async function getUserProfile() {
