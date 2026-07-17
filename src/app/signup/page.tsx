@@ -34,7 +34,9 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
-      const result = await signUp(email, password, name);
+      // Create redirect URL back to the site
+      const redirectUrl = `${window.location.origin}/login`;
+      const result = await signUp(email, password, name, redirectUrl);
       if (result?.requiresEmailConfirmation) {
         setSuccess(true);
       } else {

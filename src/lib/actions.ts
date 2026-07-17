@@ -8,11 +8,29 @@ import type { Perfume, Sale } from "@/lib/types";
 
 export async function signIn(email: string, password: string) {
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw new Error(error.message);
+
+  // Create profile upon first login if it doesn't exist
+  if (data.user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", data.user.id)
+      .single();
+
+    if (!profile) {
+      const displayName = data.user.user_metadata?.display_name || email.split("@")[0];
+      await supabase.from("profiles").upsert({
+        id: data.user.id,
+        display_name: displayName,
+        role: "customer",
+      });
+    }
+  }
 }
 
-export async function signUp(email: string, password: string, name: string) {
+export async function signUp(email: string, password: string, name: string, redirectUrl: string) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     throw new Error("Invalid email format");
@@ -22,21 +40,22 @@ export async function signUp(email: string, password: string, name: string) {
   const { error: signUpError, data } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        display_name: name.trim(),
+      },
+      emailRedirectTo: redirectUrl,
+    },
   });
   if (signUpError) throw new Error(signUpError.message);
   
   if (data.user && data.user.identities && data.user.identities.length === 0) {
     throw new Error("Email address already registered");
   }
-  
-  if (data.user) {
-    const { error: profileError } = await supabase.from("profiles").upsert({
-      id: data.user.id,
-      display_name: name.trim(),
-      role: 'customer'
-    });
-    if (profileError) throw new Error(profileError.message);
-  }
+
+  // Note: We no longer try to insert into `profiles` here.
+  // Unconfirmed users do not have a valid session to bypass RLS.
+  // The profile will be created upon first login in the `signIn` function.
 
   return { requiresEmailConfirmation: !data.session };
 }
