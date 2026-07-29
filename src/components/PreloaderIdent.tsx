@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * PreloaderIdent — Rivera Perfume House
+ * PreloaderIdent — Rivera Fragrance House
  *
  * Choreography timeline:
  *   0.00s  Ambient gold glow scales in
  *   0.10s  Top ornament line draws
  *   0.50s  Diamond ornament fades in
  *   0.55s  "RIVERA" letters cascade in (6 × 70ms stagger, blur reveal)
- *   1.05s  "Perfume House" subtitle fades in
+ *   1.05s  "Fragrance House" subtitle fades in
  *   1.30s  Bottom diamond + line draw
  *   1.55s  Thin progress bar fills over 0.85s
  *   2.60s  Exit: fade out + subtle upward lift
@@ -154,7 +154,7 @@ export default function PreloaderIdent({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, delay: 1.05, ease }}
             >
-              Perfume House
+              Fragrance House
             </motion.p>
 
             {/* bottom diamond */}

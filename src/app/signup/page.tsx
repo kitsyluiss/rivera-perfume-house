@@ -87,7 +87,7 @@ export default function SignUpPage() {
                   <CardTitle className="font-display text-2xl tracking-wide text-foreground">Create Account</CardTitle>
                 </motion.div>
                 <CardDescription className="text-muted-foreground mt-2">
-                  Join Rivera Perfume House to shop our exclusive collection
+                  Join Rivera Fragrance House to shop our exclusive collection
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-6 pb-7 sm:px-8 sm:pb-8">

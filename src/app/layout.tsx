@@ -6,7 +6,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Rivera Perfume House",
+  title: "Rivera Fragrance House",
   description: "Curated luxury fragrances",
   icons: {
     icon: "/logo.svg",

@@ -221,3 +221,7 @@ CREATE POLICY "Admins can manage QR codes" ON storage.objects FOR ALL TO authent
   bucket_id = 'payment_qrs' AND 
   (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
 );
+
+-- Flash sale stock limit and name (Added later)
+ALTER TABLE perfumes ADD COLUMN IF NOT EXISTS flash_sale_stock INTEGER CHECK (flash_sale_stock >= 0);
+ALTER TABLE perfumes ADD COLUMN IF NOT EXISTS flash_sale_name TEXT;

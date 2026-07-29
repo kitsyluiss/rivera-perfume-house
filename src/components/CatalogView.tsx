@@ -378,7 +378,7 @@ export default function CatalogView({
         className="border-t border-border py-10 text-center"
       >
         <p className="font-body text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-          Rivera Perfume House &mdash; Fine Fragrances
+          Rivera Fragrance House &mdash; Fine Fragrances
         </p>
       </motion.footer>
 
