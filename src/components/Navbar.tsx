@@ -45,8 +45,8 @@ export default function Navbar({ isLoggedIn, role }: { isLoggedIn: boolean; role
             <span className="font-display text-sm tracking-[0.28em] text-primary sm:text-base">
               RIVERA
             </span>
-            <span className="block text-[7px] tracking-[0.3em] text-muted-foreground/70 sm:text-[8px] sm:tracking-[0.32em]">
-              PERFUME HOUSE
+            <span className="block text-[6px] tracking-[0.16em] text-muted-foreground/70 sm:text-[7px] sm:tracking-[0.14em]">
+              FRAGRANCE HOUSE
             </span>
           </div>
         </Link>

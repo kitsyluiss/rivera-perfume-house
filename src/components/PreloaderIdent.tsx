@@ -145,8 +145,8 @@ export default function PreloaderIdent({
                 fontFamily: '"DM Mono", monospace',
                 fontSize: "clamp(0.5rem, 1vw, 0.58rem)",
                 fontWeight: 300,
-                letterSpacing: "0.42em",
-                paddingLeft: "0.42em",
+                letterSpacing: "0.22em",
+                paddingLeft: "0.22em",
                 textTransform: "uppercase" as const,
                 color: "#7e725b",
               }}
