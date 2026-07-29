@@ -208,6 +208,64 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
       heart: ["Cardamom", "Lily of the Valley", "Ginger", "Carnation"],
       base: ["Musk", "Cashmere Musk", "Ambergris", "Leather", "Cedarwood", "Moss"]
     }
+  },
+  "hawas black": {
+    description: "A bold, dark, and powerful aromatic woody scent with crisp top notes of grapefruit, bergamot, and pineapple, drying down into an earthy blend of oakmoss, amber, and patchouli.",
+    accords: [
+      { name: "Woody", value: 100, color: "woody" },
+      { name: "Citrus", value: 85, color: "citrus" },
+      { name: "Mossy", value: 70, color: "mossy" },
+      { name: "Earthy", value: 65, color: "earthy" },
+      { name: "Fresh Spicy", value: 50, color: "fresh_spicy" },
+      { name: "Fruity", value: 48, color: "fruity" },
+      { name: "Patchouli", value: 47, color: "patchouli" },
+      { name: "Sweet", value: 46, color: "sweet" },
+      { name: "Aromatic", value: 45, color: "aromatic" }
+    ],
+    notes: {
+      top: ["Bergamot", "Pineapple", "Grapefruit"],
+      heart: ["Patchouli", "Cedarwood", "Jasmine"],
+      base: ["Oakmoss", "Woody Notes", "Amber"]
+    }
+  },
+  "hunter men": {
+    description: "A rich, woody aromatic fragrance with clean herbal and floral hints of ylang-ylang and tuberose, anchored by cedarwood, sandalwood, and earthy vetiver.",
+    accords: [
+      { name: "Woody", value: 100, color: "woody" },
+      { name: "Aromatic", value: 75, color: "aromatic" },
+      { name: "Citrus", value: 60, color: "citrus" },
+      { name: "Yellow Floral", value: 58, color: "yellow_floral" },
+      { name: "Fresh Spicy", value: 58, color: "fresh_spicy" },
+      { name: "Warm Spicy", value: 45, color: "warm_spicy" },
+      { name: "Tuberose", value: 44, color: "tuberose" },
+      { name: "White Floral", value: 40, color: "white_floral" },
+      { name: "Sweet", value: 35, color: "sweet" }
+    ],
+    notes: {
+      top: ["Grapefruit", "Cedar Needles", "Rosemary", "Cardamom"],
+      heart: ["Ylang-Ylang", "Tuberose", "Olibanum"],
+      base: ["Cedar", "Sandalwood", "Vetiver"]
+    }
+  },
+  "hawas": {
+    description: "An aquatic, fruity masterpiece blending fresh apple, sparkling citrus, and warm cinnamon, settling into a gorgeous, long-lasting base of ambergris and musk.",
+    accords: [
+      { name: "Fruity", value: 100, color: "fruity" },
+      { name: "Citrus", value: 95, color: "citrus" },
+      { name: "Aquatic", value: 85, color: "aquatic" },
+      { name: "Fresh", value: 75, color: "fresh" },
+      { name: "Warm Spicy", value: 60, color: "warm_spicy" },
+      { name: "Amber", value: 55, color: "amber" },
+      { name: "Sweet", value: 55, color: "sweet" },
+      { name: "Musky", value: 50, color: "musky" },
+      { name: "Aromatic", value: 50, color: "aromatic" },
+      { name: "Animalic", value: 48, color: "animalic" }
+    ],
+    notes: {
+      top: ["Apple", "Bergamot", "Lemon", "Cinnamon"],
+      heart: ["Watery Notes", "Plum", "Orange Blossom", "Cardamon"],
+      base: ["Ambergris", "Musk", "Patchouli", "Driftwood"]
+    }
   }
 };
 

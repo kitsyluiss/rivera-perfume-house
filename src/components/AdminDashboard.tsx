@@ -157,6 +157,67 @@ export default function AdminDashboard() {
     return () => { void supabase.removeChannel(channel); };
   }, [fetchPerfumes, fetchSales, fetchOrders]);
 
+  // ── Auto-seed specific perfumes if missing ───────────────────────
+  useEffect(() => {
+    const seedNewPerfumes = async () => {
+      if (perfumes.length === 0) return;
+      const targetScents = ["Hawas Black", "Hunter Men", "Hawas"];
+      const existingScents = new Set(perfumes.map((p) => p.scent_name));
+      const missingScents = targetScents.filter(s => !existingScents.has(s));
+      
+      if (missingScents.length === 0) return;
+
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const toInsert = [];
+      if (missingScents.includes("Hawas Black")) {
+        toInsert.push({
+          user_id: user.id,
+          brand: "Rasasi",
+          scent_name: "Hawas Black",
+          season: "Statement",
+          target_sale_price: 1999,
+          quantity: 2,
+          cost_price: 0,
+        });
+      }
+      if (missingScents.includes("Hunter Men")) {
+        toInsert.push({
+          user_id: user.id,
+          brand: "Armaf",
+          scent_name: "Hunter Men",
+          season: "Casual",
+          target_sale_price: 1499,
+          quantity: 2,
+          cost_price: 0,
+        });
+      }
+      if (missingScents.includes("Hawas")) {
+        toInsert.push({
+          user_id: user.id,
+          brand: "Rasasi",
+          scent_name: "Hawas",
+          season: "Casual",
+          target_sale_price: 1999,
+          quantity: 2,
+          cost_price: 0,
+        });
+      }
+
+      if (toInsert.length > 0) {
+        const { error } = await supabase.from("perfumes").insert(toInsert);
+        if (!error) {
+          toast.success(`Automatically seeded ${toInsert.length} new perfumes!`);
+          void fetchPerfumes();
+        }
+      }
+    };
+
+    void seedNewPerfumes();
+  }, [perfumes, fetchPerfumes]);
+
   const handleSignOut = async () => {
     await signOut();
     toast.success("Signed out");
