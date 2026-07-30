@@ -266,6 +266,61 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
       heart: ["Watery Notes", "Plum", "Orange Blossom", "Cardamon"],
       base: ["Ambergris", "Musk", "Patchouli", "Driftwood"]
     }
+  },
+  "pacific aloha": {
+    description: "An incredibly fresh, tropical marine blend of sweet melon and blood orange layered with rich coconut, transitioning into a warm amberwood and cacao base.",
+    accords: [
+      { name: "Aquatic", value: 100, color: "aquatic" },
+      { name: "Ozonic", value: 100, color: "ozonic" },
+      { name: "Coconut", value: 70, color: "coconut" },
+      { name: "Citrus", value: 65, color: "citrus" },
+      { name: "Marine", value: 55, color: "marine" },
+      { name: "Sweet", value: 53, color: "sweet" },
+      { name: "Fruity", value: 50, color: "fruity" },
+      { name: "Aromatic", value: 48, color: "aromatic" },
+      { name: "Amber", value: 45, color: "amber" },
+      { name: "Lactonic", value: 43, color: "lactonic" }
+    ],
+    notes: {
+      top: ["Melon", "Blood Orange", "Lemon"],
+      heart: ["Watermelon", "Coconut"],
+      base: ["Marine notes", "Amberwood", "Cacao"]
+    }
+  },
+  "aquatica": {
+    description: "A gorgeous, sweet citrus-coconut escape with vanilla highlights, supported by sugarcane, fresh jasmine, warm rum, and deep patchouli.",
+    accords: [
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "Sweet", value: 75, color: "sweet" },
+      { name: "Coconut", value: 65, color: "coconut" },
+      { name: "Vanilla", value: 55, color: "vanilla" },
+      { name: "Fresh Spicy", value: 45, color: "fresh_spicy" }
+    ],
+    notes: {
+      top: ["Lime", "Coconut Milk", "Bergamot", "Mandarin"],
+      heart: ["Sugar Cane", "Jasmine", "Hibiscus", "Gardenia"],
+      base: ["Rum", "Musk", "Tonka Bean", "Patchouli"]
+    }
+  },
+  "nocturno elixir": {
+    description: "A fresh and herbal aromatic powerhouse of lavender, mint, and zesty citrus, finished with rich sandalwood.",
+    accords: [
+      { name: "Aromatic", value: 100, color: "aromatic" },
+      { name: "Citrus", value: 98, color: "citrus" },
+      { name: "Fresh Spicy", value: 98, color: "fresh_spicy" },
+      { name: "Woody", value: 75, color: "woody" },
+      { name: "Herbal", value: 65, color: "herbal" },
+      { name: "Green", value: 55, color: "green" },
+      { name: "Lavender", value: 55, color: "lavender" },
+      { name: "Powdery", value: 55, color: "powdery" },
+      { name: "Warm Spicy", value: 53, color: "warm_spicy" },
+      { name: "Fruity", value: 45, color: "fruity" }
+    ],
+    notes: {
+      top: ["Lemon Zest", "Bergamot", "Mint", "Artemisia"],
+      heart: ["Geranium", "Lavender", "Pineapple"],
+      base: ["Sandalwood"]
+    }
   }
 };
 

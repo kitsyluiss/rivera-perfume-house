@@ -161,7 +161,14 @@ export default function AdminDashboard() {
   useEffect(() => {
     const seedNewPerfumes = async () => {
       if (perfumes.length === 0) return;
-      const targetScents = ["Hawas Black", "Hunter Men", "Hawas"];
+      const targetScents = [
+        "Hawas Black", 
+        "Hunter Men", 
+        "Hawas",
+        "Pacific Aloha",
+        "Aquatica",
+        "Nocturno Elixir"
+      ];
       const existingScents = new Set(perfumes.map((p) => p.scent_name));
       const missingScents = targetScents.filter(s => !existingScents.has(s));
       
@@ -201,6 +208,39 @@ export default function AdminDashboard() {
           scent_name: "Hawas",
           season: "Casual",
           target_sale_price: 1999,
+          quantity: 2,
+          cost_price: 0,
+        });
+      }
+      if (missingScents.includes("Pacific Aloha")) {
+        toInsert.push({
+          user_id: user.id,
+          brand: "Rayhaan",
+          scent_name: "Pacific Aloha",
+          season: "Casual",
+          target_sale_price: 1499,
+          quantity: 2,
+          cost_price: 0,
+        });
+      }
+      if (missingScents.includes("Aquatica")) {
+        toInsert.push({
+          user_id: user.id,
+          brand: "Rayhaan",
+          scent_name: "Aquatica",
+          season: "Casual",
+          target_sale_price: 1499,
+          quantity: 2,
+          cost_price: 0,
+        });
+      }
+      if (missingScents.includes("Nocturno Elixir")) {
+        toInsert.push({
+          user_id: user.id,
+          brand: "Rayhaan",
+          scent_name: "Nocturno Elixir",
+          season: "Casual",
+          target_sale_price: 1499,
           quantity: 2,
           cost_price: 0,
         });
