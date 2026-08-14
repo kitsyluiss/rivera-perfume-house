@@ -122,24 +122,27 @@ export default function PerfumeCard({
 
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card via-card/60 to-transparent pointer-events-none" />
 
-        <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1">
+        {/* Category Tag (Bottom Left) */}
+        <div className="absolute bottom-2 left-2 z-10">
           <div className="rounded-full bg-card/85 px-2 py-0.5 text-[8px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.18em] text-muted-foreground backdrop-blur-md">
             {tag}
           </div>
-          {hasFlashSale && !isExpired && (
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-              <div className="rounded-full bg-primary/90 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-primary-foreground backdrop-blur-md flex items-center gap-1 w-max">
-                {perfume.flash_sale_name && <span>{perfume.flash_sale_name} •</span>}
-                <span>-{percentOff}% OFF</span>
-              </div>
-              {timeLeft && (
-                <div className="rounded-full bg-black/60 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-white backdrop-blur-md flex items-center w-max font-mono tracking-wider">
-                  ⏱ {timeLeft}
-                </div>
-              )}
-            </div>
-          )}
         </div>
+
+        {/* Flash Sale Details (Top Left) */}
+        {hasFlashSale && !isExpired && (
+          <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 sm:flex-row sm:items-center">
+            <div className="rounded-full bg-primary/90 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-primary-foreground backdrop-blur-md flex items-center gap-1 w-max">
+              {perfume.flash_sale_name && <span>{perfume.flash_sale_name} •</span>}
+              <span>-{percentOff}% OFF</span>
+            </div>
+            {timeLeft && (
+              <div className="rounded-full bg-black/60 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-white backdrop-blur-md flex items-center w-max font-mono tracking-wider">
+                ⏱ {timeLeft}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="relative z-10 -mt-2 p-3 pb-4.5 sm:p-5">
