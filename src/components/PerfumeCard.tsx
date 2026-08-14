@@ -122,7 +122,7 @@ export default function PerfumeCard({
 
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card via-card/60 to-transparent pointer-events-none" />
 
-        <div className="absolute bottom-2 left-2 z-10 flex gap-1">
+        <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1">
           <div className="rounded-full bg-card/85 px-2 py-0.5 text-[8px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.18em] text-muted-foreground backdrop-blur-md">
             {tag}
           </div>
