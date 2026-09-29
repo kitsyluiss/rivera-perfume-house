@@ -128,10 +128,13 @@ export async function upsertProfile(displayName: string) {
 
 export async function getPerfumes(): Promise<Perfume[]> {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   const { data: perfumesData, error } = await supabase
     .from("perfumes")
     .select("*")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -440,8 +443,10 @@ export async function recordSale(formData: FormData) {
 
 export async function getSales(): Promise<Sale[]> {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
-  // RLS `sales_read_own` automatically filters to the current user's sales
+  // Filter sales by the admin who recorded them
   const { data, error } = await supabase
     .from("sales")
     .select(
@@ -454,6 +459,7 @@ export async function getSales(): Promise<Sale[]> {
       )
     `
     )
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
