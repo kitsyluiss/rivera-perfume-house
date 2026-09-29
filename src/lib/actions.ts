@@ -521,3 +521,21 @@ export async function deleteSale(saleId: string) {
   revalidatePath("/");
   revalidatePath("/admin");
 }
+
+export async function cleanUpSeededItems() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  
+  // Delete items matching the exact auto-seed profile: cost_price = 0, quantity = 2
+  const { error } = await supabase
+    .from("perfumes")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("cost_price", 0)
+    .eq("quantity", 2);
+    
+  if (error) throw new Error(error.message);
+  revalidatePath("/");
+  revalidatePath("/admin");
+}

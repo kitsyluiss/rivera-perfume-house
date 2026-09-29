@@ -16,7 +16,7 @@ import {
 import dynamic from "next/dynamic";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { getPerfumes, getSales, signOut } from "@/lib/actions";
+import { getPerfumes, getSales, signOut, cleanUpSeededItems } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/client";
 import { Perfume, Sale } from "@/lib/types";
 import InventoryTable from "@/components/InventoryTable";
@@ -157,142 +157,7 @@ export default function AdminDashboard() {
     return () => { void supabase.removeChannel(channel); };
   }, [fetchPerfumes, fetchSales, fetchOrders]);
 
-  // ── Auto-seed specific perfumes if missing ───────────────────────
-  useEffect(() => {
-    const seedNewPerfumes = async () => {
-      if (perfumes.length === 0) return;
-      const targetScents = [
-        "Hawas Black", 
-        "Hunter Men", 
-        "Hawas",
-        "Pacific Aloha",
-        "Aquatica",
-        "Nocturno Elixir",
-        "Divine",
-        "Supremacy Collector's Edition",
-        "Varakh Silver"
-      ];
-      const existingScents = new Set(perfumes.map((p) => p.scent_name));
-      const missingScents = targetScents.filter(s => !existingScents.has(s));
-      
-      if (missingScents.length === 0) return;
-
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const toInsert = [];
-      if (missingScents.includes("Hawas Black")) {
-        toInsert.push({
-          user_id: user.id,
-          brand: "Rasasi",
-          scent_name: "Hawas Black",
-          season: "Statement",
-          target_sale_price: 1999,
-          quantity: 2,
-          cost_price: 0,
-        });
-      }
-      if (missingScents.includes("Hunter Men")) {
-        toInsert.push({
-          user_id: user.id,
-          brand: "Armaf",
-          scent_name: "Hunter Men",
-          season: "Casual",
-          target_sale_price: 1499,
-          quantity: 2,
-          cost_price: 0,
-        });
-      }
-      if (missingScents.includes("Hawas")) {
-        toInsert.push({
-          user_id: user.id,
-          brand: "Rasasi",
-          scent_name: "Hawas",
-          season: "Casual",
-          target_sale_price: 1999,
-          quantity: 2,
-          cost_price: 0,
-        });
-      }
-      if (missingScents.includes("Pacific Aloha")) {
-        toInsert.push({
-          user_id: user.id,
-          brand: "Rayhaan",
-          scent_name: "Pacific Aloha",
-          season: "Casual",
-          target_sale_price: 1499,
-          quantity: 2,
-          cost_price: 0,
-        });
-      }
-      if (missingScents.includes("Aquatica")) {
-        toInsert.push({
-          user_id: user.id,
-          brand: "Rayhaan",
-          scent_name: "Aquatica",
-          season: "Casual",
-          target_sale_price: 1499,
-          quantity: 2,
-          cost_price: 0,
-        });
-      }
-      if (missingScents.includes("Nocturno Elixir")) {
-        toInsert.push({
-          user_id: user.id,
-          brand: "Rayhaan",
-          scent_name: "Nocturno Elixir",
-          season: "Casual",
-          target_sale_price: 1499,
-          quantity: 2,
-          cost_price: 0,
-        });
-      }
-      if (missingScents.includes("Divine")) {
-        toInsert.push({
-          user_id: user.id,
-          brand: "Rayhaan",
-          scent_name: "Divine",
-          season: "Date Night",
-          target_sale_price: 1499,
-          quantity: 2,
-          cost_price: 0,
-        });
-      }
-      if (missingScents.includes("Supremacy Collector's Edition")) {
-        toInsert.push({
-          user_id: user.id,
-          brand: "Afnan",
-          scent_name: "Supremacy Collector's Edition",
-          season: "Statement",
-          target_sale_price: 2499,
-          quantity: 2,
-          cost_price: 0,
-        });
-      }
-      if (missingScents.includes("Varakh Silver")) {
-        toInsert.push({
-          user_id: user.id,
-          brand: "Fragrance World",
-          scent_name: "Varakh Silver",
-          season: "Office Safe",
-          target_sale_price: 1499,
-          quantity: 2,
-          cost_price: 0,
-        });
-      }
-
-      if (toInsert.length > 0) {
-        const { error } = await supabase.from("perfumes").insert(toInsert);
-        if (!error) {
-          toast.success(`Automatically seeded ${toInsert.length} new perfumes!`);
-          void fetchPerfumes();
-        }
-      }
-    };
-
-    void seedNewPerfumes();
-  }, [perfumes, fetchPerfumes]);
+  // Auto-seed logic removed to prevent cluttering inventory
 
   const handleSignOut = async () => {
     await signOut();
@@ -491,18 +356,38 @@ export default function AdminDashboard() {
           </div>
 
           <motion.div 
-            className="w-full sm:w-auto"
-            whileHover={{ scale: 1.01 }} 
-            whileTap={{ scale: 0.99 }}
+            className="w-full sm:w-auto flex gap-2"
           >
             {tab === "inventory" ? (
-              <Button
-                onClick={() => setAddOpen(true)}
-                className="w-full h-9 px-3 text-[10px] uppercase tracking-wider sm:h-10 sm:px-4 sm:text-xs sm:w-auto"
-              >
-                <Plus className="mr-1.5 h-4 w-4 sm:mr-2" />
-                Add New
-              </Button>
+              <>
+                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="flex-1 sm:flex-none">
+                  <Button
+                    onClick={async () => {
+                      const id = toast.loading("Cleaning up seeded items...");
+                      try {
+                        await cleanUpSeededItems();
+                        await fetchPerfumes();
+                        toast.success("Seeded items removed!", { id });
+                      } catch (e: any) {
+                        toast.error(e.message, { id });
+                      }
+                    }}
+                    variant="outline"
+                    className="w-full h-9 px-3 text-[10px] uppercase tracking-wider sm:h-10 sm:px-4 sm:text-xs sm:w-auto border-red-500/20 hover:bg-red-500/10 hover:text-red-500 text-red-500"
+                  >
+                    Clear Seed
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="flex-1 sm:flex-none">
+                  <Button
+                    onClick={() => setAddOpen(true)}
+                    className="w-full h-9 px-3 text-[10px] uppercase tracking-wider sm:h-10 sm:px-4 sm:text-xs sm:w-auto"
+                  >
+                    <Plus className="mr-1.5 h-4 w-4 sm:mr-2" />
+                    Add New
+                  </Button>
+                </motion.div>
+              </>
             ) : (
               <Button
                 onClick={() => setSellOpen(true)}
