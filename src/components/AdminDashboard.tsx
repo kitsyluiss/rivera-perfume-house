@@ -16,7 +16,7 @@ import {
 import dynamic from "next/dynamic";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { getPerfumes, getSales, signOut, cleanUpSeededItems } from "@/lib/actions";
+import { getPerfumes, getSales, signOut } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/client";
 import { Perfume, Sale } from "@/lib/types";
 import InventoryTable from "@/components/InventoryTable";
@@ -356,38 +356,18 @@ export default function AdminDashboard() {
           </div>
 
           <motion.div 
-            className="w-full sm:w-auto flex gap-2"
+            className="w-full sm:w-auto"
+            whileHover={{ scale: 1.01 }} 
+            whileTap={{ scale: 0.99 }}
           >
             {tab === "inventory" ? (
-              <>
-                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="flex-1 sm:flex-none">
-                  <Button
-                    onClick={async () => {
-                      const id = toast.loading("Cleaning up seeded items...");
-                      try {
-                        await cleanUpSeededItems();
-                        await fetchPerfumes();
-                        toast.success("Seeded items removed!", { id });
-                      } catch (e: any) {
-                        toast.error(e.message, { id });
-                      }
-                    }}
-                    variant="outline"
-                    className="w-full h-9 px-3 text-[10px] uppercase tracking-wider sm:h-10 sm:px-4 sm:text-xs sm:w-auto border-red-500/20 hover:bg-red-500/10 hover:text-red-500 text-red-500"
-                  >
-                    Clear Seed
-                  </Button>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="flex-1 sm:flex-none">
-                  <Button
-                    onClick={() => setAddOpen(true)}
-                    className="w-full h-9 px-3 text-[10px] uppercase tracking-wider sm:h-10 sm:px-4 sm:text-xs sm:w-auto"
-                  >
-                    <Plus className="mr-1.5 h-4 w-4 sm:mr-2" />
-                    Add New
-                  </Button>
-                </motion.div>
-              </>
+              <Button
+                onClick={() => setAddOpen(true)}
+                className="w-full h-9 px-3 text-[10px] uppercase tracking-wider sm:h-10 sm:px-4 sm:text-xs sm:w-auto"
+              >
+                <Plus className="mr-1.5 h-4 w-4 sm:mr-2" />
+                Add New
+              </Button>
             ) : (
               <Button
                 onClick={() => setSellOpen(true)}

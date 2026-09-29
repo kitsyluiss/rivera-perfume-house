@@ -521,32 +521,3 @@ export async function deleteSale(saleId: string) {
   revalidatePath("/");
   revalidatePath("/admin");
 }
-
-export async function cleanUpSeededItems() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-  
-  const targetScents = [
-    "Hawas Black", 
-    "Hunter Men", 
-    "Hawas",
-    "Pacific Aloha",
-    "Aquatica",
-    "Nocturno Elixir",
-    "Divine",
-    "Supremacy Collector's Edition",
-    "Varakh Silver"
-  ];
-  
-  // Delete by scent name to ensure they are removed even if quantity changed
-  const { error } = await supabase
-    .from("perfumes")
-    .delete()
-    .eq("user_id", user.id)
-    .in("scent_name", targetScents);
-    
-  if (error) throw new Error(error.message);
-  revalidatePath("/");
-  revalidatePath("/admin");
-}
