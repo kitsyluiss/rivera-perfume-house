@@ -527,13 +527,24 @@ export async function cleanUpSeededItems() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
   
-  // Delete items matching the exact auto-seed profile: cost_price = 0, quantity = 2
+  const targetScents = [
+    "Hawas Black", 
+    "Hunter Men", 
+    "Hawas",
+    "Pacific Aloha",
+    "Aquatica",
+    "Nocturno Elixir",
+    "Divine",
+    "Supremacy Collector's Edition",
+    "Varakh Silver"
+  ];
+  
+  // Delete by scent name to ensure they are removed even if quantity changed
   const { error } = await supabase
     .from("perfumes")
     .delete()
     .eq("user_id", user.id)
-    .eq("cost_price", 0)
-    .eq("quantity", 2);
+    .in("scent_name", targetScents);
     
   if (error) throw new Error(error.message);
   revalidatePath("/");
