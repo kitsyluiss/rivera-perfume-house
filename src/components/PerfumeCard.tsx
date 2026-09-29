@@ -1,8 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import Image from "next/image";
-import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  useMotionTemplate,
+  useReducedMotion,
+} from "motion/react";
 import { Perfume } from "@/lib/types";
 import { formatPhp } from "@/lib/format";
 import { inferPerfumeTag } from "@/lib/perfume-tags";
@@ -29,20 +36,32 @@ export default function PerfumeCard({
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [clickedGlow, setClickedGlow] = useState(false);
+  const prefersReduced = useReducedMotion();
   const inStock = perfume.quantity > 0;
   const tag = inferPerfumeTag(perfume);
-  
-  const hasFlashSale = perfume.flash_sale_price != null && 
-    perfume.flash_sale_end != null && 
+
+  const hasFlashSale =
+    perfume.flash_sale_price != null &&
+    perfume.flash_sale_end != null &&
     new Date(perfume.flash_sale_end) > new Date() &&
     (perfume.flash_sale_stock == null || perfume.flash_sale_stock > 0);
-    
-  const { timeLeft, isExpired } = useCountdown(hasFlashSale ? perfume.flash_sale_end! : null);
 
-  const displayPrice = hasFlashSale && !isExpired ? perfume.flash_sale_price! : perfume.target_sale_price;
-  const percentOff = hasFlashSale && !isExpired
-    ? Math.round(((perfume.target_sale_price - displayPrice) / perfume.target_sale_price) * 100) 
-    : 0;
+  const { timeLeft, isExpired } = useCountdown(
+    hasFlashSale ? perfume.flash_sale_end! : null
+  );
+
+  const displayPrice =
+    hasFlashSale && !isExpired
+      ? perfume.flash_sale_price!
+      : perfume.target_sale_price;
+  const percentOff =
+    hasFlashSale && !isExpired
+      ? Math.round(
+          ((perfume.target_sale_price - displayPrice) /
+            perfume.target_sale_price) *
+            100
+        )
+      : 0;
 
   const handleTap = () => {
     setClickedGlow(true);
@@ -50,9 +69,9 @@ export default function PerfumeCard({
     onClick?.();
   };
 
-  // --- 3D tilt (mouse-only) ---
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
+  // --- 3D tilt + magnetic border glow (mouse-only) ---
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
 
   const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [8, -8]), {
     stiffness: 250,
@@ -63,11 +82,37 @@ export default function PerfumeCard({
     damping: 25,
   });
 
-  const handleMouse = (event: React.MouseEvent) => {
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    mouseX.set((event.clientX - rect.left) / rect.width - 0.5);
-    mouseY.set((event.clientY - rect.top) / rect.height - 0.5);
-  };
+  // Magnetic border glow — gold spotlight traces cursor around card
+  const glowX = useSpring(useTransform(mouseX, [0, 1], [0, 100]), {
+    stiffness: 300,
+    damping: 30,
+  });
+  const glowY = useSpring(useTransform(mouseY, [0, 1], [0, 100]), {
+    stiffness: 300,
+    damping: 30,
+  });
+  const borderGlow = useMotionTemplate`radial-gradient(300px circle at ${glowX}% ${glowY}%, rgba(214,179,109,0.10), transparent 60%)`;
+
+  const handleMouse = useCallback(
+    (event: React.MouseEvent) => {
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width;
+      const y = (event.clientY - rect.top) / rect.height;
+      mouseX.set(x - 0.5);
+      mouseY.set(y - 0.5);
+    },
+    [mouseX, mouseY]
+  );
+
+  // For glow we need 0-1 range, for tilt we need -0.5 to 0.5
+  const handleMouseForGlow = useCallback(
+    (event: React.MouseEvent) => {
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      mouseX.set((event.clientX - rect.left) / rect.width - 0.5);
+      mouseY.set((event.clientY - rect.top) / rect.height - 0.5);
+    },
+    [mouseX, mouseY]
+  );
 
   const resetMouse = () => {
     mouseX.set(0);
@@ -75,9 +120,10 @@ export default function PerfumeCard({
   };
 
   // Only apply perspective tilt on non-touch (pointer) devices
-  const tiltStyle = isTouchDevice
-    ? {}
-    : { rotateX, rotateY, transformPerspective: 900 };
+  const tiltStyle =
+    isTouchDevice || prefersReduced
+      ? {}
+      : { rotateX, rotateY, transformPerspective: 900 };
 
   return (
     <motion.article
@@ -87,21 +133,35 @@ export default function PerfumeCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.25 } }}
-      transition={{ duration: 0.7, delay: Math.min(index * 0.07, 0.56), ease }}
-      onMouseMove={isTouchDevice ? undefined : handleMouse}
+      transition={{
+        duration: 0.7,
+        delay: Math.min(index * 0.07, 0.56),
+        ease,
+      }}
+      onMouseMove={isTouchDevice ? undefined : handleMouseForGlow}
       onMouseLeave={isTouchDevice ? undefined : resetMouse}
       onClick={handleTap}
       style={tiltStyle}
-      // On touch devices we skip the 3D tilt entirely: it has no effect without a
-      // mouse and can cause subpixel transform shifts that break tap hit-testing on
-      // the last card in the grid.
       className={`card-shimmer group relative cursor-pointer overflow-hidden rounded-[1.1rem] border border-border bg-card transition-[border-color] duration-500 hover:border-primary/25 ${
         clickedGlow ? "is-glowing" : ""
       } ${!inStock ? "opacity-50 grayscale" : ""}`}
     >
+      {/* Magnetic border glow overlay — mouse-only */}
+      {!isTouchDevice && (
+        <motion.div
+          className="pointer-events-none absolute inset-0 z-[2] rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{ background: borderGlow }}
+          aria-hidden
+        />
+      )}
+
       <div className="relative aspect-[4/5] overflow-hidden bg-secondary">
         {perfume.image_url ? (
-          <motion.div className="relative h-full w-full" whileHover={{ scale: 1.06 }} transition={{ duration: 0.65, ease }}>
+          <motion.div
+            className="relative h-full w-full"
+            whileHover={{ scale: 1.06 }}
+            transition={{ duration: 0.65, ease }}
+          >
             <Image
               src={perfume.image_url}
               alt={`${perfume.brand} ${perfume.scent_name}`}
@@ -132,8 +192,10 @@ export default function PerfumeCard({
         {/* Flash Sale Details (Top Left) */}
         {hasFlashSale && !isExpired && (
           <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 sm:flex-row sm:items-center">
-            <div className="rounded-full bg-primary/90 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-primary-foreground backdrop-blur-md flex items-center gap-1 w-max">
-              {perfume.flash_sale_name && <span>{perfume.flash_sale_name} •</span>}
+            <div className="flash-sale-badge rounded-full bg-primary/90 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-primary-foreground backdrop-blur-md flex items-center gap-1 w-max">
+              {perfume.flash_sale_name && (
+                <span>{perfume.flash_sale_name} •</span>
+              )}
               <span>-{percentOff}% OFF</span>
             </div>
             {timeLeft && (
@@ -146,7 +208,11 @@ export default function PerfumeCard({
       </div>
 
       <div className="relative z-10 -mt-2 p-3 pb-4.5 sm:p-5">
-        <motion.div initial={false} whileHover={{ y: -3 }} transition={{ duration: 0.3, ease }}>
+        <motion.div
+          initial={false}
+          whileHover={{ y: -3 }}
+          transition={{ duration: 0.3, ease }}
+        >
           <p className="mb-1 text-[8px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-primary font-body">
             {perfume.brand}
           </p>
@@ -164,7 +230,11 @@ export default function PerfumeCard({
                 </p>
               )}
             </div>
-            <motion.span initial={{ opacity: 0, x: -6 }} whileHover={{ opacity: 1, x: 0 }} className="hidden text-[10px] uppercase tracking-[0.15em] text-primary font-body sm:block">
+            <motion.span
+              initial={{ opacity: 0, x: -6 }}
+              whileHover={{ opacity: 1, x: 0 }}
+              className="hidden text-[10px] uppercase tracking-[0.15em] text-primary font-body sm:block"
+            >
               View →
             </motion.span>
           </div>

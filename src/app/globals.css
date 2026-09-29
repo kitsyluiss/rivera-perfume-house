@@ -133,6 +133,10 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   STUDIO-GRADE EFFECTS
+   ═══════════════════════════════════════════════════════════════════ */
+
 /* Animated gradient mesh */
 @keyframes mesh-drift {
   0%,
@@ -189,15 +193,7 @@ input[type="number"] {
   }
 }
 
-/* Stop animation entirely when user prefers reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .bg-gradient-mesh::before,
-  .bg-gradient-mesh::after {
-    animation: none;
-  }
-}
-
-/* Shimmer for card hover glow */
+/* ── Shimmer for card hover glow ── */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -234,13 +230,129 @@ input[type="number"] {
   animation: shimmer 2.5s ease-in-out infinite;
 }
 
-/* Stop shimmer animation if the OS requests reduced motion */
+/* ── Flash sale pulse glow ── */
+@keyframes flash-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(38 44% 61% / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 12px 4px hsl(38 44% 61% / 0.15);
+  }
+}
+
+.flash-sale-badge {
+  animation: flash-pulse 2s ease-in-out infinite;
+}
+
+/* ── Floating gold particles ── */
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(var(--particle-drift, 20px)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+.gold-particle {
+  position: absolute;
+  width: var(--particle-size, 2px);
+  height: var(--particle-size, 2px);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(214, 179, 109, 0.8), rgba(214, 179, 109, 0.2));
+  pointer-events: none;
+  animation: particle-float var(--particle-duration, 12s) linear infinite;
+  animation-delay: var(--particle-delay, 0s);
+  will-change: transform, opacity;
+}
+
+/* ── Accord bar spring overshoot ── */
+@keyframes accord-fill {
+  0% {
+    transform: scaleX(0);
+  }
+  70% {
+    transform: scaleX(1.03);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+/* ── Footer reveal parallax ── */
+.footer-reveal {
+  position: relative;
+}
+
+.footer-reveal::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to top, transparent, hsl(var(--background)));
+  pointer-events: none;
+}
+
+/* ── Levitation shadow for detail panel ── */
+@keyframes levitate-shadow {
+  0%, 100% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scaleX(0.9) scaleY(0.85);
+    opacity: 0.15;
+  }
+}
+
+.levitate-shadow {
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 20px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.3), transparent 70%);
+  border-radius: 50%;
+  animation: levitate-shadow 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Stop animation entirely when user prefers reduced motion */
 @media (prefers-reduced-motion: reduce) {
+  .bg-gradient-mesh::before,
+  .bg-gradient-mesh::after {
+    animation: none;
+  }
+
   .card-shimmer:hover::before,
   .card-shimmer:active::before,
   .card-shimmer.is-glowing::before {
     animation: none;
     opacity: 0.6;
+  }
+
+  .flash-sale-badge {
+    animation: none;
+  }
+
+  .gold-particle {
+    animation: none;
+    display: none;
+  }
+
+  .levitate-shadow {
+    animation: none;
   }
 }
 
@@ -248,4 +360,3 @@ input[type="number"] {
 .preloader-seen .preloader-overlay {
   display: none !important;
 }
-
