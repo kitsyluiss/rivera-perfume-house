@@ -200,17 +200,17 @@ input[type="number"] {
 /* Shimmer for card hover glow */
 @keyframes shimmer {
   0% {
-    background-position: -200% 0;
+    transform: translateX(-100%);
   }
   100% {
-    background-position: 200% 0;
+    transform: translateX(100%);
   }
 }
 
 .card-shimmer::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -100% -100%; /* Make it large enough to sweep across */
   border-radius: inherit;
   background: linear-gradient(
     105deg,
@@ -220,18 +220,18 @@ input[type="number"] {
     hsl(38 44% 61% / 0.06) 55%,
     transparent 60%
   );
-  background-size: 200% 100%;
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
   z-index: 1;
+  will-change: transform;
 }
 
 .card-shimmer:hover::before,
 .card-shimmer:active::before,
 .card-shimmer.is-glowing::before {
   opacity: 1;
-  animation: shimmer 2.5s ease-in-out infinite;
+  animation: shimmer 1.8s ease-in-out infinite;
 }
 
 /* Stop shimmer animation if the OS requests reduced motion */
@@ -241,6 +241,7 @@ input[type="number"] {
   .card-shimmer.is-glowing::before {
     animation: none;
     opacity: 0.6;
+    transform: translateX(0);
   }
 }
 

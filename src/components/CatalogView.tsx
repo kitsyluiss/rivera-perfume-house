@@ -424,6 +424,9 @@ export default function CatalogView({
                         src={selectedPerfume.image_url}
                         alt={selectedPerfume.scent_name}
                         className="h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                        style={{ willChange: "transform" }}
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">

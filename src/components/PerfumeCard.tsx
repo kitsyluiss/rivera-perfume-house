@@ -82,19 +82,19 @@ export default function PerfumeCard({
   return (
     <motion.article
       ref={cardRef}
-      layout
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.25 } }}
-      transition={{ duration: 0.7, delay: Math.min(index * 0.07, 0.56), ease }}
+      transition={{ duration: 0.7, delay: Math.min(index * 0.04, 0.4), ease }}
       onMouseMove={isTouchDevice ? undefined : handleMouse}
       onMouseLeave={isTouchDevice ? undefined : resetMouse}
       onClick={handleTap}
-      style={tiltStyle}
-      // On touch devices we skip the 3D tilt entirely: it has no effect without a
-      // mouse and can cause subpixel transform shifts that break tap hit-testing on
-      // the last card in the grid.
+      style={{
+        ...tiltStyle,
+        willChange: "transform, opacity",
+      }}
+      // On touch devices we skip the 3D tilt entirely
       className={`card-shimmer group relative cursor-pointer overflow-hidden rounded-[1.1rem] border border-border bg-card transition-[border-color] duration-500 hover:border-primary/25 ${
         clickedGlow ? "is-glowing" : ""
       } ${!inStock ? "opacity-50 grayscale" : ""}`}
@@ -102,16 +102,14 @@ export default function PerfumeCard({
       <div className="relative aspect-[4/5] overflow-hidden bg-secondary">
         {perfume.image_url ? (
           <motion.div className="relative h-full w-full" whileHover={{ scale: 1.06 }} transition={{ duration: 0.65, ease }}>
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={perfume.image_url}
               alt={`${perfume.brand} ${perfume.scent_name}`}
-              fill
-              // 2-col mobile → each card is ~50vw; 3-col tablet → ~33vw; 4-col desktop → 25vw
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover"
-              // Eagerly load first 4 cards; lazy-load the rest
-              priority={index < 4}
+              className="h-full w-full object-cover"
               loading={index < 4 ? "eager" : "lazy"}
+              decoding="async"
+              style={{ willChange: "transform" }}
             />
           </motion.div>
         ) : (
@@ -124,7 +122,7 @@ export default function PerfumeCard({
 
         {/* Category Tag (Bottom Left) */}
         <div className="absolute bottom-2 left-2 z-10">
-          <div className="rounded-full bg-card/85 px-2 py-0.5 text-[8px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.18em] text-muted-foreground backdrop-blur-md">
+          <div className="rounded-full bg-card/95 px-2 py-0.5 text-[8px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.18em] text-muted-foreground shadow-sm">
             {tag}
           </div>
         </div>
@@ -132,12 +130,12 @@ export default function PerfumeCard({
         {/* Flash Sale Details (Top Left) */}
         {hasFlashSale && !isExpired && (
           <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 sm:flex-row sm:items-center">
-            <div className="rounded-full bg-primary/90 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-primary-foreground backdrop-blur-md flex items-center gap-1 w-max">
+            <div className="rounded-full bg-primary/95 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-primary-foreground shadow-sm flex items-center gap-1 w-max">
               {perfume.flash_sale_name && <span>{perfume.flash_sale_name} •</span>}
               <span>-{percentOff}% OFF</span>
             </div>
             {timeLeft && (
-              <div className="rounded-full bg-black/60 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-white backdrop-blur-md flex items-center w-max font-mono tracking-wider">
+              <div className="rounded-full bg-black/90 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-white shadow-sm flex items-center w-max font-mono tracking-wider">
                 ⏱ {timeLeft}
               </div>
             )}
