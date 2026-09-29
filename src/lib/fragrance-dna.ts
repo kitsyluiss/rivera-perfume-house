@@ -321,6 +321,63 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
       heart: ["Geranium", "Lavender", "Pineapple"],
       base: ["Sandalwood"]
     }
+  },
+  "divine": {
+    description: "A fresh, fruity, and floral delight featuring litchi, ginger, and rose, finished with deep patchouli and chocolate.",
+    accords: [
+      { name: "Fresh", value: 100, color: "fresh" },
+      { name: "Patchouli", value: 88, color: "patchouli" },
+      { name: "Fresh Spicy", value: 85, color: "fresh_spicy" },
+      { name: "Floral", value: 83, color: "floral" },
+      { name: "Rose", value: 80, color: "rose" },
+      { name: "Citrus", value: 78, color: "citrus" },
+      { name: "Fruity", value: 75, color: "fruity" },
+      { name: "Warm Spicy", value: 70, color: "warm_spicy" },
+      { name: "Woody", value: 68, color: "woody" },
+      { name: "Tropical", value: 60, color: "tropical" }
+    ],
+    notes: {
+      top: ["Litchi", "Ginger", "Bergamot"],
+      heart: ["Peony", "Rose", "Vanilla"],
+      base: ["Patchouli", "Chocolate"]
+    }
+  },
+  "supremacy collector's edition": {
+    description: "A commanding sweet and fruity blend with sharp pineapple, bright white florals, and a rich, amber-moss base.",
+    accords: [
+      { name: "Fruity", value: 100, color: "fruity" },
+      { name: "Sweet", value: 90, color: "sweet" },
+      { name: "White Floral", value: 85, color: "white_floral" },
+      { name: "Citrus", value: 83, color: "citrus" },
+      { name: "Amber", value: 70, color: "amber" },
+      { name: "Mossy", value: 65, color: "mossy" },
+      { name: "Tropical", value: 60, color: "tropical" },
+      { name: "Animalic", value: 60, color: "animalic" },
+      { name: "Fresh", value: 55, color: "fresh" },
+      { name: "Musky", value: 55, color: "musky" }
+    ],
+    notes: {
+      top: ["Pineapple", "Bergamot", "White Flowers", "Apple"],
+      heart: ["Orange Blossom", "Birch", "Amber"],
+      base: ["Oak Moss", "Musk", "Ambergris"]
+    }
+  },
+  "varakh silver": {
+    description: "An elegant, aromatic and fresh spicy profile characterized by juniper berry and nutmeg, with a soft musky-amber dry down.",
+    accords: [
+      { name: "Aromatic", value: 100, color: "aromatic" },
+      { name: "Fresh Spicy", value: 95, color: "fresh_spicy" },
+      { name: "Woody", value: 60, color: "woody" },
+      { name: "Musky", value: 58, color: "musky" },
+      { name: "Powdery", value: 55, color: "powdery" },
+      { name: "Amber", value: 50, color: "amber" },
+      { name: "Soft Spicy", value: 48, color: "soft_spicy" }
+    ],
+    notes: {
+      top: ["Juniper Berry", "Coriander Leaf"],
+      heart: ["Nutmeg"],
+      base: ["Musk", "Amber", "Vanilla"]
+    }
   }
 };
 

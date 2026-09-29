@@ -167,7 +167,10 @@ export default function AdminDashboard() {
         "Hawas",
         "Pacific Aloha",
         "Aquatica",
-        "Nocturno Elixir"
+        "Nocturno Elixir",
+        "Divine",
+        "Supremacy Collector's Edition",
+        "Varakh Silver"
       ];
       const existingScents = new Set(perfumes.map((p) => p.scent_name));
       const missingScents = targetScents.filter(s => !existingScents.has(s));
@@ -240,6 +243,39 @@ export default function AdminDashboard() {
           brand: "Rayhaan",
           scent_name: "Nocturno Elixir",
           season: "Casual",
+          target_sale_price: 1499,
+          quantity: 2,
+          cost_price: 0,
+        });
+      }
+      if (missingScents.includes("Divine")) {
+        toInsert.push({
+          user_id: user.id,
+          brand: "Rayhaan",
+          scent_name: "Divine",
+          season: "Date Night",
+          target_sale_price: 1499,
+          quantity: 2,
+          cost_price: 0,
+        });
+      }
+      if (missingScents.includes("Supremacy Collector's Edition")) {
+        toInsert.push({
+          user_id: user.id,
+          brand: "Afnan",
+          scent_name: "Supremacy Collector's Edition",
+          season: "Statement",
+          target_sale_price: 2499,
+          quantity: 2,
+          cost_price: 0,
+        });
+      }
+      if (missingScents.includes("Varakh Silver")) {
+        toInsert.push({
+          user_id: user.id,
+          brand: "Fragrance World",
+          scent_name: "Varakh Silver",
+          season: "Office Safe",
           target_sale_price: 1499,
           quantity: 2,
           cost_price: 0,
