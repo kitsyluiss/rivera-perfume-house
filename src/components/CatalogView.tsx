@@ -1,22 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useScroll,
-  useSpring,
-  useTransform,
-  useReducedMotion,
-} from "motion/react";
-import {
-  ChevronDown,
-  Filter,
-  Search,
-  X,
-  ShoppingCart,
-  Loader2,
-} from "lucide-react";
+import { AnimatePresence, motion, useScroll, useSpring } from "motion/react";
+import { ChevronDown, Filter, Search, X, ShoppingCart, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import PerfumeCard from "@/components/PerfumeCard";
@@ -30,67 +16,6 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 const ease = [0.22, 1, 0.36, 1] as const;
-
-/* ── Stagger variants for detail panel ── */
-const fadeUp = {
-  hidden: { opacity: 0, y: 16, filter: "blur(4px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.5, ease },
-  },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.92 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { type: "spring" as const, stiffness: 300, damping: 25 },
-  },
-};
-
-/* ── Floating gold particles ── */
-function GoldParticles({ count = 18 }: { count?: number }) {
-  const prefersReduced = useReducedMotion();
-  if (prefersReduced) return null;
-
-  const particles = useMemo(
-    () =>
-      Array.from({ length: count }, (_, i) => ({
-        id: i,
-        left: `${5 + Math.random() * 90}%`,
-        bottom: `${-5 - Math.random() * 10}%`,
-        size: `${1 + Math.random() * 2.5}px`,
-        drift: `${-30 + Math.random() * 60}px`,
-        duration: `${10 + Math.random() * 14}s`,
-        delay: `${-Math.random() * 15}s`,
-        opacity: 0.3 + Math.random() * 0.5,
-      })),
-    [count]
-  );
-
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="gold-particle"
-          style={{
-            left: p.left,
-            bottom: p.bottom,
-            "--particle-size": p.size,
-            "--particle-drift": p.drift,
-            "--particle-duration": p.duration,
-            "--particle-delay": p.delay,
-            opacity: p.opacity,
-          } as React.CSSProperties}
-        />
-      ))}
-    </div>
-  );
-}
 
 function getAccordGradient(color: string): string {
   switch (color) {
@@ -227,7 +152,6 @@ export default function CatalogView({
   const [brandFilter, setBrandFilter] = useState("all");
   const [brandOpen, setBrandOpen] = useState(false);
   const [tagFilter, setTagFilter] = useState("all");
-  const prefersReduced = useReducedMotion();
 
   const { scrollYProgress } = useScroll();
   const barWidth = useSpring(scrollYProgress, {
@@ -235,15 +159,6 @@ export default function CatalogView({
     damping: 30,
     restDelta: 0.001,
   });
-
-  /* ── Hero parallax ── */
-  const heroRef = useRef<HTMLElement>(null);
-  const { scrollY } = useScroll();
-  const heroY = useTransform(scrollY, [0, 400], [0, -80]);
-  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
-  const heroScale = useTransform(scrollY, [0, 400], [1, 0.97]);
-  const springHeroY = useSpring(heroY, { stiffness: 100, damping: 30 });
-  const springHeroScale = useSpring(heroScale, { stiffness: 100, damping: 30 });
 
   const brands = useMemo(
     () =>
@@ -280,441 +195,324 @@ export default function CatalogView({
         className="bg-gradient-mesh relative min-h-screen overflow-x-clip transition-opacity duration-500"
         style={{ opacity: preloaderDone ? 1 : 0 }}
       >
-        {/* Scroll progress bar */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 z-50 h-[2px] origin-left"
+        style={{
+          scaleX: barWidth,
+          background:
+            "linear-gradient(90deg, hsl(38 44% 61% / 0.4), hsl(38 44% 61%))",
+        }}
+      />
+
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="bg-gradient-mesh absolute inset-0" />
+      </div>
+
+      <header className="relative px-4 pb-8 pt-10 text-center sm:px-6 sm:pb-10 sm:pt-16">
         <motion.div
-          className="fixed top-0 left-0 right-0 z-50 h-[2px] origin-left"
-          style={{
-            scaleX: barWidth,
-            background:
-              "linear-gradient(90deg, hsl(38 44% 61% / 0.4), hsl(38 44% 61%))",
-          }}
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 1.2, delay: 0.05, ease }}
+          className="mx-auto mb-6 h-px w-10 bg-primary sm:mb-8"
         />
 
-        <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-          <div className="bg-gradient-mesh absolute inset-0" />
-        </div>
-
-        {/* ── Floating gold particles ── */}
-        <GoldParticles count={18} />
-
-        {/* ── Hero section with parallax ── */}
-        <motion.header
-          ref={heroRef}
-          className="relative px-4 pb-8 pt-10 text-center sm:px-6 sm:pb-10 sm:pt-16"
-          style={
-            prefersReduced
-              ? {}
-              : { y: springHeroY, opacity: heroOpacity, scale: springHeroScale }
-          }
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease }}
+          className="font-display overflow-hidden text-5xl font-light leading-none tracking-[0.18em] pl-[0.18em] text-primary sm:text-7xl md:text-8xl"
         >
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 1.2, delay: 0.05, ease }}
-            className="mx-auto mb-6 h-px w-10 bg-primary sm:mb-8"
-          />
+          {"RIVERA".split("").map((char, index) => (
+            <motion.span
+              key={`${char}-${index}`}
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.9, delay: 0.1 + index * 0.04, ease }}
+              className="inline-block"
+            >
+              {char}
+            </motion.span>
+          ))}
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.7 }}
+          className="mt-3 text-[9px] uppercase tracking-[0.28em] pl-[0.28em] text-muted-foreground sm:mt-4 sm:text-xs"
+        >
+          Curated luxury fragrances
+        </motion.p>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease }}
-            className="font-display overflow-hidden text-5xl font-light leading-none tracking-[0.18em] pl-[0.18em] text-primary sm:text-7xl md:text-8xl"
-          >
-            {"RIVERA".split("").map((char, index) => (
-              <motion.span
-                key={`${char}-${index}`}
-                initial={{ y: "100%", opacity: 0, filter: "blur(6px)" }}
-                animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-                transition={{
-                  duration: 0.9,
-                  delay: 0.1 + index * 0.04,
-                  ease,
-                }}
-                className="inline-block"
-              >
-                {char}
-              </motion.span>
-            ))}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.7 }}
-            className="mt-3 text-[9px] uppercase tracking-[0.28em] pl-[0.28em] text-muted-foreground sm:mt-4 sm:text-xs"
-          >
-            Curated luxury fragrances
-          </motion.p>
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 1.2, delay: 0.35, ease }}
+          className="mx-auto mt-6 h-px w-10 bg-primary sm:mt-8"
+        />
 
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 1.2, delay: 0.35, ease }}
-            className="mx-auto mt-6 h-px w-10 bg-primary sm:mt-8"
-          />
-
-          {/* Filter section */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
-            className="mx-auto mt-8 flex max-w-2xl flex-col items-center gap-4 sm:mt-10 sm:gap-5"
-          >
-            {/* Search + brand filter */}
-            <div className="relative z-[1000] flex w-full max-w-xl items-center">
-              <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by brand or scent..."
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="h-11 w-full rounded-none border-0 border-b border-border bg-transparent pl-7 pr-10 text-sm text-foreground placeholder:text-muted-foreground transition-all duration-300 focus-visible:border-b-primary focus-visible:ring-0 sm:h-13"
-              />
-              <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                <button
-                  type="button"
-                  onClick={() => setBrandOpen((o) => !o)}
-                  className={`flex h-8 w-8 items-center justify-center text-muted-foreground transition hover:text-foreground ${
-                    brandFilter !== "all" ? "text-primary" : ""
-                  }`}
-                  aria-label="Filter by brand"
-                >
-                  <Filter className="h-4 w-4" />
-                </button>
-                <AnimatePresence>
-                  {brandOpen && (
-                    <BrandDropdown
-                      brands={brands}
-                      value={brandFilter}
-                      onChange={(v) => {
-                        setBrandFilter(v);
-                        setBrandOpen(false);
-                      }}
-                      onClose={() => setBrandOpen(false)}
-                      align="right"
-                    />
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
-            {/* Category pills with shared layoutId underline */}
-            <div className="relative flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+        {/* Filter section */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
+          className="mx-auto mt-8 flex max-w-2xl flex-col items-center gap-4 sm:mt-10 sm:gap-5"
+        >
+          {/* Search + brand filter */}
+          <div className="relative z-[1000] flex w-full max-w-xl items-center">
+            <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by brand or scent..."
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className="h-11 w-full rounded-none border-0 border-b border-border bg-transparent pl-7 pr-10 text-sm text-foreground placeholder:text-muted-foreground transition-all duration-300 focus-visible:border-b-primary focus-visible:ring-0 sm:h-13"
+            />
+            <div className="absolute right-0 top-1/2 -translate-y-1/2">
               <button
                 type="button"
-                onClick={() => setTagFilter("all")}
-                className={`relative px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none transition sm:py-2 sm:text-[10px] ${
-                  tagFilter === "all"
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                onClick={() => setBrandOpen((o) => !o)}
+                className={`flex h-8 w-8 items-center justify-center text-muted-foreground transition hover:text-foreground ${
+                  brandFilter !== "all" ? "text-primary" : ""
                 }`}
+                aria-label="Filter by brand"
               >
-                All
-                {tagFilter === "all" && (
-                  <motion.div
-                    layoutId="category-underline"
-                    className="absolute -bottom-0.5 left-0 right-0 h-px bg-primary"
-                    transition={{
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 30,
+                <Filter className="h-4 w-4" />
+              </button>
+              <AnimatePresence>
+                {brandOpen && (
+                  <BrandDropdown
+                    brands={brands}
+                    value={brandFilter}
+                    onChange={(v) => {
+                      setBrandFilter(v);
+                      setBrandOpen(false);
                     }}
+                    onClose={() => setBrandOpen(false)}
+                    align="right"
                   />
                 )}
-              </button>
-              {PERFUME_TAGS.map((tag) => {
-                const active = tagFilter === tag.value.toLowerCase();
-                return (
-                  <button
-                    key={tag.value}
-                    type="button"
-                    onClick={() => setTagFilter(tag.value.toLowerCase())}
-                    className={`relative px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none transition sm:py-2 sm:text-[10px] ${
-                      active
-                        ? "text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {tag.value}
-                    {active && (
-                      <motion.div
-                        layoutId="category-underline"
-                        className="absolute -bottom-0.5 left-0 right-0 h-px bg-primary"
-                        transition={{
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 30,
-                        }}
-                      />
-                    )}
-                  </button>
-                );
-              })}
+              </AnimatePresence>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.p
+          {/* Category pills — single wrapping row */}
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setTagFilter("all")}
+              className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none transition sm:py-2 sm:text-[10px] ${
+                tagFilter === "all"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All
+            </button>
+            {PERFUME_TAGS.map((tag) => {
+              const active = tagFilter === tag.value.toLowerCase();
+              return (
+                <button
+                  key={tag.value}
+                  type="button"
+                  onClick={() => setTagFilter(tag.value.toLowerCase())}
+                  className={`px-1 py-1.5 text-[9px] uppercase tracking-[0.18em] leading-none transition sm:py-2 sm:text-[10px] ${
+                    active
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tag.value}
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45 }}
+          className="mt-4 text-[9px] uppercase tracking-[0.24em] text-muted-foreground sm:mt-5 sm:text-[10px]"
+        >
+          {filtered.length} {filtered.length === 1 ? "fragrance" : "fragrances"}
+        </motion.p>
+      </header>
+
+      <section className="mx-auto max-w-7xl px-4 pb-20 pt-2 sm:px-6">
+        <AnimatePresence mode="wait">
+          {filtered.length === 0 ? (
+            <motion.p
+              key="empty"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="mt-20 text-center text-base text-muted-foreground"
+            >
+              {initialPerfumes.length === 0
+                ? "No perfumes in the collection yet."
+                : "No fragrances match your search."}
+            </motion.p>
+          ) : (
+            // NOTE: No `layout` on this wrapper — Framer Motion layout transforms
+            // on the grid container can corrupt getBoundingClientRect() for the
+            // last card on mobile, making it unclickable. Cards carry layout
+            // themselves via their own `layout` prop.
+            <div className="w-full grid grid-cols-2 gap-3 landscape:grid-cols-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+              {filtered.map((perfume, index) => (
+                <PerfumeCard
+                  key={perfume.id}
+                  perfume={perfume}
+                  index={index}
+                  onClick={() => setSelectedPerfume(perfume)}
+                />
+              ))}
+            </div>
+          )}
+        </AnimatePresence>
+      </section>
+
+      <motion.footer
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+        className="border-t border-border py-10 text-center"
+      >
+        <p className="font-body text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+          Rivera Fragrance House &mdash; Fine Fragrances
+        </p>
+      </motion.footer>
+
+      <AnimatePresence>
+        {selectedPerfume && (
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.45 }}
-            className="mt-4 text-[9px] uppercase tracking-[0.24em] text-muted-foreground sm:mt-5 sm:text-[10px]"
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[5000] flex items-end justify-center md:items-center"
           >
-            {filtered.length}{" "}
-            {filtered.length === 1 ? "fragrance" : "fragrances"}
-          </motion.p>
-        </motion.header>
+            {/* Scrim */}
+            <div
+              className="absolute inset-0 bg-black/82 backdrop-blur-md cursor-pointer"
+              onClick={() => setSelectedPerfume(null)}
+            />
 
-        <section className="mx-auto max-w-7xl px-4 pb-20 pt-2 sm:px-6">
-          <AnimatePresence mode="wait">
-            {filtered.length === 0 ? (
-              <motion.p
-                key="empty"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="mt-20 text-center text-base text-muted-foreground"
-              >
-                {initialPerfumes.length === 0
-                  ? "No perfumes in the collection yet."
-                  : "No fragrances match your search."}
-              </motion.p>
-            ) : (
-              // NOTE: No `layout` on this wrapper — Framer Motion layout transforms
-              // on the grid container can corrupt getBoundingClientRect() for the
-              // last card on mobile, making it unclickable. Cards carry layout
-              // themselves via their own `layout` prop.
-              <div className="w-full grid grid-cols-2 gap-3 landscape:grid-cols-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-                {filtered.map((perfume, index) => (
-                  <PerfumeCard
-                    key={perfume.id}
-                    perfume={perfume}
-                    index={index}
-                    onClick={() => setSelectedPerfume(perfume)}
-                  />
-                ))}
-              </div>
-            )}
-          </AnimatePresence>
-        </section>
-
-        {/* ── Footer with reveal effect ── */}
-        <motion.footer
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.8, ease }}
-          className="footer-reveal border-t border-border py-10 text-center"
-        >
-          <p className="font-body text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            Rivera Fragrance House &mdash; Fine Fragrances
-          </p>
-        </motion.footer>
-
-        {/* ══════════════════════════════════════════════════════════════
-            DETAIL PANEL — Theatrical staggered reveal
-           ══════════════════════════════════════════════════════════════ */}
-        <AnimatePresence>
-          {selectedPerfume && (
+            {/* Panel */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="fixed inset-0 z-[5000] flex items-end justify-center md:items-center"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 220 }}
+              className="relative z-10 w-full max-w-3xl overflow-hidden rounded-t-[1.5rem] border border-border bg-background shadow-2xl md:rounded-[1.5rem] max-h-[92vh] md:max-h-[85vh] flex flex-col"
             >
-              {/* Scrim with enhanced blur */}
-              <motion.div
-                className="absolute inset-0 cursor-pointer"
-                initial={{ backdropFilter: "blur(0px)", backgroundColor: "rgba(0,0,0,0)" }}
-                animate={{ backdropFilter: "blur(12px)", backgroundColor: "rgba(0,0,0,0.82)" }}
-                exit={{ backdropFilter: "blur(0px)", backgroundColor: "rgba(0,0,0,0)" }}
-                transition={{ duration: 0.4 }}
+              {/* Close Button */}
+              <button
+                type="button"
                 onClick={() => setSelectedPerfume(null)}
-              />
-
-              {/* Panel */}
-              <motion.div
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 30, stiffness: 220 }}
-                className="relative z-10 w-full max-w-3xl overflow-hidden rounded-t-[1.5rem] border border-border bg-background shadow-2xl md:rounded-[1.5rem] max-h-[92vh] md:max-h-[85vh] flex flex-col"
+                className="absolute right-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-card/85 text-muted-foreground transition hover:bg-primary/10 hover:text-foreground cursor-pointer"
               >
-                {/* Close Button */}
-                <motion.button
-                  type="button"
-                  onClick={() => setSelectedPerfume(null)}
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                  className="absolute right-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-card/85 text-muted-foreground transition hover:bg-primary/10 hover:text-foreground cursor-pointer"
-                >
-                  <X className="h-5 w-5" />
-                </motion.button>
+                <X className="h-5 w-5" />
+              </button>
 
-                <div className="overflow-y-auto overscroll-contain flex-1">
-                  {/* Hero Section — staggered cascade */}
-                  <div className="grid grid-cols-1 md:grid-cols-12">
-                    <div className="relative aspect-[4/5] md:aspect-auto md:h-full md:col-span-5 bg-secondary overflow-hidden">
-                      {selectedPerfume.image_url ? (
-                        <motion.div
-                          initial={{ scale: 1.08, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ duration: 0.8, ease }}
-                          className="h-full w-full"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={selectedPerfume.image_url}
-                            alt={selectedPerfume.scent_name}
-                            className="h-full w-full object-cover"
-                          />
-                        </motion.div>
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
-                          No Image
-                        </div>
-                      )}
-                      {/* Levitation shadow */}
-                      <div className="levitate-shadow" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-background" />
+              <div className="overflow-y-auto overscroll-contain flex-1">
+                {/* Hero Section */}
+                <div className="grid grid-cols-1 md:grid-cols-12">
+                  <div className="relative aspect-[4/5] md:aspect-auto md:h-full md:col-span-5 bg-secondary overflow-hidden">
+                    {selectedPerfume.image_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={selectedPerfume.image_url}
+                        alt={selectedPerfume.scent_name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
+                        No Image
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-background" />
+                  </div>
+
+                  <div className="p-8 md:col-span-7 flex flex-col justify-center">
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-primary mb-2">
+                      {selectedPerfume.brand}
+                    </p>
+                    <h2 className="font-display text-3xl font-light leading-tight text-foreground md:text-4xl lg:text-5xl mb-4">
+                      {selectedPerfume.scent_name}
+                    </h2>
+                    
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      <span className="rounded-full border border-primary/25 px-3.5 py-1 text-[9px] uppercase tracking-[0.15em] text-primary">
+                        {inferPerfumeTag(selectedPerfume)}
+                      </span>
+                      <span className="rounded-full border border-border px-3.5 py-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground">
+                        {selectedPerfume.quantity > 0 ? "Available" : "Unavailable"}
+                      </span>
                     </div>
 
-                    {/* ── Content with staggered variants ── */}
-                    <motion.div
-                      className="p-8 md:col-span-7 flex flex-col justify-center"
-                      initial="hidden"
-                      animate="visible"
-                      variants={{
-                        hidden: {},
-                        visible: {
-                          transition: {
-                            staggerChildren: 0.06,
-                            delayChildren: 0.15,
-                          },
-                        },
-                      }}
-                    >
-                      <motion.p
-                        variants={fadeUp}
-                        className="text-[10px] uppercase tracking-[0.25em] text-primary mb-2"
-                      >
-                        {selectedPerfume.brand}
-                      </motion.p>
-                      <motion.h2
-                        variants={fadeUp}
-                        className="font-display text-3xl font-light leading-tight text-foreground md:text-4xl lg:text-5xl mb-4"
-                      >
-                        {selectedPerfume.scent_name}
-                      </motion.h2>
+                    <p className="text-xs font-light leading-relaxed text-muted-foreground/80 italic font-body mb-6">
+                      &ldquo;{getFragranceDNA(selectedPerfume.scent_name).description}&rdquo;
+                    </p>
 
-                      <motion.div
-                        variants={fadeUp}
-                        className="flex flex-wrap gap-2 mb-2"
-                      >
-                        <span className="rounded-full border border-primary/25 px-3.5 py-1 text-[9px] uppercase tracking-[0.15em] text-primary">
-                          {inferPerfumeTag(selectedPerfume)}
-                        </span>
-                        <span className="rounded-full border border-border px-3.5 py-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground">
-                          {selectedPerfume.quantity > 0
-                            ? "Available"
-                            : "Unavailable"}
-                        </span>
-                      </motion.div>
-
-                      <motion.p
-                        variants={fadeUp}
-                        className="text-xs font-light leading-relaxed text-muted-foreground/80 italic font-body mb-6"
-                      >
-                        &ldquo;
-                        {
-                          getFragranceDNA(selectedPerfume.scent_name)
-                            .description
-                        }
-                        &rdquo;
-                      </motion.p>
-
-                      <motion.div variants={fadeUp} className="mb-6">
-                        <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
-                          Price
-                        </p>
-                        {(() => {
-                          const hasFlashSale =
-                            selectedPerfume.flash_sale_price != null &&
-                            selectedPerfume.flash_sale_end != null &&
-                            new Date(selectedPerfume.flash_sale_end) >
-                              new Date() &&
-                            (selectedPerfume.flash_sale_stock == null ||
-                              selectedPerfume.flash_sale_stock > 0);
-
-                          if (hasFlashSale) {
-                            return (
-                              <div className="flex items-center gap-3">
-                                <p className="font-display text-3xl font-semibold text-foreground">
-                                  {formatPhp(
-                                    selectedPerfume.flash_sale_price!
-                                  )}
-                                </p>
-                                <p className="font-display text-xl text-muted-foreground line-through decoration-muted-foreground/40">
-                                  {formatPhp(
-                                    selectedPerfume.target_sale_price
-                                  )}
-                                </p>
-                                <div className="flex items-center gap-1">
-                                  {selectedPerfume.flash_sale_name && (
-                                    <span className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">
-                                      {selectedPerfume.flash_sale_name}
-                                    </span>
-                                  )}
-                                  <span className="rounded-md bg-primary/20 px-2 py-1 text-[10px] font-bold text-primary">
-                                    -
-                                    {Math.round(
-                                      ((selectedPerfume.target_sale_price -
-                                        selectedPerfume.flash_sale_price!) /
-                                        selectedPerfume.target_sale_price) *
-                                        100
-                                    )}
-                                    %
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          }
-
+                    <div className="mb-6">
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
+                        Price
+                      </p>
+                      {(() => {
+                        const hasFlashSale = selectedPerfume.flash_sale_price != null && 
+                          selectedPerfume.flash_sale_end != null && 
+                          new Date(selectedPerfume.flash_sale_end) > new Date() &&
+                          (selectedPerfume.flash_sale_stock == null || selectedPerfume.flash_sale_stock > 0);
+                        
+                        if (hasFlashSale) {
                           return (
-                            <p className="font-display text-3xl font-semibold text-foreground">
-                              {formatPhp(selectedPerfume.target_sale_price)}
-                            </p>
+                            <div className="flex items-center gap-3">
+                              <p className="font-display text-3xl font-semibold text-foreground">
+                                {formatPhp(selectedPerfume.flash_sale_price!)}
+                              </p>
+                              <p className="font-display text-xl text-muted-foreground line-through decoration-muted-foreground/40">
+                                {formatPhp(selectedPerfume.target_sale_price)}
+                              </p>
+                              <div className="flex items-center gap-1">
+                                {selectedPerfume.flash_sale_name && (
+                                  <span className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">
+                                    {selectedPerfume.flash_sale_name}
+                                  </span>
+                                )}
+                                <span className="rounded-md bg-primary/20 px-2 py-1 text-[10px] font-bold text-primary">
+                                  -{Math.round(((selectedPerfume.target_sale_price - selectedPerfume.flash_sale_price!) / selectedPerfume.target_sale_price) * 100)}%
+                                </span>
+                              </div>
+                            </div>
                           );
-                        })()}
-                      </motion.div>
+                        }
+                        
+                        return (
+                          <p className="font-display text-3xl font-semibold text-foreground">
+                            {formatPhp(selectedPerfume.target_sale_price)}
+                          </p>
+                        );
+                      })()}
+                    </div>
 
-                      <motion.div
-                        variants={fadeUp}
-                        className="flex items-center gap-2 mb-8"
-                      >
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            selectedPerfume.quantity > 0
-                              ? "bg-emerald-400"
-                              : "bg-red-400"
-                          }`}
-                        />
-                        <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                          {selectedPerfume.quantity > 0
-                            ? selectedPerfume.quantity <= 5
-                              ? `Low stock — only ${selectedPerfume.quantity} left`
-                              : "In Stock"
-                            : "Sold Out"}
-                        </span>
-                      </motion.div>
-
-                      <motion.div
-                        variants={scaleIn}
-                        className="mt-8 flex flex-col gap-2"
-                      >
+                    <div className="flex items-center gap-2 mb-8">
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          selectedPerfume.quantity > 0 ? "bg-emerald-400" : "bg-red-400"
+                        }`}
+                      />
+                      <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {selectedPerfume.quantity > 0
+                          ? selectedPerfume.quantity <= 5
+                            ? `Low stock — only ${selectedPerfume.quantity} left`
+                            : "In Stock"
+                          : "Sold Out"}
+                      </span>
+                    </div>
+                      
+                      <div className="mt-8 flex flex-col gap-2">
                         <motion.div
-                          animate={
-                            actionError ? { x: [-5, 5, -5, 5, 0] } : {}
-                          }
+                          animate={actionError ? { x: [-5, 5, -5, 5, 0] } : {}}
                           transition={{ duration: 0.4 }}
                         >
                           <Button
@@ -723,26 +521,19 @@ export default function CatalogView({
                               setIsAddingToCart(true);
                               setActionError(null);
                               try {
-                                const result = await addToCart(
-                                  selectedPerfume.id,
-                                  1
-                                );
+                                const result = await addToCart(selectedPerfume.id, 1);
                                 if (result?.error) {
                                   setActionError(result.error);
                                 } else {
                                   toast.success("Added to cart!");
                                 }
                               } catch (e: any) {
-                                setActionError(
-                                  e.message || "Failed to add to cart"
-                                );
+                                setActionError(e.message || "Failed to add to cart");
                               } finally {
                                 setIsAddingToCart(false);
                               }
                             }}
-                            disabled={
-                              isAddingToCart || selectedPerfume.quantity === 0
-                            }
+                            disabled={isAddingToCart || selectedPerfume.quantity === 0}
                             className="w-full h-12 text-xs uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
                           >
                             {isAddingToCart ? (
@@ -751,8 +542,7 @@ export default function CatalogView({
                               "Out of Stock"
                             ) : (
                               <>
-                                <ShoppingCart className="mr-2 h-4 w-4" /> Add to
-                                Cart
+                                <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
                               </>
                             )}
                           </Button>
@@ -766,179 +556,102 @@ export default function CatalogView({
                             {actionError}
                           </motion.p>
                         )}
-                      </motion.div>
-                    </motion.div>
+                      </div>
                   </div>
-
-                  {/* ── Fragrance DNA block with animated accord bars ── */}
-                  {(() => {
-                    const dna = getFragranceDNA(selectedPerfume.scent_name);
-                    return (
-                      <motion.div
-                        className="border-t border-border p-8"
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true }}
-                        variants={{
-                          hidden: {},
-                          visible: {
-                            transition: {
-                              staggerChildren: 0.04,
-                              delayChildren: 0.1,
-                            },
-                          },
-                        }}
-                      >
-                        {/* Accords Profile */}
-                        <div className="mb-8">
-                          <motion.h4
-                            variants={fadeUp}
-                            className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-6 font-mono"
-                          >
-                            Accord Profile
-                          </motion.h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                            {dna.accords.map((accord, i) => (
-                              <motion.div
-                                key={accord.name}
-                                variants={fadeUp}
-                                className="flex items-center gap-3"
-                              >
-                                <span className="w-20 text-right text-xs text-muted-foreground">
-                                  {accord.name}
-                                </span>
-                                <div className="h-1 bg-border rounded-full flex-1 overflow-hidden">
-                                  <motion.div
-                                    initial={{ scaleX: 0 }}
-                                    whileInView={{ scaleX: 1 }}
-                                    viewport={{ once: true }}
-                                    transition={{
-                                      duration: 0.7,
-                                      delay: i * 0.05,
-                                      ease: [0.34, 1.56, 0.64, 1],
-                                    }}
-                                    className="h-full rounded-full origin-left"
-                                    style={{
-                                      width: `${accord.value}%`,
-                                      background: getAccordGradient(
-                                        accord.color
-                                      ),
-                                    }}
-                                  />
-                                </div>
-                              </motion.div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Fragrance Pyramid */}
-                        <div>
-                          <motion.h4
-                            variants={fadeUp}
-                            className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-6 font-mono"
-                          >
-                            Fragrance Pyramid
-                          </motion.h4>
-                          <div className="flex flex-col gap-4 border-t border-primary/5 pt-2">
-                            {dna.notes.top && dna.notes.top.length > 0 && (
-                              <motion.div
-                                variants={fadeUp}
-                                className="flex gap-4 items-start"
-                              >
-                                <span className="w-16 text-xs text-[#7ed6c8] font-mono uppercase tracking-[0.1em] pt-1">
-                                  Top
-                                </span>
-                                <div className="flex flex-wrap gap-2">
-                                  {dna.notes.top.map((note, i) => (
-                                    <motion.span
-                                      key={note}
-                                      initial={{ opacity: 0, scale: 0.8 }}
-                                      whileInView={{ opacity: 1, scale: 1 }}
-                                      viewport={{ once: true }}
-                                      transition={{
-                                        duration: 0.3,
-                                        delay: 0.1 + i * 0.04,
-                                        type: "spring",
-                                        stiffness: 300,
-                                      }}
-                                      className="rounded-full border border-[#7ed6c8]/15 px-3 py-1 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors duration-200"
-                                    >
-                                      {note}
-                                    </motion.span>
-                                  ))}
-                                </div>
-                              </motion.div>
-                            )}
-                            {dna.notes.heart &&
-                              dna.notes.heart.length > 0 && (
-                                <motion.div
-                                  variants={fadeUp}
-                                  className="flex gap-4 items-start border-t border-border/40 pt-4"
-                                >
-                                  <span className="w-16 text-xs text-primary font-mono uppercase tracking-[0.1em] pt-1">
-                                    Heart
-                                  </span>
-                                  <div className="flex flex-wrap gap-2">
-                                    {dna.notes.heart.map((note, i) => (
-                                      <motion.span
-                                        key={note}
-                                        initial={{ opacity: 0, scale: 0.8 }}
-                                        whileInView={{ opacity: 1, scale: 1 }}
-                                        viewport={{ once: true }}
-                                        transition={{
-                                          duration: 0.3,
-                                          delay: 0.15 + i * 0.04,
-                                          type: "spring",
-                                          stiffness: 300,
-                                        }}
-                                        className="rounded-full border border-primary/15 px-3 py-1 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors duration-200"
-                                      >
-                                        {note}
-                                      </motion.span>
-                                    ))}
-                                  </div>
-                                </motion.div>
-                              )}
-                            {dna.notes.base && dna.notes.base.length > 0 && (
-                              <motion.div
-                                variants={fadeUp}
-                                className="flex gap-4 items-start border-t border-border/40 pt-4"
-                              >
-                                <span className="w-16 text-xs text-[#c48a6e] font-mono uppercase tracking-[0.1em] pt-1">
-                                  Base
-                                </span>
-                                <div className="flex flex-wrap gap-2">
-                                  {dna.notes.base.map((note, i) => (
-                                    <motion.span
-                                      key={note}
-                                      initial={{ opacity: 0, scale: 0.8 }}
-                                      whileInView={{ opacity: 1, scale: 1 }}
-                                      viewport={{ once: true }}
-                                      transition={{
-                                        duration: 0.3,
-                                        delay: 0.2 + i * 0.04,
-                                        type: "spring",
-                                        stiffness: 300,
-                                      }}
-                                      className="rounded-full border border-[#c48a6e]/15 px-3 py-1 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors duration-200"
-                                    >
-                                      {note}
-                                    </motion.span>
-                                  ))}
-                                </div>
-                              </motion.div>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })()}
                 </div>
-              </motion.div>
+
+                {/* Fragrance DNA block */}
+                {(() => {
+                  const dna = getFragranceDNA(selectedPerfume.scent_name);
+                  return (
+                    <div className="border-t border-border p-8">
+                      {/* Accords Profile */}
+                      <div className="mb-8">
+                        <h4 className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-6 font-mono">
+                          Accord Profile
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                          {dna.accords.map((accord) => (
+                            <div key={accord.name} className="flex items-center gap-3">
+                              <span className="w-20 text-right text-xs text-muted-foreground">
+                                {accord.name}
+                              </span>
+                              <div className="h-1 bg-border rounded-full flex-1 overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  whileInView={{ width: `${accord.value}%` }}
+                                  viewport={{ once: true }}
+                                  transition={{ duration: 0.8, ease }}
+                                  className="h-full rounded-full"
+                                  style={{
+                                    background: getAccordGradient(accord.color),
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Fragrance Pyramid */}
+                      <div>
+                        <h4 className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-6 font-mono">
+                          Fragrance Pyramid
+                        </h4>
+                        <div className="flex flex-col gap-4 border-t border-primary/5 pt-2">
+                          {dna.notes.top && dna.notes.top.length > 0 && (
+                            <div className="flex gap-4 items-start">
+                              <span className="w-16 text-xs text-[#7ed6c8] font-mono uppercase tracking-[0.1em] pt-1">
+                                Top
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {dna.notes.top.map((note) => (
+                                  <span key={note} className="rounded-full border border-[#7ed6c8]/15 px-3 py-1 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors duration-200">
+                                    {note}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {dna.notes.heart && dna.notes.heart.length > 0 && (
+                            <div className="flex gap-4 items-start border-t border-border/40 pt-4">
+                              <span className="w-16 text-xs text-primary font-mono uppercase tracking-[0.1em] pt-1">
+                                Heart
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {dna.notes.heart.map((note) => (
+                                  <span key={note} className="rounded-full border border-primary/15 px-3 py-1 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors duration-200">
+                                    {note}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {dna.notes.base && dna.notes.base.length > 0 && (
+                            <div className="flex gap-4 items-start border-t border-border/40 pt-4">
+                              <span className="w-16 text-xs text-[#c48a6e] font-mono uppercase tracking-[0.1em] pt-1">
+                                Base
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {dna.notes.base.map((note) => (
+                                  <span key={note} className="rounded-full border border-[#c48a6e]/15 px-3 py-1 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors duration-200">
+                                    {note}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </main>
     </>
   );
 }
