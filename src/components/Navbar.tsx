@@ -5,10 +5,20 @@ import { usePathname, useRouter } from "next/navigation";
 import { LogOut, UserCircle, ShoppingCart } from "lucide-react";
 import { signOut } from "@/lib/actions";
 import { toast } from "sonner";
+import { motion, useScroll, useTransform } from "motion/react";
+import { useState, useEffect } from "react";
 
 export default function Navbar({ isLoggedIn, role }: { isLoggedIn: boolean; role?: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { scrollY } = useScroll();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    return scrollY.on("change", (latest) => {
+      setIsScrolled(latest > 50);
+    });
+  }, [scrollY]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -19,180 +29,69 @@ export default function Navbar({ isLoggedIn, role }: { isLoggedIn: boolean; role
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname === "/admin";
 
+  const navLinkClass = (href: string) =>
+    `text-[10px] uppercase tracking-[0.2em] transition-colors duration-300 hover:text-primary ${
+      isActive(href) ? "text-primary" : "text-foreground"
+    }`;
+
+  const iconClass =
+    "text-foreground transition-colors duration-300 hover:text-primary flex h-10 w-10 items-center justify-center";
+
   return (
-    <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-background/75 backdrop-blur-2xl">
-      {/* Thin gold accent line at top */}
-      <div
-        className="h-px w-full"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent 0%, hsl(38 44% 61% / 0.6) 30%, hsl(38 44% 61% / 0.9) 50%, hsl(38 44% 61% / 0.6) 70%, transparent 100%)",
-        }}
-      />
+    <motion.header
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
+      style={{
+        backgroundColor: isScrolled ? "rgba(5, 5, 5, 0.95)" : "transparent",
+        borderBottom: isScrolled ? "1px solid rgba(255,255,255,0.05)" : "1px solid transparent",
+        paddingTop: isScrolled ? "1rem" : "1.5rem",
+        paddingBottom: isScrolled ? "1rem" : "1.5rem",
+      }}
+    >
+      <nav className="mx-auto flex max-w-[1400px] items-center justify-between px-6 lg:px-12">
+        {/* Left: Nav Links */}
+        <div className="hidden items-center gap-8 sm:flex w-1/3">
+          <Link href="/" className={navLinkClass("/")}>
+            Catalog
+          </Link>
+          {isLoggedIn && role === "admin" && (
+            <Link href="/admin" className={navLinkClass("/admin")}>
+              Admin
+            </Link>
+          )}
+          {isLoggedIn && role === "customer" && (
+            <Link href="/orders" className={navLinkClass("/orders")}>
+              Orders
+            </Link>
+          )}
+        </div>
 
-      <nav className="flex items-center justify-between gap-4 px-4 py-2.5 sm:px-6 sm:py-3 lg:px-8">
-
-        {/* Brand wordmark */}
-        <Link href="/" className="group flex items-center gap-3">
-          {/* Logo SVG */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo.svg"
-            alt="Rivera Logo"
-            className="h-8 w-8 object-contain transition-transform duration-350 group-hover:scale-105"
-          />
-          <div className="flex flex-col leading-none">
-            <span className="font-display text-sm tracking-[0.28em] text-primary sm:text-base">
-              RIVERA
-            </span>
-            <span className="block text-[6px] tracking-[0.16em] text-muted-foreground/70 sm:text-[7px] sm:tracking-[0.14em]">
-              FRAGRANCE HOUSE
-            </span>
-          </div>
+        {/* Center: Brand */}
+        <Link href="/" className="flex flex-col items-center justify-center w-1/3 text-center group">
+          <span className="font-display text-lg tracking-[0.4em] text-foreground transition-colors group-hover:text-primary sm:text-2xl">
+            RIVERA
+          </span>
+          <span className="mt-1 block text-[7px] tracking-[0.3em] text-muted-foreground transition-colors group-hover:text-primary">
+            FRAGRANCE HOUSE
+          </span>
         </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden items-center gap-2 sm:flex">
-          {/* Tab pills */}
-          <div className="flex items-center gap-0.5 rounded-full border border-white/[0.07] bg-white/[0.03] p-1">
-            <Link
-              href="/"
-              className={`relative rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] transition-all duration-200 ${
-                isActive("/")
-                  ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(38_44%_61%/0.25)]"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Catalog
+        {/* Right: Actions */}
+        <div className="flex items-center justify-end gap-2 w-1/3">
+          <Link href="/cart" aria-label="Shopping Cart" className={iconClass}>
+            <ShoppingCart className="h-[18px] w-[18px] stroke-[1.5]" />
+          </Link>
+
+          {isLoggedIn ? (
+            <button type="button" onClick={handleSignOut} aria-label="Sign out" className={iconClass}>
+              <LogOut className="h-[18px] w-[18px] stroke-[1.5]" />
+            </button>
+          ) : (
+            <Link href="/login" aria-label="Log In" className={iconClass}>
+              <UserCircle className="h-[18px] w-[18px] stroke-[1.5]" />
             </Link>
-
-            {isLoggedIn && role === 'admin' && (
-              <Link
-                href="/admin#inventory-list"
-                className={`relative rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] transition-all duration-200 ${
-                  isActive("/admin")
-                    ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(38_44%_61%/0.25)]"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Dashboard
-              </Link>
-            )}
-            {isLoggedIn && role === 'customer' && (
-              <Link
-                href="/orders"
-                className={`relative rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] transition-all duration-200 ${
-                  isActive("/orders")
-                    ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(38_44%_61%/0.25)]"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Orders
-              </Link>
-            )}
-          </div>
-
-          {/* Cart Icon & Auth button */}
-          <div className="flex items-center gap-2">
-            <Link
-              href="/cart"
-              title="Shopping Cart"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all duration-200 hover:border-primary/25 hover:bg-primary/8 hover:text-foreground"
-            >
-              <ShoppingCart className="h-4 w-4" />
-            </Link>
-
-            {isLoggedIn ? (
-              <button
-                type="button"
-                onClick={handleSignOut}
-                title="Sign out"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all duration-200 hover:border-primary/25 hover:bg-primary/8 hover:text-foreground"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-              </button>
-            ) : (
-              <Link
-                href="/login"
-                title="Log In"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all duration-200 hover:border-primary/25 hover:bg-primary/8 hover:text-foreground"
-              >
-                <UserCircle className="h-4 w-4" />
-              </Link>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile nav */}
-        <div className="flex items-center gap-2 sm:hidden">
-          <div className="flex items-center gap-0.5 rounded-full border border-white/[0.07] bg-white/[0.03] p-1">
-            <Link
-              href="/"
-              className={`rounded-full px-3 py-1.5 text-[9px] uppercase tracking-[0.18em] transition-all duration-200 ${
-                isActive("/")
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground"
-              }`}
-            >
-              Catalog
-            </Link>
-
-            {isLoggedIn && role === 'admin' && (
-              <Link
-                href="/admin#inventory-list"
-                className={`rounded-full px-3 py-1.5 text-[9px] uppercase tracking-[0.18em] transition-all duration-200 ${
-                  isActive("/admin")
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground"
-                }`}
-              >
-                Admin
-              </Link>
-            )}
-            {isLoggedIn && role === 'customer' && (
-              <Link
-                href="/orders"
-                className={`rounded-full px-3 py-1.5 text-[9px] uppercase tracking-[0.18em] transition-all duration-200 ${
-                  isActive("/orders")
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground"
-                }`}
-              >
-                Orders
-              </Link>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/cart"
-              title="Shopping Cart"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all hover:border-primary/25 hover:text-foreground"
-            >
-              <ShoppingCart className="h-3.5 w-3.5" />
-            </Link>
-
-            {isLoggedIn ? (
-              <button
-                type="button"
-                onClick={handleSignOut}
-                title="Sign out"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all hover:border-primary/25 hover:text-foreground"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-              </button>
-            ) : (
-              <Link
-                href="/login"
-                title="Log In"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-muted-foreground transition-all hover:border-primary/25 hover:text-foreground"
-              >
-                <UserCircle className="h-4 w-4" />
-              </Link>
-            )}
-          </div>
+          )}
         </div>
       </nav>
-    </header>
+    </motion.header>
   );
 }
