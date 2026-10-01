@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Perfume } from "@/lib/types";
+import { getAvifUrl } from "@/lib/get-avif";
 import { deletePerfume, updatePerfume, updatePerfumePhoto } from "@/lib/actions";
 import { formatPhp } from "@/lib/format";
 import { toast } from "sonner";
@@ -520,10 +521,10 @@ export default function InventoryTable({
                   className="group relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-secondary hover:border-primary/50 transition-colors"
                   title="Update photo"
                 >
-                  {perfume.image_url ? (
+                  {perfume.image_url || (getAvifUrl(perfume) !== "/logo.svg") ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={perfume.image_url}
+                      src={perfume.image_url || getAvifUrl(perfume)}
                       alt={perfume.scent_name}
                       className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                     />
@@ -721,10 +722,10 @@ export default function InventoryTable({
                         className="group relative h-11 w-11 shrink-0 overflow-hidden rounded-md border border-border bg-secondary hover:border-primary/50 transition-colors cursor-pointer"
                         title="Update photo"
                       >
-                        {perfume.image_url ? (
+                        {perfume.image_url || (getAvifUrl(perfume) !== "/logo.svg") ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
                           <img
-                            src={perfume.image_url}
+                            src={perfume.image_url || getAvifUrl(perfume)}
                             alt={perfume.scent_name}
                             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                           />

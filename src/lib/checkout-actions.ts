@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { getAvifUrl } from "./get-avif";
 
 export async function getAddresses() {
   const supabase = await createClient();
@@ -116,7 +117,7 @@ export async function createOrder(addressId: string | null) {
       cost_price: perfume.cost_price,
       brand: perfume.brand,
       scent_name: perfume.scent_name,
-      image_url: perfume.image_url,
+      image_url: perfume.image_url || (getAvifUrl(perfume) !== "/logo.svg" ? getAvifUrl(perfume) : null),
     };
   });
 

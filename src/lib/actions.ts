@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Perfume, Sale } from "@/lib/types";
+import { getAvifUrl } from "./get-avif";
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -126,10 +127,23 @@ export async function upsertProfile(displayName: string) {
 
 // ─── Perfumes ──────────────────────────────────────────────────────────────────
 
+async function requireAdmin(supabase: any, userId: string) {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  if (profile?.role !== "admin") {
+    throw new Error("Unauthorized: Admins only");
+  }
+}
+
 export async function getPerfumes(): Promise<Perfume[]> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
+  await requireAdmin(supabase, user.id);
 
   const { data: perfumesData, error } = await supabase
     .from("perfumes")
@@ -180,6 +194,7 @@ export async function addPerfume(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) throw new Error("Unauthorized");
+  await requireAdmin(supabase, user.id);
 
   const brand = String(formData.get("brand") ?? "");
   const scent_name = String(formData.get("scent_name") ?? "");
@@ -235,11 +250,27 @@ export async function updatePerfume(id: string, updates: Record<string, unknown>
   } = await supabase.auth.getUser();
 
   if (!user) throw new Error("Unauthorized");
+  await requireAdmin(supabase, user.id);
 
-  const { error } = await supabase.from("perfumes").update(updates).eq("id", id);
+  const allowedFields = [
+    "brand",
+    "scent_name",
+    "season",
+    "quantity",
+    "cost_price",
+    "target_sale_price",
+    "image_url",
+  ];
+  const sanitizedUpdates: Record<string, unknown> = {};
+  for (const key of allowedFields) {
+    if (key in updates) sanitizedUpdates[key] = updates[key];
+  }
+
+  const { error } = await supabase.from("perfumes").update(sanitizedUpdates).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/");
   revalidatePath("/admin");
+  revalidatePath("/catalog");
 }
 
 export async function updatePerfumePhoto(id: string, image: File) {
@@ -249,6 +280,7 @@ export async function updatePerfumePhoto(id: string, image: File) {
   } = await supabase.auth.getUser();
 
   if (!user) throw new Error("Unauthorized");
+  await requireAdmin(supabase, user.id);
 
   // Get current perfume info to resolve old image and match name/brand
   const { data: perfume, error: fetchError } = await supabase
@@ -305,6 +337,7 @@ export async function deletePerfume(id: string, imageUrl?: string | null) {
   } = await supabase.auth.getUser();
 
   if (!user) throw new Error("Unauthorized");
+  await requireAdmin(supabase, user.id);
 
   if (imageUrl) {
     const path = imageUrl.split("/perfume_images/")[1];
@@ -392,6 +425,7 @@ export async function recordSale(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) throw new Error("Unauthorized");
+  await requireAdmin(supabase, user.id);
 
   const perfume_id = String(formData.get("perfume_id") ?? "");
   const quantity_sold = Number(formData.get("quantity_sold"));
@@ -445,6 +479,7 @@ export async function getSales(): Promise<Sale[]> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
+  await requireAdmin(supabase, user.id);
 
   // Filter sales by the admin who recorded them
   const { data, error } = await supabase
@@ -477,7 +512,11 @@ export async function getSales(): Promise<Sale[]> {
       created_at: sale.created_at as string,
       brand: perfume?.brand as string | undefined,
       scent_name: perfume?.scent_name as string | undefined,
-      image_url: (perfume?.image_url as string | null) ?? null,
+      image_url:
+        (perfume?.image_url as string | null) ||
+        (perfume && getAvifUrl(perfume as unknown as Perfume) !== "/logo.svg"
+          ? getAvifUrl(perfume as unknown as Perfume)
+          : null),
     };
   });
 }
@@ -489,6 +528,7 @@ export async function deleteSale(saleId: string) {
   } = await supabase.auth.getUser();
 
   if (!user) throw new Error("Unauthorized");
+  await requireAdmin(supabase, user.id);
 
   // Fetch the sale to restore inventory
   const { data: sale, error: fetchError } = await supabase

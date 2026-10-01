@@ -47,7 +47,7 @@ type Tab = "inventory" | "sales" | "orders" | "payments";
 function StatsGrid({
   stats,
 }: {
-  stats: { label: string; value: number; icon: React.ElementType; format?: (n: number) => string }[];
+  stats: { label: string; value: number; icon: React.ComponentType<{ className?: string }>; format?: (n: number) => string }[];
 }) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 w-full">

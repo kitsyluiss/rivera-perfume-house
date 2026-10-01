@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserProfile } from "@/lib/actions";
 import { Toaster } from "sonner";
 import "./globals.css";
+import SmoothScroll from "@/components/SmoothScroll";
 
 export const metadata: Metadata = {
   title: "Rivera Fragrance House",
@@ -18,16 +19,18 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let session = null;
+  let user = null;
   let profile = null;
 
   try {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getSession();
-    session = data.session;
-    profile = session ? await getUserProfile() : null;
-  } catch (error) {
-    // If auth fails (e.g. on edge environments due to cookie issues), gracefully fall back to unauthenticated state.
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+    profile = user ? await getUserProfile() : null;
+  } catch (error: any) {
+    if (error?.digest === 'DYNAMIC_SERVER_USAGE' || error?.message?.includes('Dynamic server usage')) {
+      throw error;
+    }
     console.error("Auth error in layout:", error);
   }
 
@@ -49,8 +52,10 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
-        <Navbar isLoggedIn={!!session} role={role} />
-        {children}
+        <Navbar isLoggedIn={!!user} role={role} />
+        <SmoothScroll>
+          {children}
+        </SmoothScroll>
         <Toaster
           position="bottom-right"
           toastOptions={{

@@ -11,6 +11,7 @@ import { getCartItems, updateCartQuantity, removeFromCart, clearCart } from "@/l
 import { formatPhp } from "@/lib/format";
 import { toast } from "sonner";
 import { CartItem } from "@/lib/types";
+import { getAvifUrl } from "@/lib/get-avif";
 
 export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -130,19 +131,22 @@ export default function CartPage() {
                   className="flex gap-4 sm:gap-6 rounded-[1.1rem] border border-border bg-card p-4 sm:p-5"
                 >
                   <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-md bg-secondary sm:h-32 sm:w-28">
-                    {item.perfume?.image_url ? (
-                      <Image
-                        src={item.perfume.image_url}
-                        alt={item.perfume.scent_name}
-                        fill
-                        sizes="(max-width: 640px) 5rem, 7rem"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground/30 text-center">
-                        No image
-                      </div>
-                    )}
+                    {(() => {
+                      const img = item.perfume?.image_url || (item.perfume && getAvifUrl(item.perfume) !== "/logo.svg" ? getAvifUrl(item.perfume) : null);
+                      return img ? (
+                        <Image
+                          src={img}
+                          alt={item.perfume?.scent_name || "Perfume"}
+                          fill
+                          sizes="(max-width: 640px) 5rem, 7rem"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground/30 text-center">
+                          No image
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex flex-1 flex-col justify-between">
@@ -188,9 +192,11 @@ export default function CartPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 rounded-full border border-border bg-background px-1 py-1">
                           <button
+                            type="button"
                             onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
                             disabled={actionLoading === `update-${item.id}` || item.quantity <= 1}
-                            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-secondary disabled:opacity-50 transition-colors"
+                            aria-label={`Decrease quantity of ${item.perfume?.scent_name || "item"}`}
+                            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-secondary disabled:opacity-50 transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
@@ -198,18 +204,22 @@ export default function CartPage() {
                             {item.quantity}
                           </span>
                           <button
+                            type="button"
                             onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
                             disabled={actionLoading === `update-${item.id}` || (item.perfume && item.quantity >= item.perfume.quantity)}
-                            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-secondary disabled:opacity-50 transition-colors"
+                            aria-label={`Increase quantity of ${item.perfume?.scent_name || "item"}`}
+                            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-secondary disabled:opacity-50 transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
                           >
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
 
                         <button
+                          type="button"
                           onClick={() => handleRemove(item.id)}
                           disabled={actionLoading === `remove-${item.id}`}
-                          className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+                          aria-label={`Remove ${item.perfume?.scent_name || "item"} from cart`}
+                          className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-destructive"
                           title="Remove item"
                         >
                           {actionLoading === `remove-${item.id}` ? (

@@ -378,6 +378,77 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
       heart: ["Nutmeg"],
       base: ["Musk", "Amber", "Vanilla"]
     }
+  },
+  "daarej sport pour homme": {
+    description: "A fresh and dynamic scent blending aquatic and aromatic notes with a crisp finish.",
+    accords: [
+      { name: "Aquatic", value: 100, color: "aquatic" },
+      { name: "Fresh", value: 95, color: "fresh" },
+      { name: "Aromatic", value: 85, color: "aromatic" },
+      { name: "Woody", value: 70, color: "woody" },
+      { name: "Musky", value: 65, color: "musky" },
+      { name: "Green", value: 60, color: "green" },
+      { name: "Fresh Spicy", value: 50, color: "fresh_spicy" }
+    ],
+    notes: {
+      top: ["Crisp Fresh Accords", "Marine Notes"],
+      heart: ["Aromatic Nuances", "Green Nuances", "Subtle Spicy Touches"],
+      base: ["Clean Woody Finishes", "Musky Finishes"]
+    }
+  },
+  "rose of dreams": {
+    description: "A captivating, powdery floral fragrance grounded by deep woods and a touch of fruit.",
+    accords: [
+      { name: "Green", value: 100, color: "green" },
+      { name: "Woody", value: 90, color: "woody" },
+      { name: "Rose", value: 85, color: "rose" },
+      { name: "Powdery", value: 75, color: "powdery" },
+      { name: "Fresh Spicy", value: 70, color: "fresh_spicy" },
+      { name: "Iris", value: 65, color: "iris" },
+      { name: "Fruity", value: 55, color: "fruity" },
+      { name: "Floral", value: 50, color: "floral" },
+      { name: "Musky", value: 45, color: "musky" },
+      { name: "Ozonic", value: 40, color: "ozonic" }
+    ],
+    notes: {
+      top: ["Green Notes", "Blackcurrant", "Peach"],
+      heart: ["Cedarwood", "Black Pepper", "White Musk", "Violet Leaf", "Orris Root"],
+      base: ["Rose", "Iris"]
+    }
+  },
+  "ameerat al arab asdaaf": {
+    description: "A beautifully composed citrus and white floral blend wrapped in soft musk and woods.",
+    accords: [
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "White Floral", value: 85, color: "white_floral" },
+      { name: "Musky", value: 70, color: "musky" },
+      { name: "Woody", value: 65, color: "woody" },
+      { name: "Fresh", value: 60, color: "fresh" },
+      { name: "Fresh Spicy", value: 55, color: "fresh_spicy" },
+      { name: "Powdery", value: 50, color: "powdery" },
+      { name: "Green", value: 45, color: "green" },
+      { name: "Floral", value: 40, color: "floral" }
+    ],
+    notes: {
+      top: ["Citruses", "Bergamot"],
+      heart: ["White Musk", "Aloe Vera"],
+      base: ["Jasmine", "Musk", "Woody Notes", "Oud"]
+    }
+  },
+  "freeze": {
+    description: "An ultra-cooling mix of spearmint and citrus set against icy herbs and ambermax.",
+    accords: [
+      { name: "Fresh", value: 100, color: "fresh" },
+      { name: "Citrus", value: 95, color: "citrus" },
+      { name: "Green", value: 75, color: "green" },
+      { name: "Fresh Spicy", value: 68, color: "fresh_spicy" },
+      { name: "Aromatic", value: 50, color: "aromatic" }
+    ],
+    notes: {
+      top: ["Spearmint", "Lemon Zest", "Calabrian bergamot", "Grapefruit", "Snow"],
+      heart: ["Ice", "Tea", "Ginger", "Sage"],
+      base: ["Ambermax™", "Peony", "Cedar"]
+    }
   }
 };
 
@@ -386,6 +457,13 @@ export function getFragranceDNA(scentName: string): FragranceDNA {
   const key = scentName.toLowerCase().trim().replace(/\s+/g, " ");
   if (DNA_DICTIONARY[key]) {
     return DNA_DICTIONARY[key];
+  }
+  
+  // Check for partial or substring match
+  for (const dictKey of Object.keys(DNA_DICTIONARY)) {
+    if (key.includes(dictKey) || dictKey.includes(key)) {
+      return DNA_DICTIONARY[dictKey];
+    }
   }
   
   // Safe default fallback for custom fragrances

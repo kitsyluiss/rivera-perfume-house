@@ -13,6 +13,7 @@ import { getAddresses, saveAddress, createOrder } from "@/lib/checkout-actions";
 import { formatPhp } from "@/lib/format";
 import { toast } from "sonner";
 import { CartItem, Address } from "@/lib/types";
+import { getAvifUrl } from "@/lib/get-avif";
 
 export default function CheckoutPage() {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -199,8 +200,17 @@ export default function CheckoutPage() {
                 {addresses.map((addr) => (
                   <div
                     key={addr.id}
+                    tabIndex={0}
+                    role="radio"
+                    aria-checked={selectedAddress === addr.id}
                     onClick={() => setSelectedAddress(addr.id)}
-                    className={`relative cursor-pointer rounded-xl border p-4 transition-all duration-200 ${
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedAddress(addr.id);
+                      }
+                    }}
+                    className={`relative cursor-pointer rounded-xl border p-4 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary ${
                       selectedAddress === addr.id 
                         ? "border-primary bg-primary/5" 
                         : "border-border bg-secondary/20 hover:border-primary/40"
@@ -246,9 +256,12 @@ export default function CheckoutPage() {
               {items.map((item) => (
                 <div key={item.id} className="flex gap-4">
                   <div className="relative h-16 w-12 shrink-0 rounded bg-secondary overflow-hidden">
-                    {item.perfume?.image_url && (
-                      <img src={item.perfume.image_url} alt="" className="h-full w-full object-cover" />
-                    )}
+                    {(() => {
+                      const img = item.perfume?.image_url || (item.perfume && getAvifUrl(item.perfume) !== "/logo.svg" ? getAvifUrl(item.perfume) : null);
+                      return img ? (
+                        <img src={img} alt="" className="h-full w-full object-cover" />
+                      ) : null;
+                    })()}
                   </div>
                   <div className="flex-1 flex flex-col justify-center">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{item.perfume?.brand}</p>

@@ -13,6 +13,23 @@ export interface PaymentMethod {
   created_at: string;
 }
 
+async function verifyAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    throw new Error("Unauthorized: Admin privilege required");
+  }
+  return { supabase, user };
+}
+
 export async function getActivePaymentMethods(): Promise<PaymentMethod[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -26,9 +43,7 @@ export async function getActivePaymentMethods(): Promise<PaymentMethod[]> {
 }
 
 export async function getAllPaymentMethods(): Promise<PaymentMethod[]> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
+  const { supabase } = await verifyAdmin();
 
   const { data, error } = await supabase
     .from("payment_methods")
@@ -45,11 +60,11 @@ export async function addPaymentMethod(
   accountNumber: string,
   qrCodeUrl: string | null
 ) {
-  const supabase = await createClient();
+  const { supabase } = await verifyAdmin();
   const { error } = await supabase.from("payment_methods").insert({
-    provider_name: providerName,
-    account_name: accountName,
-    account_number: accountNumber,
+    provider_name: providerName.trim(),
+    account_name: accountName.trim(),
+    account_number: accountNumber.trim(),
     qr_code_url: qrCodeUrl,
     is_active: true,
   });
@@ -60,7 +75,7 @@ export async function addPaymentMethod(
 }
 
 export async function togglePaymentMethod(id: string, isActive: boolean) {
-  const supabase = await createClient();
+  const { supabase } = await verifyAdmin();
   const { error } = await supabase
     .from("payment_methods")
     .update({ is_active: isActive })
@@ -72,20 +87,22 @@ export async function togglePaymentMethod(id: string, isActive: boolean) {
 }
 
 export async function deletePaymentMethod(id: string, qrCodeUrl: string | null) {
-  const supabase = await createClient();
+  const { supabase } = await verifyAdmin();
   
   if (qrCodeUrl) {
-    // Attempt to extract the path from the URL.
-    // Example: https://<project>.supabase.co/storage/v1/object/public/payment_qrs/filename.png
-    const urlObj = new URL(qrCodeUrl);
-    const pathParts = urlObj.pathname.split('/');
-    const publicIndex = pathParts.indexOf('public');
-    if (publicIndex !== -1 && pathParts.length > publicIndex + 2) {
-      const bucketName = pathParts[publicIndex + 1];
-      const fileName = pathParts.slice(publicIndex + 2).join('/');
-      if (bucketName === 'payment_qrs') {
-        await supabase.storage.from("payment_qrs").remove([fileName]);
+    try {
+      const urlObj = new URL(qrCodeUrl);
+      const pathParts = urlObj.pathname.split('/');
+      const publicIndex = pathParts.indexOf('public');
+      if (publicIndex !== -1 && pathParts.length > publicIndex + 2) {
+        const bucketName = pathParts[publicIndex + 1];
+        const fileName = pathParts.slice(publicIndex + 2).join('/');
+        if (bucketName === 'payment_qrs') {
+          await supabase.storage.from("payment_qrs").remove([fileName]);
+        }
       }
+    } catch {
+      // Ignore URL parse errors
     }
   }
 

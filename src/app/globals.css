@@ -62,7 +62,30 @@
     /* clip (not hidden) — clips horizontal overflow without creating a new
        scroll container, which would otherwise cause scroll-blocking */
     overflow-x: clip;
+    scroll-behavior: auto !important;
   }
+/* Official Lenis Smooth Scroll Rules */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
 
   body {
     @apply bg-background text-foreground font-body;
@@ -250,3 +273,46 @@ input[type="number"] {
   display: none !important;
 }
 
+/* Cinematic text reveal with glare */
+@keyframes glare-sweep {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+.letter-glare {
+  position: relative;
+  overflow: hidden;
+}
+
+.letter-glare::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(214, 179, 109, 0.35) 45%,
+    rgba(214, 179, 109, 0.5) 50%,
+    rgba(214, 179, 109, 0.35) 55%,
+    transparent 65%
+  );
+  animation: glare-sweep 0.6s ease-out forwards;
+  pointer-events: none;
+}
+
+/* Clean modal isolation: hide navbar when product modal is active so nothing leaks */
+body.modal-open header[data-navbar] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-12px);
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Clean modal isolation: hide search and filter section when product modal is active */
+body.modal-open [data-search-filter] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}

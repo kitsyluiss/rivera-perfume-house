@@ -3,55 +3,57 @@
 /**
  * PreloaderIdent — Rivera Fragrance House
  *
- * Choreography timeline:
- *   0.00s  Ambient gold glow scales in
- *   0.10s  Top ornament line draws
- *   0.50s  Diamond ornament fades in
- *   0.55s  "RIVERA" letters cascade in (6 × 70ms stagger, blur reveal)
- *   1.05s  "Fragrance House" subtitle fades in
- *   1.30s  Bottom diamond + line draw
- *   1.55s  Thin progress bar fills over 0.85s
- *   2.60s  Exit: fade out + subtle upward lift
- *   ~3.3s  Fully dismissed → onComplete fires
+ * High-precision luxury asset gating preloader.
+ * Monitors Drei's useProgress() to ensure 100% of 3D textures, WebGL assets,
+ * and shaders are fully decoded and compiled before the page curtain lifts.
  */
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useProgress } from "@react-three/drei";
 
-const ease = [0.22, 1, 0.36, 1] as const;
+const ease = [0.16, 1, 0.3, 1] as const;
 const BRAND = "RIVERA".split("");
 
 export default function PreloaderIdent({
   onComplete,
   alwaysShow = false,
+  subtitle = "An Olfactory Gallery",
 }: {
   onComplete?: () => void;
   alwaysShow?: boolean;
+  subtitle?: string;
 }) {
   const [visible, setVisible] = useState(true);
+  const { active, progress } = useProgress();
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
+  // 1. Minimum luxury choreography window (1.4s) to allow letter cascade to complete
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setMinTimeElapsed(true);
+    }, 1400);
+    return () => clearTimeout(t);
+  }, []);
+
+  // 2. Dismiss only when choreography has finished AND all 3D assets are 100% loaded
   useEffect(() => {
     if (alwaysShow) {
       setVisible(true);
       return;
     }
-    if (typeof window !== "undefined") {
-      const seen = sessionStorage.getItem("rivera-preloader-seen");
-      if (seen === "true") {
-        setVisible(false);
-        onComplete?.();
-      } else {
-        setVisible(true);
-        sessionStorage.setItem("rivera-preloader-seen", "true");
-      }
-    }
-  }, [onComplete, alwaysShow]);
 
-  useEffect(() => {
-    if (!visible || alwaysShow) return;
-    const t = setTimeout(() => setVisible(false), 2600);
-    return () => clearTimeout(t);
-  }, [visible, alwaysShow]);
+    // Both the minimum presentation time has passed and Three.js loading is inactive
+    if (minTimeElapsed && (!active || progress >= 100)) {
+      setVisible(false);
+      try {
+        sessionStorage.setItem("rivera-preloader-seen", "true");
+      } catch (e) {}
+      onComplete?.();
+    } else {
+      setVisible(true);
+    }
+  }, [minTimeElapsed, active, progress, alwaysShow, onComplete]);
 
   return (
     <AnimatePresence onExitComplete={onComplete}>
@@ -59,13 +61,13 @@ export default function PreloaderIdent({
         <motion.div
           key="preloader-ident"
           className="preloader-overlay fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
-          style={{ background: "#080706" }}
+          style={{ background: "#060606" }}
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, y: -16 }}
           transition={{ duration: 0.75, ease }}
         >
-          {/* ── grain texture ─────────────────────────── */}
+          {/* Subtle grain texture */}
           <div
             className="absolute inset-0 pointer-events-none opacity-[0.025]"
             style={{
@@ -73,46 +75,46 @@ export default function PreloaderIdent({
             }}
           />
 
-          {/* ── ambient gold glow ─────────────────────── */}
+          {/* Ambient gold glow */}
           <motion.div
             className="absolute pointer-events-none rounded-full"
             style={{
-              width: 460,
-              height: 460,
+              width: 480,
+              height: 480,
               background:
-                "radial-gradient(circle, rgba(214,179,109,0.08), transparent 55%)",
+                "radial-gradient(circle, rgba(214,179,109,0.08), transparent 60%)",
             }}
-            initial={{ scale: 0.5, opacity: 0 }}
+            initial={{ scale: 0.7, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 2.2, ease }}
+            transition={{ duration: 1.6, ease }}
           />
 
-          {/* ── centre composition ────────────────────── */}
+          {/* Centre composition */}
           <div className="relative flex flex-col items-center">
-            {/* top line */}
+            {/* Top ornament line */}
             <motion.div
               className="h-px"
-              style={{ backgroundColor: "rgba(214,179,109,0.28)" }}
+              style={{ backgroundColor: "rgba(214,179,109,0.3)" }}
               initial={{ width: 0 }}
-              animate={{ width: 48 }}
-              transition={{ duration: 0.55, delay: 0.1, ease }}
+              animate={{ width: 44 }}
+              transition={{ duration: 0.45, delay: 0.05, ease }}
             />
 
-            {/* top diamond */}
+            {/* Top diamond */}
             <motion.div
-              className="my-5"
+              className="my-4"
               style={{
-                width: 5,
-                height: 5,
+                width: 4,
+                height: 4,
                 transform: "rotate(45deg)",
-                backgroundColor: "rgba(214,179,109,0.38)",
+                backgroundColor: "rgba(214,179,109,0.45)",
               }}
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.5, ease }}
+              transition={{ duration: 0.3, delay: 0.2, ease }}
             />
 
-            {/* RIVERA — letter cascade */}
+            {/* RIVERA — Letter cascade */}
             <div className="flex items-center justify-center" style={{ paddingLeft: "0.45em" }}>
               {BRAND.map((ch, i) => (
                 <motion.span
@@ -120,16 +122,16 @@ export default function PreloaderIdent({
                   className="inline-block"
                   style={{
                     fontFamily: '"Cormorant Garamond", Georgia, serif',
-                    fontSize: "clamp(1.5rem, 3.8vw, 2rem)",
+                    fontSize: "clamp(1.75rem, 4vw, 2.25rem)",
                     fontWeight: 300,
                     color: "#d6b36d",
                     letterSpacing: "0.45em",
                   }}
-                  initial={{ opacity: 0, y: 14, filter: "blur(4px)" }}
+                  initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                   transition={{
-                    duration: 0.42,
-                    delay: 0.55 + i * 0.07,
+                    duration: 0.45,
+                    delay: 0.25 + i * 0.05,
                     ease,
                   }}
                 >
@@ -138,68 +140,68 @@ export default function PreloaderIdent({
               ))}
             </div>
 
-            {/* subtitle */}
+            {/* Subtitle */}
             <motion.p
               className="mt-2.5"
               style={{
-                fontFamily: '"DM Mono", monospace',
-                fontSize: "clamp(0.5rem, 1vw, 0.58rem)",
-                fontWeight: 300,
-                letterSpacing: "0.22em",
-                paddingLeft: "0.22em",
+                fontFamily: '"Lora", serif',
+                fontSize: "clamp(0.55rem, 1.1vw, 0.65rem)",
+                fontWeight: 400,
+                letterSpacing: "0.35em",
+                paddingLeft: "0.35em",
                 textTransform: "uppercase" as const,
-                color: "#7e725b",
+                color: "rgba(255, 255, 255, 0.6)",
               }}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 1.05, ease }}
+              transition={{ duration: 0.5, delay: 0.65, ease }}
             >
-              Fragrance House
+              {subtitle}
             </motion.p>
 
-            {/* bottom diamond */}
+            {/* Bottom diamond */}
             <motion.div
-              className="my-5"
+              className="my-4"
               style={{
-                width: 5,
-                height: 5,
+                width: 4,
+                height: 4,
                 transform: "rotate(45deg)",
-                backgroundColor: "rgba(214,179,109,0.38)",
+                backgroundColor: "rgba(214,179,109,0.45)",
               }}
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 1.3, ease }}
+              transition={{ duration: 0.3, delay: 0.8, ease }}
             />
 
-            {/* bottom line */}
+            {/* Bottom line */}
             <motion.div
               className="h-px"
-              style={{ backgroundColor: "rgba(214,179,109,0.28)" }}
+              style={{ backgroundColor: "rgba(214,179,109,0.3)" }}
               initial={{ width: 0 }}
-              animate={{ width: 48 }}
-              transition={{ duration: 0.55, delay: 1.3, ease }}
+              animate={{ width: 44 }}
+              transition={{ duration: 0.45, delay: 0.8, ease }}
             />
 
-            {/* progress bar */}
+            {/* Hairline Gold Progress Bar */}
             <motion.div
-              className="mt-8 overflow-hidden rounded-full"
+              className="mt-6 overflow-hidden rounded-full relative"
               style={{
-                width: 84,
+                width: 72,
                 height: 1,
-                backgroundColor: "rgba(214,179,109,0.1)",
+                backgroundColor: "rgba(214,179,109,0.12)",
               }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.55, duration: 0.25 }}
+              transition={{ delay: 0.9, duration: 0.3 }}
             >
               <motion.div
-                className="h-full rounded-full"
+                className="h-full rounded-full absolute left-0 top-0"
                 style={{
-                  backgroundColor: "rgba(214,179,109,0.45)",
+                  backgroundColor: "#e1b854",
                 }}
                 initial={{ width: "0%" }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 0.85, delay: 1.55, ease }}
+                animate={{ width: `${Math.max(15, progress)}%` }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
               />
             </motion.div>
           </div>

@@ -2,11 +2,12 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import { motion, useMotionValue, useSpring, useTransform, useScroll } from "motion/react";
 import { Perfume } from "@/lib/types";
 import { formatPhp } from "@/lib/format";
 import { inferPerfumeTag } from "@/lib/perfume-tags";
 import { useCountdown } from "@/hooks/useCountdown";
+import { getAvifUrl, getPngUrl } from "@/lib/get-avif";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -21,10 +22,12 @@ const isTouchDevice =
 export default function PerfumeCard({
   perfume,
   index,
+  isSelected,
   onClick,
 }: {
   perfume: Perfume;
   index: number;
+  isSelected?: boolean;
   onClick?: () => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -74,14 +77,32 @@ export default function PerfumeCard({
     mouseY.set(0);
   };
 
-  // Only apply perspective tilt on non-touch (pointer) devices
-  const tiltStyle = isTouchDevice
+  // Only apply perspective tilt on non-touch (pointer) devices when not selected
+  const tiltStyle = isTouchDevice || isSelected
     ? {}
     : { rotateX, rotateY, transformPerspective: 900 };
+
+  // --- Scroll Parallax ---
+  const { scrollYProgress } = useScroll({
+    target: cardRef,
+    offset: ["start end", "end start"],
+  });
+
+  const imageY = useTransform(scrollYProgress, [0, 1], [isTouchDevice ? 15 : 30, isTouchDevice ? -15 : -30]);
+  const textY = useTransform(scrollYProgress, [0, 1], [isTouchDevice ? 5 : 10, isTouchDevice ? -5 : -10]);
 
   return (
     <motion.article
       ref={cardRef}
+      tabIndex={0}
+      role="button"
+      aria-label={`View details for ${perfume.brand} ${perfume.scent_name}`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleTap();
+        }
+      }}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
@@ -94,31 +115,53 @@ export default function PerfumeCard({
         ...tiltStyle,
         willChange: "transform, opacity",
       }}
-      // On touch devices we skip the 3D tilt entirely
-      className={`card-shimmer group relative cursor-pointer overflow-hidden rounded-[1.1rem] border border-border bg-card transition-[border-color] duration-500 hover:border-primary/25 ${
+      className={`card-shimmer group relative cursor-pointer overflow-hidden rounded-[1.1rem] border border-border bg-card transition-[border-color] duration-500 hover:border-primary/25 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black ${
         clickedGlow ? "is-glowing" : ""
       } ${!inStock ? "opacity-50 grayscale" : ""}`}
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-secondary">
-        {perfume.image_url ? (
-          <motion.div className="relative h-full w-full" whileHover={{ scale: 1.06 }} transition={{ duration: 0.65, ease }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={perfume.image_url}
-              alt={`${perfume.brand} ${perfume.scent_name}`}
-              className="h-full w-full object-cover"
-              loading={index < 4 ? "eager" : "lazy"}
-              decoding="async"
-              style={{ willChange: "transform" }}
-            />
-          </motion.div>
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground/30">
-            No image
-          </div>
-        )}
+      <div className="relative aspect-[9/16] overflow-hidden bg-secondary">
+        {(() => {
+          const cardImage = perfume.image_url || getPngUrl(perfume);
+          const hasImage = Boolean(cardImage || getAvifUrl(perfume) !== "/logo.svg");
 
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card via-card/60 to-transparent pointer-events-none" />
+          return hasImage ? (
+            <div className={`relative h-full w-full flex items-center justify-center ${isSelected ? "" : "group-hover:scale-105 transition-transform duration-700 ease-out"}`}>
+              
+              {/* 1. Hidden Isolated Bottle (Strict layoutId origin) */}
+              {/* Elevated to z-20 when selected so Framer Motion cleanly morphs without clipping beneath */}
+              <motion.img
+                layoutId={`bottle-${perfume.id}`}
+                src={getAvifUrl(perfume)}
+                alt={`${perfume.brand} ${perfume.scent_name}`}
+                className={`absolute inset-0 m-auto h-[85%] w-full object-contain ${isSelected ? "z-20" : "z-0"}`}
+                style={{ willChange: "transform" }}
+                transition={{ type: "spring", stiffness: 75, damping: 18, mass: 1.1 }}
+                loading={index < 4 ? "eager" : "lazy"}
+                decoding="async"
+              />
+
+              {/* 2. Unaltered Catalog Environment Photo (Fades out when selected) */}
+              {cardImage && (
+                <motion.div 
+                  style={{ y: imageY, scale: 1.15 }}
+                  animate={{ opacity: isSelected ? 0 : 1 }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute inset-0 z-10"
+                >
+                  <img src={cardImage} alt="" className="h-full w-full object-cover" />
+                </motion.div>
+              )}
+              
+            </div>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground/30">
+              No image
+            </div>
+          );
+        })()}
+
+        {/* Shadow Gradient at bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card via-card/60 to-transparent pointer-events-none z-10" />
 
         {/* Category Tag (Bottom Left) */}
         <div className="absolute bottom-2 left-2 z-10">
@@ -143,7 +186,7 @@ export default function PerfumeCard({
         )}
       </div>
 
-      <div className="relative z-10 -mt-2 p-3 pb-4.5 sm:p-5">
+      <motion.div style={{ y: textY }} className="relative z-10 -mt-2 p-3 pb-4.5 sm:p-5 bg-card">
         <motion.div initial={false} whileHover={{ y: -3 }} transition={{ duration: 0.3, ease }}>
           <p className="mb-1 text-[8px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-primary font-body">
             {perfume.brand}
@@ -167,7 +210,7 @@ export default function PerfumeCard({
             </motion.span>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
     </motion.article>
   );
 }
