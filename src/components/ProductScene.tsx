@@ -102,8 +102,8 @@ function ProductCard({
             <planeGeometry args={[2.5, 3.125]} />
             <meshPhysicalMaterial 
               ref={materialRef2}
-              transparent={true} alphaMap={texture} depthWrite={false} opacity={0.15} 
-              roughness={0.0} metalness={0.5} transmission={0.9} clearcoat={1.0} side={THREE.FrontSide} 
+              transparent={true} alphaMap={texture} depthWrite={false} opacity={0.12} 
+              roughness={0.15} metalness={0.2} side={THREE.FrontSide} 
             />
           </mesh>
         </Billboard>
@@ -128,8 +128,8 @@ function StandaloneProductCard({ perfume, radius }: { perfume: Perfume, radius: 
           <mesh position={[0, 0, 0.05]}>
             <planeGeometry args={[2.5, 3.125]} />
             <meshPhysicalMaterial 
-              transparent={true} alphaMap={texture} depthWrite={false} opacity={0.15} 
-              roughness={0.0} metalness={0.5} transmission={0.9} clearcoat={1.0} side={THREE.FrontSide} 
+              transparent={true} alphaMap={texture} depthWrite={false} opacity={0.12} 
+              roughness={0.15} metalness={0.2} side={THREE.FrontSide} 
             />
           </mesh>
         </group>
@@ -258,13 +258,15 @@ export default function ProductScene({
   onSelect,
   selectedPerfume,
   dragX,
-  selectionSource
+  selectionSource,
+  isVisible = true,
 }: { 
   perfumes: Perfume[];
   onSelect: (p: Perfume) => void;
   selectedPerfume?: Perfume | null;
   dragX?: any;
   selectionSource?: "grid" | "carousel" | null;
+  isVisible?: boolean;
 }) {
   // If no perfumes, render nothing
   if (!perfumes || perfumes.length === 0) return null;
@@ -277,8 +279,9 @@ export default function ProductScene({
   return (
     <Canvas 
       camera={{ position: [0, 0, radius + 5], fov: 40 }}
-      dpr={[1, 1.5]}
-      gl={{ antialias: true, alpha: true }}
+      dpr={1}
+      frameloop={isVisible ? "always" : "never"}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
     >
       <ambientLight intensity={2.5} />
       {/* Gold rim light */}
@@ -288,7 +291,6 @@ export default function ProductScene({
         penumbra={1} 
         intensity={8} 
         color="#d6b36d" 
-        castShadow
       />
       {/* Fill light */}
       <spotLight 
@@ -314,7 +316,7 @@ export default function ProductScene({
       {/* Ground plane for shadows */}
       <ContactShadows 
         position={[0, -2, 0]} 
-        opacity={0.4} 
+        opacity={0.35} 
         scale={20} 
         blur={2} 
         far={4.5} 

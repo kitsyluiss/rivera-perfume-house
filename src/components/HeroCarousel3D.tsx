@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Perfume } from "@/lib/types";
 import { Loader2 } from "lucide-react";
-import { motion, AnimatePresence, useMotionValue, useTransform } from "motion/react";
+import { motion, useMotionValue, useTransform } from "motion/react";
 
 const ProductScene = dynamic(() => import("./ProductScene"), {
   ssr: false,
@@ -26,7 +26,9 @@ export default function HeroCarousel3D({
   selectedPerfume?: Perfume | null;
   selectionSource?: "grid" | "carousel" | null;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   
   // 1. Framer Motion robust physics value for drag
   const dragX = useMotionValue(0);
@@ -42,12 +44,26 @@ export default function HeroCarousel3D({
     }
   }, []);
 
+  // Pause Three.js rendering when carousel is scrolled off-screen
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   if (!mounted || perfumes.length === 0) {
     return null; // Fallback to normal layout if reduced motion or SSR
   }
 
   return (
-    <div className="relative w-full overflow-hidden h-[60vh] min-h-[400px] lg:h-[70vh] border-b border-border/50">
+    <div ref={containerRef} className="relative w-full overflow-hidden h-[60vh] min-h-[400px] lg:h-[70vh] border-b border-border/50">
       
       {/* Heavy Liquid Drag Layer */}
       <motion.div
@@ -64,6 +80,7 @@ export default function HeroCarousel3D({
             selectedPerfume={selectedPerfume}
             dragX={dragX}
             selectionSource={selectionSource}
+            isVisible={isVisible}
           />
         </motion.div>
       </motion.div>
