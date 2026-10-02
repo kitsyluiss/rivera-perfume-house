@@ -151,6 +151,19 @@ export default function CatalogView({
   const [query, setQuery] = useState("");
   const [selectedPerfume, setSelectedPerfume] = useState<Perfume | null>(null);
   const [selectionSource, setSelectionSource] = useState<"grid" | "carousel" | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    // Remove layoutId right before unmount so it fades out cleanly without panning back
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setSelectedPerfume(null);
+        setSelectionSource(null);
+        setIsClosing(false);
+      });
+    });
+  };
 
   const shuffleAll = (items: Perfume[]) => {
     const pool = items.filter(
@@ -222,8 +235,7 @@ export default function CatalogView({
     if (!selectedPerfume) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setSelectedPerfume(null);
-        setSelectionSource(null);
+        handleClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -484,10 +496,7 @@ export default function CatalogView({
               style={{
                 background: "radial-gradient(circle at calc(50% - 20vw) 50%, rgba(5,5,5,0.85) 0%, rgba(5,5,5,0.96) 55%, rgba(0,0,0,1) 100%)",
               }}
-              onClick={() => {
-                setSelectedPerfume(null);
-                setSelectionSource(null);
-              }}
+              onClick={handleClose}
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
               data-lenis-prevent="true"
@@ -511,10 +520,7 @@ export default function CatalogView({
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
                 type="button"
-                onClick={() => {
-                  setSelectedPerfume(null);
-                  setSelectionSource(null);
-                }}
+                onClick={handleClose}
                 aria-label="Close product details"
                 className="absolute right-6 top-6 md:right-10 md:top-8 z-[10000] flex h-11 w-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/15 backdrop-blur-md text-white transition cursor-pointer pointer-events-auto shadow-2xl focus:outline-none focus:ring-2 focus:ring-primary"
               >
@@ -526,14 +532,14 @@ export default function CatalogView({
                 {(selectedPerfume.image_url || getAvifUrl(selectedPerfume) !== "/logo.svg") && (
                   <div className="relative h-[85%] md:h-full aspect-[9/16] flex items-center justify-center">
                     <motion.img
-                      layoutId={selectionSource === "grid" ? `bottle-${selectedPerfume.id}` : undefined}
+                      layoutId={selectionSource === "grid" && !isClosing ? `bottle-${selectedPerfume.id}` : undefined}
                       src={getAvifUrl(selectedPerfume)}
                       alt={selectedPerfume.scent_name}
                       className="relative z-10 h-[90%] w-full object-contain drop-shadow-[0_25px_50px_rgba(0,0,0,0.8)]"
                       style={{ willChange: "transform" }}
                       initial={selectionSource === "carousel" ? { opacity: 0, scale: 0.85, y: 20 } : undefined}
                       animate={selectionSource === "carousel" ? { opacity: 1, scale: 1, y: 0 } : undefined}
-                      exit={selectionSource === "carousel" ? { opacity: 0, scale: 0.85, y: 20 } : undefined}
+                      exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } }}
                       transition={{ type: "spring", stiffness: 85, damping: 18, mass: 1.0 }}
                     />
                   </div>
