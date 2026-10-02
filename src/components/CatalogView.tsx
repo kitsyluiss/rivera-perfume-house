@@ -320,7 +320,7 @@ export default function CatalogView({
       </header>
 
       {/* 2. 3D HERO CAROUSEL: Placed below the branding with clear separation */}
-      <section className="relative w-full my-6 md:my-10">
+      <section className="relative w-full my-2 md:my-10">
         <HeroCarousel3D 
           key={carouselPerfumes.map(p => p.id).join('-')}
           perfumes={carouselPerfumes}
@@ -479,7 +479,7 @@ export default function CatalogView({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
               className="fixed inset-0 z-[9990] pointer-events-auto backdrop-blur-3xl"
               style={{
                 background: "radial-gradient(circle at calc(50% - 20vw) 50%, rgba(5,5,5,0.85) 0%, rgba(5,5,5,0.96) 55%, rgba(0,0,0,1) 100%)",
@@ -531,10 +531,10 @@ export default function CatalogView({
                       alt={selectedPerfume.scent_name}
                       className="relative z-10 h-[90%] w-full object-contain drop-shadow-[0_25px_50px_rgba(0,0,0,0.8)]"
                       style={{ willChange: "transform" }}
-                      initial={selectionSource === "carousel" ? { opacity: 0, scale: 0.88 } : undefined}
-                      animate={selectionSource === "carousel" ? { opacity: 1, scale: 1 } : undefined}
-                      exit={selectionSource === "carousel" ? { opacity: 0, scale: 0.88 } : undefined}
-                      transition={{ type: "spring", stiffness: 75, damping: 18, mass: 1.1 }}
+                      initial={selectionSource === "carousel" ? { opacity: 0, scale: 0.85, y: 20 } : undefined}
+                      animate={selectionSource === "carousel" ? { opacity: 1, scale: 1, y: 0 } : undefined}
+                      exit={selectionSource === "carousel" ? { opacity: 0, scale: 0.85, y: 20 } : undefined}
+                      transition={{ type: "spring", stiffness: 85, damping: 18, mass: 1.0 }}
                     />
                   </div>
                 )}

@@ -63,7 +63,10 @@ export default function HeroCarousel3D({
   }
 
   return (
-    <div ref={containerRef} className="relative w-full overflow-hidden h-[60vh] min-h-[400px] lg:h-[70vh] border-b border-border/50">
+    <div ref={containerRef} className="relative w-full overflow-hidden h-[44vh] min-h-[340px] max-h-[460px] md:h-[60vh] md:max-h-none lg:h-[70vh] border-b border-border/50">
+      {/* Subtle luxury edge fade giving a distinct framed border on left & right */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-4 sm:w-8 bg-gradient-to-r from-background via-background/60 to-transparent z-20" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-4 sm:w-8 bg-gradient-to-l from-background/60 to-transparent z-20" />
       
       {/* Heavy Liquid Drag Layer */}
       <motion.div

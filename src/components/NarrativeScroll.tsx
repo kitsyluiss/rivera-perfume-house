@@ -51,64 +51,6 @@ function CelestialDust() {
   );
 }
 
-// Parallax Spotlight Bottles - Anchored to the Best Sellers showcase
-function ArchiveSpotlightFlacons({ scrollYProgress }: { scrollYProgress: MotionValue<number> }) {
-  const { viewport } = useThree();
-  const group1 = useRef<THREE.Group>(null);
-  const group2 = useRef<THREE.Group>(null);
-
-  const texture1 = useTexture("/perfumes/hawas_black.avif");
-  const texture2 = useTexture("/perfumes/varakh_silver.avif");
-
-  const isMobile = viewport.width < 7;
-
-  useFrame((state) => {
-    const progress = scrollYProgress.get();
-    const entrance = Math.max(0, Math.min(1, (progress - 0.45) / 0.35));
-    const targetY = (progress - 0.82) * 5.5 - 0.2;
-
-    if (group1.current) {
-      const xBase = isMobile ? -2.2 : -3.9;
-      group1.current.position.x = xBase - (1 - entrance) * 3;
-      group1.current.position.y = targetY;
-      group1.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.4) * 0.12 + (1 - entrance) * 0.4;
-      group1.current.rotation.z = Math.cos(state.clock.elapsedTime * 0.3) * 0.05;
-    }
-    if (group2.current) {
-      const xBase = isMobile ? 2.2 : 3.9;
-      group2.current.position.x = xBase + (1 - entrance) * 3;
-      group2.current.position.y = targetY + 0.3;
-      group2.current.rotation.y = -Math.sin(state.clock.elapsedTime * 0.4) * 0.12 - (1 - entrance) * 0.4;
-      group2.current.rotation.z = -Math.cos(state.clock.elapsedTime * 0.3) * 0.05;
-    }
-  });
-
-  return (
-    <>
-      <group ref={group1} position={[-3.9, 0, -0.5]}>
-        <Float speed={2} floatIntensity={0.6} rotationIntensity={0.2}>
-          <Billboard follow={true} lockX={false} lockY={false} lockZ={false}>
-            <mesh scale={isMobile ? [0.9, 0.9, 0.9] : [1.25, 1.25, 1.25]}>
-              <planeGeometry args={[2.5, 3.125]} />
-              <meshBasicMaterial map={texture1} transparent depthWrite={false} side={THREE.DoubleSide} />
-            </mesh>
-          </Billboard>
-        </Float>
-      </group>
-      <group ref={group2} position={[3.9, 0, -0.5]}>
-        <Float speed={1.8} floatIntensity={0.7} rotationIntensity={0.15}>
-          <Billboard follow={true} lockX={false} lockY={false} lockZ={false}>
-            <mesh scale={isMobile ? [0.9, 0.9, 0.9] : [1.35, 1.35, 1.35]}>
-              <planeGeometry args={[2.5, 3.125]} />
-              <meshBasicMaterial map={texture2} transparent depthWrite={false} side={THREE.DoubleSide} />
-            </mesh>
-          </Billboard>
-        </Float>
-      </group>
-    </>
-  );
-}
-
 // Zero Gravity Scatter Component - Starfield Volumetric Constellation
 function ZeroGravityScatter({ scrollYProgress }: { scrollYProgress: MotionValue<number> }) {
   const groupRef = useRef<THREE.Group>(null);
@@ -240,7 +182,6 @@ export default function NarrativeScroll() {
           <Suspense fallback={null}>
             <CelestialDust />
             <ZeroGravityScatter scrollYProgress={scrollYProgress} />
-            <ArchiveSpotlightFlacons scrollYProgress={scrollYProgress} />
           </Suspense>
         </Canvas>
       </div>
@@ -257,11 +198,7 @@ export default function NarrativeScroll() {
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col items-center max-w-4xl mx-auto will-change-transform"
           >
-            {/* Friendly Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#e1b854]/40 bg-black/70 px-4 py-1.5 text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] text-[#e1b854] mb-6 shadow-lg shadow-black/60 pointer-events-auto">
-              <span className="h-2 w-2 rounded-full bg-[#e1b854] animate-pulse" />
-              Local Family Business &bull; Wholesale &amp; Personal Use
-            </div>
+
 
             {/* Brand Title */}
             <h1 className="font-display text-6xl sm:text-8xl md:text-9xl lg:text-[10vw] leading-none text-transparent bg-clip-text bg-gradient-to-b from-[#f9d976] to-[#bd9135] font-light tracking-widest mb-4">
@@ -419,113 +356,6 @@ export default function NarrativeScroll() {
             </motion.div>
           </div>
 
-        </section>
-
-        {/* ========================================================================= */}
-        {/* Section 4: Best Sellers / Heavy Hitters with Real Prices & Clear Descriptions */}
-        {/* ========================================================================= */}
-        <section className="py-28 sm:py-36 px-4 sm:px-6 pointer-events-auto max-w-5xl mx-auto text-center relative z-10">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#e1b854]/30 bg-black/70 px-4 py-1.5 text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] text-[#e1b854] mb-4">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#e1b854]" />
-            Customer Favorites &bull; In Stock Now
-          </div>
-
-          <h2 className="font-display text-3xl sm:text-5xl md:text-6xl text-white font-light tracking-wide">
-            The Heavy <span className="italic text-[#e1b854]">Hitters</span>
-          </h2>
-          <p className="mt-3 text-xs sm:text-sm text-white/70 max-w-xl mx-auto font-body leading-relaxed">
-            Two of our most requested beast-mode fragrances, praised for their immense longevity and compliment factor.
-          </p>
-
-          {/* Cards */}
-          <div className="mt-14 w-full grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-            {/* Card 1: Hawas Black */}
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl transition-all duration-300 hover:border-[#e1b854]/50 shadow-2xl flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="rounded-full bg-[#e1b854]/15 border border-[#e1b854]/30 px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[#e1b854]">
-                    Rasasi &bull; Sealed 100ml
-                  </span>
-                  <span className="text-[11px] font-mono text-emerald-400 font-medium">● In Stock</span>
-                </div>
-
-                <h3 className="font-display text-3xl sm:text-4xl text-white font-light">
-                  Hawas Black
-                </h3>
-
-                <div className="mt-3 flex items-baseline gap-3">
-                  <span className="font-display text-3xl font-semibold text-[#f9d976]">₱1,999</span>
-                  <span className="text-xs text-white/50 font-body">Retail / Single Bottle</span>
-                </div>
-
-                <p className="mt-5 text-sm font-body text-white/75 leading-relaxed">
-                  A powerful, dark, fresh-fruity scent opening with crisp pineapple and bergamot, drying down into smoky oakmoss, cedarwood, and amber. Incredible longevity (8+ hours).
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-1.5">
-                  {["Pineapple", "Bergamot", "Smoky Oakmoss", "Cedarwood", "Patchouli"].map((note) => (
-                    <span key={note} className="rounded-full border border-white/10 bg-black/50 px-2.5 py-1 text-[10px] text-white/60">
-                      {note}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between">
-                <span className="text-[11px] text-white/50 font-mono">Wholesale: Inquire for bulk packs</span>
-                <Link
-                  href="/catalog"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#e1b854] hover:text-white transition-colors"
-                >
-                  View in Catalog &rarr;
-                </Link>
-              </div>
-            </div>
-
-            {/* Card 2: Varakh Silver */}
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl transition-all duration-300 hover:border-[#e1b854]/50 shadow-2xl flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="rounded-full bg-[#e1b854]/15 border border-[#e1b854]/30 px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[#e1b854]">
-                    Fragrance World &bull; Sealed 100ml
-                  </span>
-                  <span className="text-[11px] font-mono text-emerald-400 font-medium">● In Stock</span>
-                </div>
-
-                <h3 className="font-display text-3xl sm:text-4xl text-white font-light">
-                  Varakh Silver
-                </h3>
-
-                <div className="mt-3 flex items-baseline gap-3">
-                  <span className="font-display text-3xl font-semibold text-[#f9d976]">₱1,499</span>
-                  <span className="text-xs text-white/50 font-body">Retail / Single Bottle</span>
-                </div>
-
-                <p className="mt-5 text-sm font-body text-white/75 leading-relaxed">
-                  A crisp, clean, aristocratic fragrance featuring aromatic juniper berries, warm nutmeg, and soft crystalline musk. Versatile, office-safe, and perfect for warm Philippine weather.
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-1.5">
-                  {["Juniper Berry", "Nutmeg", "Clean Musk", "Golden Amber", "Vanilla"].map((note) => (
-                    <span key={note} className="rounded-full border border-white/10 bg-black/50 px-2.5 py-1 text-[10px] text-white/60">
-                      {note}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between">
-                <span className="text-[11px] text-white/50 font-mono">Wholesale: Inquire for bulk packs</span>
-                <Link
-                  href="/catalog"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#e1b854] hover:text-white transition-colors"
-                >
-                  View in Catalog &rarr;
-                </Link>
-              </div>
-            </div>
-          </div>
         </section>
 
         {/* ========================================================================= */}
