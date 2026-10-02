@@ -5,8 +5,35 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Float, ContactShadows, useTexture, Billboard } from "@react-three/drei";
 import * as THREE from "three";
 import { Perfume } from "@/lib/types";
-
 import { getAvifUrl } from "@/lib/get-avif";
+
+/**
+ * Responsive Camera:
+ * Dynamically adjusts FOV and camera position when in portrait mode (aspect < 1)
+ * so the entire 3D carousel arc (center bottle + flanking bottles) is cleanly framed on mobile phones.
+ */
+function ResponsiveCamera({ radius }: { radius: number }) {
+  const { camera, size } = useThree();
+
+  useEffect(() => {
+    const aspect = size.width / size.height;
+    if (camera instanceof THREE.PerspectiveCamera) {
+      if (aspect < 1.2) {
+        // Mobile / Tablet: tightly framed with crisp left & right borders, eliminating vertical deadspace
+        const targetHFov = 68; // target horizontal FOV in degrees
+        const vFov = 2 * Math.atan(Math.tan((targetHFov / 2) * (Math.PI / 180)) / aspect) * (180 / Math.PI);
+        camera.fov = Math.min(62, Math.max(38, vFov));
+        camera.position.set(0, 0, radius + 3.8);
+      } else {
+        camera.fov = 40;
+        camera.position.set(0, 0, radius + 5);
+      }
+      camera.updateProjectionMatrix();
+    }
+  }, [camera, size, radius]);
+
+  return null;
+}
 
 // The individual product card in 3D space
 function ProductCard({ 
@@ -17,7 +44,8 @@ function ProductCard({
   onClick,
   isSelected,
   hasSelection,
-  dragX
+  dragX,
+  isMobile
 }: { 
   perfume: Perfume; 
   index: number; 
@@ -27,16 +55,30 @@ function ProductCard({
   isSelected: boolean;
   hasSelection: boolean;
   dragX: any;
+  isMobile: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const materialRef1 = useRef<THREE.MeshBasicMaterial>(null);
   const materialRef2 = useRef<THREE.MeshPhysicalMaterial>(null);
   
   const texture = useTexture(getAvifUrl(perfume));
+
+  useEffect(() => {
+    if (texture) {
+      texture.anisotropy = 16;
+      texture.generateMipmaps = true;
+      texture.minFilter = THREE.LinearMipmapLinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.needsUpdate = true;
+    }
+  }, [texture]);
   
   const angle = (index / total) * Math.PI * 2;
   const baseX = Math.sin(angle) * radius;
   const baseZ = Math.cos(angle) * radius;
+
+  const baseScale = isMobile ? 0.78 : 1.0;
   
   useFrame((state, delta) => {
     if (groupRef.current) {
@@ -51,7 +93,7 @@ function ProductCard({
           targetOpacityGlass = 0.25;
           groupRef.current.visible = true;
           
-          groupRef.current.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
+          groupRef.current.scale.lerp(new THREE.Vector3(baseScale, baseScale, baseScale), 0.1);
         } else {
           // Unselected bottles smoothly fade out
           targetOpacity = 0;
@@ -64,7 +106,7 @@ function ProductCard({
       } else {
         // Idle
         groupRef.current.visible = true;
-        groupRef.current.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
+        groupRef.current.scale.lerp(new THREE.Vector3(baseScale, baseScale, baseScale), 0.1);
       }
 
       if (materialRef1.current) {
@@ -94,7 +136,7 @@ function ProductCard({
           follow={!hasSelection || isSelected} 
           lockX={false} lockY={false} lockZ={false}
         >
-          <mesh castShadow receiveShadow>
+          <mesh>
             <planeGeometry args={[2.5, 3.125]} />
             <meshBasicMaterial ref={materialRef1} map={texture} transparent={true} depthWrite={false} side={THREE.DoubleSide} />
           </mesh>
@@ -112,46 +154,21 @@ function ProductCard({
   );
 }
 
-// A standalone card for items clicked from the grid that aren't in the carousel
-function StandaloneProductCard({ perfume, radius }: { perfume: Perfume, radius: number }) {
-  const groupRef = useRef<THREE.Group>(null);
-  const texture = useTexture(getAvifUrl(perfume));
-
-  return (
-    <Float speed={0.5} rotationIntensity={0.05} floatIntensity={0.2} position={[-0.6, 0, 5]}>
-      <Billboard follow={true} lockX={false} lockY={false} lockZ={false}>
-        <group ref={groupRef} scale={[1.05, 1.05, 1.05]}>
-          <mesh castShadow receiveShadow>
-            <planeGeometry args={[2.5, 3.125]} />
-            <meshBasicMaterial map={texture} transparent={true} depthWrite={false} side={THREE.DoubleSide} />
-          </mesh>
-          <mesh position={[0, 0, 0.05]}>
-            <planeGeometry args={[2.5, 3.125]} />
-            <meshPhysicalMaterial 
-              transparent={true} alphaMap={texture} depthWrite={false} opacity={0.12} 
-              roughness={0.15} metalness={0.2} side={THREE.FrontSide} 
-            />
-          </mesh>
-        </group>
-      </Billboard>
-    </Float>
-  );
-}
-
-
 // The interactive carousel rig
 function CarouselRig({ 
   perfumes, 
   radius,
   onSelect,
   selectedId,
-  dragX
+  dragX,
+  isMobile
 }: { 
   perfumes: Perfume[];
   radius: number;
   onSelect: (p: Perfume) => void;
   selectedId?: string;
   dragX?: any;
+  isMobile: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const targetRotation = useRef(0);
@@ -177,8 +194,6 @@ function CarouselRig({
       if (targetAngle !== null) {
         wasSelectedRef.current = true;
         // Move the entire carousel to center-left and bring it closer for the floating avif view
-        // Align dynamically with the 60vw left focal area of the radial gradient
-        const isMobile = window.innerWidth < 768;
         const targetZ = isMobile ? (3.5 - radius) : (5.2 - radius);
         const bottleWorldZ = targetZ + radius;
         
@@ -215,7 +230,6 @@ function CarouselRig({
         // Prevent rotation snapping when exiting the product view
         if (wasSelectedRef.current) {
           dragOffsetRef.current = groupRef.current.rotation.y - autoSpin;
-          // Only sync Framer Motion's visual representation if dragX exists
           if (dragX) {
             dragX.set(dragOffsetRef.current * 1000 / (Math.PI * 2));
           }
@@ -247,6 +261,7 @@ function CarouselRig({
           isSelected={perfume.id === selectedId}
           hasSelection={!!selectedId}
           dragX={dragX}
+          isMobile={isMobile}
         />
       ))}
     </group>
@@ -271,18 +286,28 @@ export default function ProductScene({
   // If no perfumes, render nothing
   if (!perfumes || perfumes.length === 0) return null;
 
-  // Determine radius based on number of items (prevent overlap)
-  const radius = Math.max(3.5, perfumes.length * 0.8);
+  // Responsive radius: slightly tighter on portrait mobile to ensure flanking bottles stay nicely framed
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
-  const isSelectedInCarousel = selectedPerfume ? perfumes.some(p => p.id === selectedPerfume.id) : false;
+  const radius = isMobile
+    ? Math.max(2.8, perfumes.length * 0.48)
+    : Math.max(3.5, perfumes.length * 0.8);
 
   return (
     <Canvas 
       camera={{ position: [0, 0, radius + 5], fov: 40 }}
-      dpr={1}
+      dpr={[1, 2]}
       frameloop={isVisible ? "always" : "never"}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
     >
+      <ResponsiveCamera radius={radius} />
+
       <ambientLight intensity={2.5} />
       {/* Gold rim light */}
       <spotLight 
@@ -308,6 +333,7 @@ export default function ProductScene({
           onSelect={onSelect}
           selectedId={selectionSource === "carousel" ? selectedPerfume?.id : undefined}
           dragX={dragX}
+          isMobile={isMobile}
         />
       </Suspense>
       
@@ -315,7 +341,7 @@ export default function ProductScene({
       
       {/* Ground plane for shadows */}
       <ContactShadows 
-        position={[0, -2, 0]} 
+        position={[0, isMobile ? -1.6 : -2, 0]} 
         opacity={0.35} 
         scale={20} 
         blur={2} 
