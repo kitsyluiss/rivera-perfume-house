@@ -266,8 +266,40 @@ export async function updatePerfume(id: string, updates: Record<string, unknown>
     if (key in updates) sanitizedUpdates[key] = updates[key];
   }
 
+  // 1. Fetch current perfume info to get brand & scent name
+  const { data: perfume } = await supabase
+    .from("perfumes")
+    .select("brand, scent_name")
+    .eq("id", id)
+    .single();
+
+  // 2. Update the target row
   const { error } = await supabase.from("perfumes").update(sanitizedUpdates).eq("id", id);
   if (error) throw new Error(error.message);
+
+  // 3. Sync pricing/season/image changes across all matching bottles in the database
+  if (perfume && (sanitizedUpdates.target_sale_price !== undefined || sanitizedUpdates.cost_price !== undefined || sanitizedUpdates.season !== undefined || sanitizedUpdates.image_url !== undefined)) {
+    const syncPayload: Record<string, unknown> = {};
+    if (sanitizedUpdates.target_sale_price !== undefined) {
+      syncPayload.target_sale_price = sanitizedUpdates.target_sale_price;
+    }
+    if (sanitizedUpdates.cost_price !== undefined) {
+      syncPayload.cost_price = sanitizedUpdates.cost_price;
+    }
+    if (sanitizedUpdates.season !== undefined) {
+      syncPayload.season = sanitizedUpdates.season;
+    }
+    if (sanitizedUpdates.image_url !== undefined) {
+      syncPayload.image_url = sanitizedUpdates.image_url;
+    }
+
+    await supabase
+      .from("perfumes")
+      .update(syncPayload)
+      .eq("brand", perfume.brand)
+      .eq("scent_name", perfume.scent_name);
+  }
+
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/catalog");

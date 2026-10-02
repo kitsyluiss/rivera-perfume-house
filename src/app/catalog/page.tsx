@@ -22,6 +22,10 @@ export default async function Home() {
     if (seen.has(key)) {
       const existing = seen.get(key)!;
       existing.quantity += p.quantity;
+      if (p.target_sale_price) existing.target_sale_price = p.target_sale_price;
+      if (p.cost_price) existing.cost_price = p.cost_price;
+      if (p.flash_sale_price !== undefined) existing.flash_sale_price = p.flash_sale_price;
+      if (p.flash_sale_end !== undefined) existing.flash_sale_end = p.flash_sale_end;
       if (!existing.image_url && p.image_url) {
         existing.image_url = p.image_url;
       }
