@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Perfume } from "@/lib/types";
 import { formatPhp } from "@/lib/format";
 import { inferPerfumeTag } from "@/lib/perfume-tags";
 import { useCountdown } from "@/hooks/useCountdown";
-import { getAvifUrl, getPngUrl } from "@/lib/get-avif";
+import { getAvifUrl, getCatalogPhoto, getFallbackCatalogPhoto } from "@/lib/get-avif";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -44,8 +44,45 @@ export default function PerfumeCard({
     onClick?.();
   };
 
-  const cardImage = perfume.image_url || getPngUrl(perfume);
-  const hasImage = Boolean(cardImage || getAvifUrl(perfume) !== "/logo.svg");
+  // Robust photo resolution for the catalog grid:
+  // 1. Primary catalog environment photo (JPG / uploaded Supabase photo)
+  // 2. Fallback secondary catalog photo (PNG)
+  // 3. Fallback AVIF cutout bottle if no catalog photo exists
+  const catalogPhoto = getCatalogPhoto(perfume);
+  const avifPhoto = getAvifUrl(perfume);
+  const initialPhoto = catalogPhoto || (avifPhoto !== "/logo.svg" ? avifPhoto : null);
+
+  const [imgSrc, setImgSrc] = useState<string | null>(initialPhoto);
+  const [hasTriedFallback, setHasTriedFallback] = useState(false);
+
+  useEffect(() => {
+    const nextPhoto = getCatalogPhoto(perfume) || (getAvifUrl(perfume) !== "/logo.svg" ? getAvifUrl(perfume) : null);
+    setImgSrc(nextPhoto);
+    setHasTriedFallback(false);
+  }, [perfume.id, perfume.image_url, perfume.scent_name]);
+
+  const handleImageError = () => {
+    if (!hasTriedFallback) {
+      setHasTriedFallback(true);
+      const fallback = getFallbackCatalogPhoto(perfume);
+      if (fallback && fallback !== imgSrc) {
+        setImgSrc(fallback);
+        return;
+      }
+      if (avifPhoto && avifPhoto !== "/logo.svg" && avifPhoto !== imgSrc) {
+        setImgSrc(avifPhoto);
+        return;
+      }
+    } else {
+      if (avifPhoto && avifPhoto !== "/logo.svg" && avifPhoto !== imgSrc) {
+        setImgSrc(avifPhoto);
+        return;
+      }
+      setImgSrc(null);
+    }
+  };
+
+  const isAvif = imgSrc?.toLowerCase().split("?")[0].endsWith(".avif");
 
   return (
     <motion.article
@@ -69,38 +106,35 @@ export default function PerfumeCard({
       } ${!inStock ? "opacity-50 grayscale" : ""}`}
     >
       <div className="relative aspect-[9/16] overflow-hidden bg-secondary">
-        {hasImage ? (
-          <div className="relative h-full w-full flex items-center justify-center">
-            
-            {/* 1. Hidden Isolated Bottle (Strict layoutId origin for modal transition) */}
-            <motion.img
-              layoutId={`bottle-${perfume.id}`}
-              src={getAvifUrl(perfume)}
-              alt={`${perfume.brand} ${perfume.scent_name}`}
-              className={`absolute inset-0 m-auto h-[85%] w-full object-contain ${isSelected ? "z-20" : "z-0"}`}
-              transition={{ type: "spring", stiffness: 75, damping: 18, mass: 1.1 }}
-              loading={index < 4 ? "eager" : "lazy"}
-              decoding="async"
-            />
+        {/* 1. Underlying Flacon with layoutId for the seamless spring morph into the modal */}
+        <motion.img
+          layoutId={`bottle-${perfume.id}`}
+          src={getAvifUrl(perfume)}
+          alt={`${perfume.brand} ${perfume.scent_name}`}
+          className={`absolute inset-0 m-auto h-[85%] w-full object-contain pointer-events-none ${
+            isSelected ? "z-20 opacity-100" : "z-0 opacity-0"
+          }`}
+          transition={{ type: "spring", stiffness: 85, damping: 18, mass: 1.0 }}
+        />
 
-            {/* 2. Unaltered Catalog Environment Photo with hardware-accelerated CSS hover zoom */}
-            {cardImage && (
-              <div 
-                className={`absolute inset-0 z-10 transition-opacity duration-500 overflow-hidden ${
-                  isSelected ? "opacity-0" : "opacity-100"
-                }`}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={cardImage} 
-                  alt="" 
-                  loading={index < 6 ? "eager" : "lazy"}
-                  decoding="async"
-                  className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" 
-                />
-              </div>
-            )}
-            
+        {/* 2. Full-bleed Catalog Environment Photo */}
+        {imgSrc ? (
+          <div 
+            className={`absolute inset-0 h-full w-full overflow-hidden bg-secondary transition-opacity duration-300 ${
+              isSelected ? "opacity-0 pointer-events-none" : "opacity-100 z-10"
+            }`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={imgSrc} 
+              alt={`${perfume.brand} ${perfume.scent_name}`} 
+              loading={index < 8 ? "eager" : "lazy"}
+              decoding="async"
+              onError={handleImageError}
+              className={`h-full w-full transition-transform duration-700 ease-out group-hover:scale-105 ${
+                isAvif ? "object-contain p-4 drop-shadow-lg" : "object-cover"
+              }`} 
+            />
           </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground/30">
