@@ -715,8 +715,9 @@ export default function CatalogView({
                                   <div className="h-1 bg-white/5 rounded-full flex-1 overflow-hidden">
                                     <motion.div
                                       initial={{ width: 0 }}
-                                      animate={{ width: `${accord.value}%` }}
-                                      transition={{ duration: 1.2, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
+                                      whileInView={{ width: `${accord.value}%` }}
+                                      viewport={{ once: true, margin: "-15%" }}
+                                      transition={{ duration: 1.2, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
                                       className="h-full rounded-full"
                                       style={{ background: getAccordGradient(accord.color) }}
                                     />
@@ -733,7 +734,13 @@ export default function CatalogView({
                             </h4>
                             <div className="flex flex-col gap-4">
                               {dna.notes.top && dna.notes.top.length > 0 && (
-                                <div className="flex gap-4 items-start">
+                                <motion.div 
+                                  initial={{ opacity: 0, y: 10 }}
+                                  whileInView={{ opacity: 1, y: 0 }}
+                                  viewport={{ once: true, margin: "-10%" }}
+                                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                                  className="flex gap-4 items-start"
+                                >
                                   <span className="w-16 text-[10px] text-white/40 font-mono uppercase tracking-[0.1em] pt-1">
                                     Top
                                   </span>
@@ -744,10 +751,16 @@ export default function CatalogView({
                                       </span>
                                     ))}
                                   </div>
-                                </div>
+                                </motion.div>
                               )}
                               {dna.notes.heart && dna.notes.heart.length > 0 && (
-                                <div className="flex gap-4 items-start border-t border-white/5 pt-4">
+                                <motion.div 
+                                  initial={{ opacity: 0, y: 10 }}
+                                  whileInView={{ opacity: 1, y: 0 }}
+                                  viewport={{ once: true, margin: "-10%" }}
+                                  transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                                  className="flex gap-4 items-start border-t border-white/5 pt-4"
+                                >
                                   <span className="w-16 text-[10px] text-[#e1b854] font-mono uppercase tracking-[0.1em] pt-1">
                                     Heart
                                   </span>
@@ -758,10 +771,16 @@ export default function CatalogView({
                                       </span>
                                     ))}
                                   </div>
-                                </div>
+                                </motion.div>
                               )}
                               {dna.notes.base && dna.notes.base.length > 0 && (
-                                <div className="flex gap-4 items-start border-t border-white/5 pt-4">
+                                <motion.div 
+                                  initial={{ opacity: 0, y: 10 }}
+                                  whileInView={{ opacity: 1, y: 0 }}
+                                  viewport={{ once: true, margin: "-10%" }}
+                                  transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                                  className="flex gap-4 items-start border-t border-white/5 pt-4"
+                                >
                                   <span className="w-16 text-[10px] text-white/40 font-mono uppercase tracking-[0.1em] pt-1">
                                     Base
                                   </span>
@@ -772,7 +791,7 @@ export default function CatalogView({
                                       </span>
                                     ))}
                                   </div>
-                                </div>
+                                </motion.div>
                               )}
                             </div>
                           </div>
