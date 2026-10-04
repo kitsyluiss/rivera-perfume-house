@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, Suspense, useMemo } from "react";
+import { useRef, Suspense, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Float, useTexture, Billboard } from "@react-three/drei";
 import { motion, useScroll, useTransform, MotionValue } from "motion/react";
@@ -52,7 +52,7 @@ function CelestialDust() {
 }
 
 // Zero Gravity Scatter Component - Starfield Volumetric Constellation
-function ZeroGravityScatter({ scrollYProgress }: { scrollYProgress: MotionValue<number> }) {
+function ZeroGravityScatter({ scrollYProgress, isMobile }: { scrollYProgress: MotionValue<number>; isMobile: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   
   const baseTextures = useTexture([
@@ -66,7 +66,12 @@ function ZeroGravityScatter({ scrollYProgress }: { scrollYProgress: MotionValue<
     "/perfumes/varakh_silver.avif",
   ]);
 
-  const textures = useMemo(() => [...baseTextures, ...baseTextures, ...baseTextures, ...baseTextures], [baseTextures]);
+  // Mobile: only 12 bottles (1.5x base). Desktop: 32 bottles (4x base).
+  const textures = useMemo(() => {
+    return isMobile 
+      ? [...baseTextures, ...baseTextures.slice(0, 4)]
+      : [...baseTextures, ...baseTextures, ...baseTextures, ...baseTextures];
+  }, [baseTextures, isMobile]);
 
   const bottles = useRef(textures.map((t) => {
     const randTier = Math.random();
@@ -157,6 +162,15 @@ function ZeroGravityScatter({ scrollYProgress }: { scrollYProgress: MotionValue<
 
 export default function NarrativeScroll() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
@@ -173,7 +187,11 @@ export default function NarrativeScroll() {
         className="fixed inset-0 z-0 pointer-events-none"
         style={{ background: "radial-gradient(circle at center, #141414 0%, #000000 90%)" }}
       >
-        <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+        <Canvas 
+          camera={{ position: [0, 0, 8], fov: 45 }}
+          dpr={isMobile ? 1 : [1, 1.5]}
+          gl={{ antialias: false, powerPreference: "high-performance" }}
+        >
           <ambientLight intensity={1.5} />
           <directionalLight position={[10, 10, 5]} intensity={2.2} color="#f6e3a1" />
           <directionalLight position={[-10, -5, -5]} intensity={1.2} color="#ffffff" />
@@ -181,7 +199,7 @@ export default function NarrativeScroll() {
           
           <Suspense fallback={null}>
             <CelestialDust />
-            <ZeroGravityScatter scrollYProgress={scrollYProgress} />
+            <ZeroGravityScatter scrollYProgress={scrollYProgress} isMobile={isMobile} />
           </Suspense>
         </Canvas>
       </div>

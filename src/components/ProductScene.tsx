@@ -65,7 +65,6 @@ function ProductCard({
 
   useEffect(() => {
     if (texture) {
-      texture.anisotropy = 16;
       texture.generateMipmaps = true;
       texture.minFilter = THREE.LinearMipmapLinearFilter;
       texture.magFilter = THREE.LinearFilter;
@@ -142,10 +141,10 @@ function ProductCard({
           </mesh>
           <mesh position={[0, 0, 0.05]}>
             <planeGeometry args={[2.5, 3.125]} />
-            <meshPhysicalMaterial 
-              ref={materialRef2}
+            <meshStandardMaterial 
+              ref={materialRef2 as any}
               transparent={true} alphaMap={texture} depthWrite={false} opacity={0.12} 
-              roughness={0.15} metalness={0.2} side={THREE.FrontSide} 
+              roughness={0.2} metalness={0.1} side={THREE.FrontSide} 
             />
           </mesh>
         </Billboard>
@@ -302,7 +301,7 @@ export default function ProductScene({
   return (
     <Canvas 
       camera={{ position: [0, 0, radius + 5], fov: 40 }}
-      dpr={[1, 2]}
+      dpr={isMobile ? 1 : [1, 2]}
       frameloop={isVisible ? "always" : "never"}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
     >
@@ -344,9 +343,11 @@ export default function ProductScene({
         position={[0, isMobile ? -1.6 : -2, 0]} 
         opacity={0.35} 
         scale={20} 
-        blur={2} 
+        blur={isMobile ? 1 : 2} 
         far={4.5} 
         color="#d6b36d"
+        resolution={isMobile ? 256 : 512}
+        frames={isMobile ? 1 : Infinity}
       />
     </Canvas>
   );
