@@ -17,7 +17,7 @@ export function getAvifUrl(p: Perfume): string {
   else if (name.includes("nocturno")) fileName = "rayhaan_nocturno.avif";
   else if (name.includes("elixir")) fileName = "rayhaan_elixir.avif";
   else if (name.includes("lion")) fileName = "rayhaan lion.avif";
-  else if (name.includes("obsidian")) fileName = "rayhaan obsidian.avif";
+  else if (name.includes("obsidian")) fileName = "rayhaanobsidian.avif";
   else if (name.includes("wolf")) fileName = "rayhaan wolf.avif";
   else if (name.includes("shiyaaka")) fileName = "shiyaaka_snow.avif";
   else if (name.includes("supremacy")) fileName = "supremacy collectors edition.avif";
@@ -57,7 +57,7 @@ export function getCatalogPhoto(p: Perfume): string | null {
   if (name.includes("nocturno")) return "/perfumes/rayhaan%20nocturno.jpg";
   if (name.includes("elixir")) return "/perfumes/rayhaan%20elixir.jpg";
   if (name.includes("lion")) return "/perfumes/rayhaan%20lion.jpg";
-  if (name.includes("obsidian")) return "/perfumes/rayhaan%20obsidian.jpg";
+  if (name.includes("obsidian")) return "/perfumes/rayhaanobsidian.jpg";
   if (name.includes("wolf")) return "/perfumes/rayhaan%20wolf.jpg";
   if (name.includes("shiyaaka")) return "/perfumes/shiyaaka%20snow.jpg";
   if (name.includes("supremacy")) return "/perfumes/supremacy%20collectors%20edition.jpg";
@@ -88,7 +88,7 @@ export function getFallbackCatalogPhoto(p: Perfume): string | null {
   if (name.includes("nocturno")) return "/perfumes/rayhaan_nocturno.png";
   if (name.includes("elixir")) return "/perfumes/rayhaan_elixir.png";
   if (name.includes("lion")) return "/perfumes/rayhaan_lion.png";
-  if (name.includes("obsidian")) return "/perfumes/rayhaan_obsidian.png";
+  if (name.includes("obsidian")) return "/perfumes/rayhaanobsidian.png";
   if (name.includes("wolf")) return "/perfumes/rayhaan_wolf.png";
   if (name.includes("shiyaaka")) return "/perfumes/shiyaaka_snow.png";
   if (name.includes("supremacy")) return "/perfumes/supremacy_collectors_edition.png";

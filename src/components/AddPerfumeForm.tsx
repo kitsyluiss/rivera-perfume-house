@@ -113,7 +113,8 @@ export default function AddPerfumeForm({
         formData.set("existing_image_url", restockSource.image_url);
       }
 
-      await addPerfume(formData);
+      const res = await addPerfume(formData);
+      if (res?.error) throw new Error(res.error);
       toast.success(
         mode === "restock"
           ? `Stock added for ${brand} — ${scentName}`

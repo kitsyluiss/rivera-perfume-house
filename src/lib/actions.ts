@@ -238,9 +238,13 @@ export async function addPerfume(formData: FormData) {
     image_url,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("[addPerfume] DB Error:", error);
+    return { error: error.message };
+  }
   revalidatePath("/");
   revalidatePath("/admin");
+  return { success: true };
 }
 
 export async function updatePerfume(id: string, updates: Record<string, unknown>) {

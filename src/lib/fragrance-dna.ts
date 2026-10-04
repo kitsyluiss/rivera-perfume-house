@@ -151,6 +151,26 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
       base: ["Vanilla", "Tonka"]
     }
   },
+  "obsidian": {
+    description: "A commanding and powdery leather fragrance accented with rich iris, deeply rooted in earthy woods and subtle musks.",
+    accords: [
+      { name: "Woody", value: 100, color: "woody" },
+      { name: "Iris", value: 98, color: "iris" },
+      { name: "Powdery", value: 95, color: "powdery" },
+      { name: "Violet", value: 78, color: "violet" },
+      { name: "Leather", value: 78, color: "leather" },
+      { name: "Earthy", value: 72, color: "earthy" },
+      { name: "Floral", value: 68, color: "floral" },
+      { name: "Musky", value: 67, color: "musky" },
+      { name: "Citrus", value: 66, color: "citrus" },
+      { name: "Animalic", value: 63, color: "animalic" }
+    ],
+    notes: {
+      top: ["Iris", "Citrus"],
+      heart: ["Leather"],
+      base: ["Sandalwood", "Ambrette", "Cedar", "Oud"]
+    }
+  },
   "delilah blanc": {
     description: "Soft, elegant, and effortlessly clean. A gentle, soapy breeze of white peach, delicate orange blossom, and powdery musk.",
     accords: [
