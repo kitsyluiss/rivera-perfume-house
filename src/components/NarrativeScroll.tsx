@@ -66,12 +66,16 @@ function ZeroGravityScatter({ scrollYProgress, isMobile }: { scrollYProgress: Mo
     "/perfumes/varakh_silver.avif",
   ]);
 
-  // Mobile: only 12 bottles (1.5x base). Desktop: 32 bottles (4x base).
+  // User requested to keep 32 bottles but make them more random
   const textures = useMemo(() => {
-    return isMobile 
-      ? [...baseTextures, ...baseTextures.slice(0, 4)]
-      : [...baseTextures, ...baseTextures, ...baseTextures, ...baseTextures];
-  }, [baseTextures, isMobile]);
+    const arr = [...baseTextures, ...baseTextures, ...baseTextures, ...baseTextures];
+    // Fisher-Yates shuffle for maximum randomness
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, [baseTextures]);
 
   const bottles = useRef(textures.map((t) => {
     const randTier = Math.random();

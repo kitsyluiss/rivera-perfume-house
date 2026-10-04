@@ -175,7 +175,6 @@ input[type="number"] {
   content: "";
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
   animation: mesh-drift 18s ease-in-out infinite;
   /* Promote to own compositing layer only on capable devices */
   will-change: transform;
@@ -198,17 +197,15 @@ input[type="number"] {
   animation-delay: -7s;
 }
 
-/* On small screens, reduce blur radius and orb size to cut GPU cost */
+/* On small screens, reduce orb size to cut GPU cost */
 @media (max-width: 640px) {
   .bg-gradient-mesh::before {
     width: 300px;
     height: 300px;
-    filter: blur(50px);
   }
   .bg-gradient-mesh::after {
     width: 250px;
     height: 250px;
-    filter: blur(40px);
   }
 }
 
