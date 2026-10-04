@@ -496,9 +496,10 @@ export default function CatalogView({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed inset-0 z-[9990] pointer-events-auto backdrop-blur-3xl"
+              className="fixed inset-0 z-[9990] pointer-events-auto backdrop-blur-md"
               style={{
-                background: "radial-gradient(circle at calc(50% - 20vw) 50%, rgba(5,5,5,0.85) 0%, rgba(5,5,5,0.96) 55%, rgba(0,0,0,1) 100%)",
+                background: "radial-gradient(circle at center, rgba(5,5,5,0.85) 0%, rgba(0,0,0,1) 100%)",
+                willChange: "opacity"
               }}
               onClick={handleClose}
               onWheel={(e) => e.stopPropagation()}
@@ -511,9 +512,7 @@ export default function CatalogView({
               role="dialog"
               aria-modal="true"
               aria-labelledby="modal-perfume-title"
-              className="fixed inset-0 z-[9995] pointer-events-none"
-              onWheel={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-[9995] overflow-y-auto overflow-x-hidden pointer-events-auto"
               data-lenis-prevent="true"
             >
               
@@ -526,13 +525,14 @@ export default function CatalogView({
                 type="button"
                 onClick={handleClose}
                 aria-label="Close product details"
-                className="absolute right-6 top-6 md:right-10 md:top-8 z-[10000] flex h-11 w-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/15 backdrop-blur-md text-white transition cursor-pointer pointer-events-auto shadow-2xl focus:outline-none focus:ring-2 focus:ring-primary"
+                className="fixed right-6 top-6 md:right-10 md:top-8 z-[10000] flex h-11 w-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/15 backdrop-blur-md text-white transition cursor-pointer pointer-events-auto shadow-2xl focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <X className="h-5 w-5" />
               </motion.button>
 
-              {/* 1. Modal Bottle Display (Centered for both Grid & Carousel) */}
-              <div className="absolute left-0 top-0 w-full h-1/2 md:w-[60vw] md:h-full flex items-center justify-center p-6 md:p-12 pointer-events-none">
+              <div className="flex flex-col md:flex-row min-h-[100dvh]">
+                {/* 1. Modal Bottle Display (Centered for both Grid & Carousel) */}
+                <div className="relative w-full h-[65dvh] md:w-[60vw] md:h-[100dvh] md:sticky md:top-0 flex items-center justify-center p-6 md:p-12 pointer-events-none">
                 {(selectedPerfume.image_url || getAvifUrl(selectedPerfume) !== "/logo.svg") && (
                   <div className="relative h-[85%] md:h-full aspect-[9/16] flex items-center justify-center">
                     <motion.img
@@ -556,10 +556,9 @@ export default function CatalogView({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 25, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } }}
                 transition={{ duration: 0.85, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute right-0 top-1/2 md:top-0 w-full md:w-[45vw] lg:w-[40vw] h-1/2 md:h-full overflow-y-auto overscroll-contain p-6 md:p-16 z-20 pointer-events-auto flex flex-col"
-                data-lenis-prevent="true"
+                className="w-full md:w-[40vw] p-6 pb-24 md:p-16 flex flex-col z-20 pointer-events-auto"
               >
-                <div className="my-auto py-8">
+                <div className="my-auto py-4 md:py-8">
                   <motion.p
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -783,6 +782,7 @@ export default function CatalogView({
                   </motion.div>
                 </div>
               </motion.div>
+             </div>
             </div>
           </>
         )}
