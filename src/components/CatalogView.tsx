@@ -538,7 +538,7 @@ export default function CatalogView({
                     <motion.img
                       layoutId={selectionSource === "grid" && !isClosing ? `bottle-${selectedPerfume.id}` : undefined}
                       src={getAvifUrl(selectedPerfume)}
-                      alt={selectedPerfume.scent_name}
+                      alt={`${selectedPerfume.brand} ${selectedPerfume.scent_name} Eau de Parfum`}
                       className="relative z-10 h-[90%] w-full object-contain drop-shadow-[0_25px_50px_rgba(0,0,0,0.8)]"
                       style={{ willChange: "transform" }}
                       initial={selectionSource === "carousel" ? { opacity: 0, scale: 0.85, y: 20 } : undefined}

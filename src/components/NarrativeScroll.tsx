@@ -392,9 +392,9 @@ export default function NarrativeScroll() {
                 Full Collection &bull; Ready to Ship
               </span>
 
-              <h3 className="font-display text-3xl sm:text-5xl md:text-6xl text-white font-light leading-tight">
+              <h2 className="font-display text-3xl sm:text-5xl md:text-6xl text-white font-light leading-tight">
                 Explore Our Fragrance <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-white via-[#f6e3a1] to-[#e1b854]">Catalog.</span>
-              </h3>
+              </h2>
 
               <p className="mt-4 text-white/70 font-body text-xs sm:text-sm md:text-base max-w-xl mx-auto leading-relaxed">
                 Browse our complete list of genuine Middle Eastern and designer perfumes. See live prices in Philippine Pesos (₱), check stock availability, and place orders directly.
@@ -477,12 +477,19 @@ export default function NarrativeScroll() {
 
           </div>
 
-          <div className="mt-16 pt-8 border-t border-white/5 text-center flex flex-col items-center justify-center gap-3">
+          <div className="mt-16 pt-8 border-t border-white/5 text-center flex flex-col items-center justify-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-mono uppercase tracking-[0.15em] text-white/60">
+              <Link href="/catalog" className="hover:text-[#e1b854] transition-colors">Live Catalog (₱)</Link>
+              <Link href="/collections" className="hover:text-[#e1b854] transition-colors">Collections</Link>
+              <Link href="/about" className="hover:text-[#e1b854] transition-colors">About Us</Link>
+              <Link href="/atelier" className="hover:text-[#e1b854] transition-colors">The Atelier</Link>
+              <Link href="/journal" className="hover:text-[#e1b854] transition-colors">Fragrance Journal</Link>
+            </div>
             <p className="font-display text-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#f9d976] to-[#bd9135] font-light tracking-[0.25em]">
               RIVERA
             </p>
             <p className="font-body text-[10px] uppercase tracking-[0.3em] text-white/50">
-              &copy; {new Date().getFullYear()} Rivera Fragrance House. All Rights Reserved. Metro Manila, Philippines.
+              &copy; {new Date().getFullYear()} Rivera Fragrance House. All Rights Reserved. Malabon, Metro Manila, Philippines.
             </p>
           </div>
         </footer>
