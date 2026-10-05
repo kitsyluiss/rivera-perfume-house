@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Rivera Fragrance House | Authentic Perfumes Philippines",
     description:
-      "100% original factory-sealed Middle Eastern & designer perfumes at honest prices. Sourced from Dubai, verified batch codes.",
+      "100% original factory-sealed Middle Eastern & designer perfumes at honest prices with verified batch codes.",
     images: ["/perfumes/hawas_black.png"],
   },
   icons: {

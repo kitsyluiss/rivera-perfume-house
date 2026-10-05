@@ -501,3 +501,61 @@ export function getFragranceDNA(scentName: string): FragranceDNA {
     }
   };
 }
+
+export function getAccordGradient(color: string): string {
+  switch (color) {
+    case "fruity":
+      return "linear-gradient(90deg, #da4453, #e9573f)";
+    case "citrus":
+      return "linear-gradient(90deg, #f6bb42, #fc6e51)";
+    case "sweet":
+      return "linear-gradient(90deg, #ec87c0, #d770ad)";
+    case "fresh":
+      return "linear-gradient(90deg, #3bafda, #4fc1e9)";
+    case "aromatic":
+      return "linear-gradient(90deg, #8cc152, #a0d468)";
+    case "musky":
+    case "musk":
+      return "linear-gradient(90deg, #ccd1d9, #aab2bd)";
+    case "powdery":
+      return "linear-gradient(90deg, #d2d6de, #e6e9ed)";
+    case "fresh_spicy":
+      return "linear-gradient(90deg, #fc6e51, #f6bb42)";
+    case "green":
+      return "linear-gradient(90deg, #37bc9b, #48cfad)";
+    case "white_floral":
+      return "linear-gradient(90deg, #f5f7fa, #e4e7eb)";
+    case "woody":
+      return "linear-gradient(90deg, #8d6e63, #a1887f)";
+    case "amber":
+      return "linear-gradient(90deg, #ffb300, #ffca28)";
+    case "cinnamon":
+      return "linear-gradient(90deg, #b71c1c, #d32f2f)";
+    case "warm_spicy":
+      return "linear-gradient(90deg, #c0392b, #d35400)";
+    case "vodka":
+      return "linear-gradient(90deg, #cbd5e1, #94a3b8)";
+    case "soft_spicy":
+      return "linear-gradient(90deg, #e6c280, #f3d9ab)";
+    case "floral":
+      return "linear-gradient(90deg, #ec4899, #f472b6)";
+    case "earthy":
+      return "linear-gradient(90deg, #5d4037, #8d6e63)";
+    case "vanilla":
+      return "linear-gradient(90deg, #fef08a, #fde047)";
+    case "lavender":
+      return "linear-gradient(90deg, #a78bfa, #c084fc)";
+    case "iris":
+      return "linear-gradient(90deg, #818cf8, #a5b4fc)";
+    case "violet":
+      return "linear-gradient(90deg, #c084fc, #e879f9)";
+    case "leather":
+      return "linear-gradient(90deg, #4e342e, #5d4037)";
+    case "smoky":
+      return "linear-gradient(90deg, #374151, #4b5563)";
+    case "animalic":
+      return "linear-gradient(90deg, #a0522d, #8b4513)";
+    default:
+      return "linear-gradient(90deg, #d6b36d, #e8c547)";
+  }
+}

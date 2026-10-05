@@ -7,6 +7,7 @@ import { motion, useScroll, useTransform, MotionValue } from "motion/react";
 import * as THREE from "three";
 import { ArrowRight, CheckCircle2, ShieldCheck, ShoppingBag, Truck, Users } from "lucide-react";
 import Link from "next/link";
+import LandingWholesaleSection from "@/components/LandingWholesaleSection";
 
 // Celestial Stardust Field - Micro-particles drifting across space
 function CelestialDust() {
@@ -383,64 +384,61 @@ export default function NarrativeScroll() {
         {/* ========================================================================= */}
         {/* Section 5: The Direct Catalog & Wholesale Portal                          */}
         {/* ========================================================================= */}
-        <section className="py-24 sm:py-32 px-4 sm:px-6 pointer-events-auto max-w-4xl mx-auto text-center relative z-10">
-          <div className="rounded-3xl border border-white/15 bg-white/[0.02] p-8 sm:p-14 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(225,184,84,0.08)_0%,transparent_70%)]" />
-            
-            <div className="relative z-10 flex flex-col items-center">
-              <span className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.25em] text-[#e1b854] mb-4">
-                Full Collection &bull; Ready to Ship
-              </span>
+        <section className="py-28 sm:py-36 px-4 sm:px-6 pointer-events-auto max-w-4xl mx-auto text-center relative z-10">
+          <span className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.25em] text-[#e1b854] mb-3 block">
+            Full Collection &bull; Ready to Ship
+          </span>
 
-              <h2 className="font-display text-3xl sm:text-5xl md:text-6xl text-white font-light leading-tight">
-                Explore Our Fragrance <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-white via-[#f6e3a1] to-[#e1b854]">Catalog.</span>
-              </h2>
+          <h2 className="font-display text-3xl sm:text-5xl md:text-6xl text-white font-light leading-tight">
+            Explore Our Fragrance <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-white via-[#f6e3a1] to-[#e1b854]">Catalog.</span>
+          </h2>
 
-              <p className="mt-4 text-white/70 font-body text-xs sm:text-sm md:text-base max-w-xl mx-auto leading-relaxed">
-                Browse our complete list of genuine Middle Eastern and designer perfumes. See live prices in Philippine Pesos (₱), check stock availability, and place orders directly.
-              </p>
+          <p className="mt-4 text-white/70 font-body text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+            Browse our complete list of genuine Middle Eastern and designer perfumes. See live prices in Philippine Pesos (₱), check stock availability, and place orders directly.
+          </p>
 
-              {/* Action Buttons */}
-              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
-                <Link 
-                  href="/catalog"
-                  className="group inline-flex h-13 w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-white px-9 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-black transition-all duration-300 hover:bg-[#e1b854] hover:scale-105 active:scale-95 shadow-xl shadow-black/40"
-                >
-                  <ShoppingBag className="h-4 w-4" />
-                  <span>Shop Catalog &amp; Prices (₱)</span>
-                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
+          {/* Action Buttons */}
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
+            <Link 
+              href="/catalog"
+              className="group inline-flex h-13 w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-white px-9 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-black transition-all duration-300 hover:bg-[#e1b854] hover:scale-105 active:scale-95 shadow-xl shadow-black/40"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span>Shop Catalog &amp; Prices (₱)</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
 
-                <Link 
-                  href="/collections"
-                  className="inline-flex h-13 w-full sm:w-auto items-center justify-center rounded-full border border-white/20 bg-white/[0.04] backdrop-blur-md px-8 text-xs sm:text-sm font-medium uppercase tracking-[0.15em] text-white/90 transition-all duration-300 hover:bg-white/10 hover:text-white hover:border-[#e1b854]/40"
-                >
-                  Browse by Brand &bull; Season
-                </Link>
-              </div>
+            <Link 
+              href="/collections"
+              className="inline-flex h-13 w-full sm:w-auto items-center justify-center rounded-full border border-white/20 bg-white/[0.04] backdrop-blur-md px-8 text-xs sm:text-sm font-medium uppercase tracking-[0.15em] text-white/90 transition-all duration-300 hover:bg-white/10 hover:text-white hover:border-[#e1b854]/40"
+            >
+              Browse by Brand &bull; Season
+            </Link>
+          </div>
 
-              {/* Trust Metrics */}
-              <div className="mt-14 pt-10 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center w-full">
-                <div>
-                  <p className="font-display text-2xl sm:text-3xl text-white font-light">100%</p>
-                  <p className="mt-1 text-[10px] uppercase tracking-wider text-white/50 font-mono">Original Sealed</p>
-                </div>
-                <div>
-                  <p className="font-display text-2xl sm:text-3xl text-[#e1b854] font-light">₱1,499+</p>
-                  <p className="mt-1 text-[10px] uppercase tracking-wider text-white/50 font-mono">Fair Direct Rates</p>
-                </div>
-                <div>
-                  <p className="font-display text-2xl sm:text-3xl text-white font-light">Wholesale</p>
-                  <p className="mt-1 text-[10px] uppercase tracking-wider text-white/50 font-mono">Reseller Friendly</p>
-                </div>
-                <div>
-                  <p className="font-display text-2xl sm:text-3xl text-[#e1b854] font-light">Nationwide</p>
-                  <p className="mt-1 text-[10px] uppercase tracking-wider text-white/50 font-mono">Fast Dispatch</p>
-                </div>
-              </div>
+          {/* Trust Metrics */}
+          <div className="mt-16 pt-10 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center w-full">
+            <div>
+              <p className="font-display text-2xl sm:text-3xl text-white font-light">100%</p>
+              <p className="mt-1 text-[10px] uppercase tracking-wider text-white/50 font-mono">Original Sealed</p>
+            </div>
+            <div>
+              <p className="font-display text-2xl sm:text-3xl text-[#e1b854] font-light">₱1,499+</p>
+              <p className="mt-1 text-[10px] uppercase tracking-wider text-white/50 font-mono">Fair Direct Rates</p>
+            </div>
+            <div>
+              <p className="font-display text-2xl sm:text-3xl text-white font-light">Wholesale</p>
+              <p className="mt-1 text-[10px] uppercase tracking-wider text-white/50 font-mono">Reseller Friendly</p>
+            </div>
+            <div>
+              <p className="font-display text-2xl sm:text-3xl text-[#e1b854] font-light">Nationwide</p>
+              <p className="mt-1 text-[10px] uppercase tracking-wider text-white/50 font-mono">Fast Dispatch</p>
             </div>
           </div>
         </section>
+
+        {/* Dedicated Reseller & Wholesale Concierge Section */}
+        <LandingWholesaleSection />
 
         {/* ========================================================================= */}
         {/* Section 6: Local Trust Footer — Honest Family Promises                    */}

@@ -21,70 +21,100 @@ export default function AtelierPage() {
   const guides = [
     {
       title: "Understanding Fragrance Concentrations",
+      badge: "Oil Concentration Breakdown",
       icon: Droplets,
-      summary: "The difference between Eau de Toilette (5-15% oil), Eau de Parfum (15-20% oil), and Extrait de Parfum (20-40% oil) in tropical humidity.",
+      summary:
+        "The difference between Eau de Toilette (5–15% oil), Eau de Parfum (15–20% oil), and Extrait de Parfum (20–40% oil). In tropical Philippine humidity, Extrait and dense EDP formulations resist sweat evaporation significantly longer.",
     },
     {
-      title: "Fragrance Pyramids & DNA",
+      title: "The Fragrance Pyramid & Molecular Evaporation",
+      badge: "Top, Heart & Base Evolution",
       icon: BookOpen,
-      summary: "How top notes evaporate in the first 15 minutes, heart notes define the scent for 2-4 hours, and base notes anchor for 8+ hours.",
+      summary:
+        "Top notes (citrus, mint, apple) flash off in the first 15–30 minutes. Heart notes (florals, spices, aquatic accords) define the scent cloud for 2–4 hours. Base notes (ambergris, woods, vanilla, musk) anchor the drydown for 8+ hours.",
     },
     {
       title: "Maximizing Longevity in Philippine Weather",
+      badge: "Tropical Heat Strategies",
       icon: Clock,
-      summary: "Why heat accelerates evaporation, how moisturizing skin beforehand locks in perfume oils, and the best pulse points for all-day sillage.",
+      summary:
+        "High heat accelerates chemical evaporation. Applying an unscented moisturizer or petroleum jelly before spraying traps fragrance molecules against the skin, doubling sillage and longevity.",
     },
     {
       title: "Projection & Sillage Etiquette",
+      badge: "Indoor vs. Outdoor Wear",
       icon: Wind,
-      summary: "Balancing beast-mode Middle Eastern fragrances between air-conditioned indoor office settings and outdoor tropical warmth.",
+      summary:
+        "Beast-mode Middle Eastern fragrances project aggressively. For air-conditioned offices, 2–3 sprays suffice. For outdoor night events or humid commutes, 4–5 sprays guarantee a magnetic sillage trail.",
     },
   ];
 
   return (
-    <main className="min-h-screen bg-black text-white px-4 py-32 sm:py-40">
-      <div className="max-w-4xl mx-auto">
+    <main className="min-h-screen bg-black text-white relative overflow-x-clip px-4 py-28 sm:py-36">
+      {/* Ambient Animated Mesh Background */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="bg-gradient-mesh absolute inset-0" />
+      </div>
+
+      <div className="max-w-5xl mx-auto">
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="mb-8">
+        <nav aria-label="Breadcrumb" className="mb-10">
           <ol className="flex items-center space-x-2 text-xs font-mono text-white/50">
             <li>
               <Link href="/" className="hover:text-primary transition-colors">Home</Link>
             </li>
             <li>/</li>
-            <li className="text-primary" aria-current="page">The Atelier</li>
+            <li className="text-primary font-medium" aria-current="page">The Atelier</li>
           </ol>
         </nav>
 
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs font-mono uppercase tracking-[0.25em] text-primary mb-3 block">
-            Olfactory Education
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <div className="mx-auto mb-6 h-px w-10 bg-primary" />
+          
+          <span className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.25em] text-primary mb-3 block">
+            Olfactory Science &amp; Education
           </span>
           <h1 className="font-display text-4xl sm:text-6xl text-white font-light tracking-wide mb-4">
-            The <span className="italic text-primary">Atelier</span>
+            The <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-white via-[#f6e3a1] to-primary">Atelier</span>
           </h1>
           <p className="font-body text-sm sm:text-base text-white/70 leading-relaxed">
-            Essential fragrance education, concentration breakdowns, and practical wear strategies tailored specifically for the tropical Philippine climate.
+            Essential perfumery knowledge, molecular concentration analysis, and practical wear strategies tailored specifically for the tropical Philippine climate.
           </p>
+
+          <div className="mx-auto mt-6 h-px w-10 bg-primary" />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 my-12">
+        {/* Guides Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {guides.map((g) => {
             const Icon = g.icon;
             return (
               <div
                 key={g.title}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-7 backdrop-blur-xl"
+                className="rounded-3xl border border-white/10 bg-white/[0.02] p-8 backdrop-blur-2xl transition-all duration-300 hover:border-primary/40 flex flex-col justify-between"
               >
-                <Icon className="h-6 w-6 text-primary mb-4" />
-                <h2 className="font-display text-xl text-white font-light mb-2">{g.title}</h2>
-                <p className="text-xs sm:text-sm text-white/65 font-body leading-relaxed">
-                  {g.summary}
-                </p>
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="rounded-full bg-primary/10 border border-primary/25 px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-primary">
+                      {g.badge}
+                    </span>
+                    <Icon className="h-5 w-5 text-primary/70" />
+                  </div>
+
+                  <h2 className="font-display text-2xl sm:text-3xl text-white font-light mb-3">
+                    {g.title}
+                  </h2>
+                  <p className="text-xs sm:text-sm font-body text-white/70 leading-relaxed">
+                    {g.summary}
+                  </p>
+                </div>
               </div>
             );
           })}
         </div>
 
+        {/* CTA */}
         <div className="mt-16 text-center border-t border-white/10 pt-12">
           <Link
             href="/catalog"

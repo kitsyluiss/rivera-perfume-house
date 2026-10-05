@@ -54,7 +54,7 @@ export async function generateMetadata({
     },
     openGraph: {
       title: `${perfume.brand} ${perfume.scent_name} | Rivera Fragrance House`,
-      description: `Original factory-sealed ${perfume.brand} ${perfume.scent_name} at ₱${price.toLocaleString()}. Verified batch codes, UAE imports, fast Metro Manila & provincial delivery.`,
+      description: `Original factory-sealed ${perfume.brand} ${perfume.scent_name} at ₱${price.toLocaleString()}. Verified batch codes, fast Metro Manila & provincial delivery.`,
       url: canonicalUrl,
       images: [
         {
@@ -95,6 +95,19 @@ export default async function PerfumeDetailPage({
         p.scent_name.toLowerCase() === perfume.scent_name.toLowerCase()
     )
     .reduce((sum, p) => sum + p.quantity, 0);
+
+  // Select up to 4 other in-stock perfumes for the recommendation section
+  const relatedPerfumes = allPerfumes
+    .filter(
+      (p) =>
+        p.id !== perfume.id &&
+        !(
+          p.brand.toLowerCase() === perfume.brand.toLowerCase() &&
+          p.scent_name.toLowerCase() === perfume.scent_name.toLowerCase()
+        ) &&
+        p.quantity > 0
+    )
+    .slice(0, 4);
 
   const photo = getCatalogPhoto(perfume) || perfume.image_url || getAvifUrl(perfume);
   const photoUrl = photo.startsWith("http") ? photo : `${siteUrl}${photo}`;
@@ -171,6 +184,7 @@ export default async function PerfumeDetailPage({
         perfume={perfume}
         imageUrl={photo}
         totalStock={totalStock}
+        relatedPerfumes={relatedPerfumes}
       />
     </>
   );

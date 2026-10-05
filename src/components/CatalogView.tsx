@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useScroll, useSpring } from "motion/react";
-import { ChevronDown, Filter, Search, X, ShoppingCart, Loader2, Share2, Check, ExternalLink } from "lucide-react";
+import { ChevronDown, Filter, Search, X, ShoppingCart, Loader2, Share2, Check, ExternalLink, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import PerfumeCard from "@/components/PerfumeCard";
@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import HeroCarousel3D from "@/components/HeroCarousel3D";
 import { getAvifUrl } from "@/lib/get-avif";
 import { getPerfumeSlug, findPerfumeBySlug } from "@/lib/slug";
+import WholesaleModal from "@/components/WholesaleModal";
 import Link from "next/link";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -162,6 +163,7 @@ export default function CatalogView({
   const [isClosing, setIsClosing] = useState(false);
 
   const [linkCopied, setLinkCopied] = useState(false);
+  const [wholesaleModalOpen, setWholesaleModalOpen] = useState(false);
 
   const handleSelectPerfume = (p: Perfume, source: "grid" | "carousel") => {
     setSelectedPerfume(p);
@@ -749,6 +751,15 @@ export default function CatalogView({
                         <span>{linkCopied ? "Link Copied!" : "Share Link"}</span>
                       </button>
 
+                      <button
+                        type="button"
+                        onClick={() => setWholesaleModalOpen(true)}
+                        className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2.5 text-xs font-mono uppercase tracking-wider text-primary hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        <span>Inquire Wholesale</span>
+                      </button>
+
                       <Link
                         href={`/perfumes/${getPerfumeSlug(selectedPerfume)}`}
                         className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-white/60 hover:text-[#e1b854] transition-colors py-2 px-1"
@@ -877,6 +888,8 @@ export default function CatalogView({
         )}
       </AnimatePresence>
     </main>
+
+    <WholesaleModal isOpen={wholesaleModalOpen} onClose={() => setWholesaleModalOpen(false)} />
     </>
   );
 }
