@@ -2,6 +2,19 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Immediately bypass middleware for search engine crawlers, static files, and sitemaps
+  if (
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
+    pathname === "/llms.txt" ||
+    pathname === "/llms-full.txt" ||
+    pathname.startsWith("/perfumes/")
+  ) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -27,38 +40,44 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup') || request.nextUrl.pathname.startsWith('/admin/login') || request.nextUrl.pathname.startsWith('/forgot-password') || request.nextUrl.pathname.startsWith('/reset-password');
-  const isAdminPage = request.nextUrl.pathname.startsWith('/admin') && !request.nextUrl.pathname.startsWith('/admin/login');
+  const isAuthPage =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/admin/login") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password");
+  const isAdminPage = pathname.startsWith("/admin") && !pathname.startsWith("/admin/login");
 
   if (isAdminPage) {
     if (!user) {
       // No user, redirect to admin login
       const url = request.nextUrl.clone();
-      url.pathname = '/admin/login';
+      url.pathname = "/admin/login";
       return NextResponse.redirect(url);
     }
 
     // Check if the user is an admin by querying the profiles table
     const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
       .single();
 
-    if (profile?.role !== 'admin') {
+    if (profile?.role !== "admin") {
       // User is not an admin, redirect to unauthorized
       const url = request.nextUrl.clone();
-      url.pathname = '/unauthorized';
+      url.pathname = "/unauthorized";
       return NextResponse.redirect(url);
     }
   }
 
   // If trying to access customer protected routes (like /checkout)
-  const isProtectedCustomerRoute = request.nextUrl.pathname.startsWith('/checkout') || request.nextUrl.pathname.startsWith('/orders');
-  
+  const isProtectedCustomerRoute =
+    pathname.startsWith("/checkout") || pathname.startsWith("/orders");
+
   if (isProtectedCustomerRoute && !user) {
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
@@ -67,6 +86,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|xml|txt|webmanifest)$).*)",
   ],
 };

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useScroll, useSpring } from "motion/react";
-import { ChevronDown, Filter, Search, X, ShoppingCart, Loader2 } from "lucide-react";
+import { ChevronDown, Filter, Search, X, ShoppingCart, Loader2, Share2, Check, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import PerfumeCard from "@/components/PerfumeCard";
@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import HeroCarousel3D from "@/components/HeroCarousel3D";
 import { getAvifUrl } from "@/lib/get-avif";
+import { getPerfumeSlug, findPerfumeBySlug } from "@/lib/slug";
+import Link from "next/link";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -147,15 +149,28 @@ function BrandDropdown({
 export default function CatalogView({
   initialPerfumes,
   initialCarouselPerfumes,
+  initialSelectedScent,
 }: {
   initialPerfumes: Perfume[];
   initialCarouselPerfumes?: Perfume[];
+  initialSelectedScent?: string;
 }) {
   const [preloaderDone, setPreloaderDone] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedPerfume, setSelectedPerfume] = useState<Perfume | null>(null);
   const [selectionSource, setSelectionSource] = useState<"grid" | "carousel" | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleSelectPerfume = (p: Perfume, source: "grid" | "carousel") => {
+    setSelectedPerfume(p);
+    setSelectionSource(source);
+    if (typeof window !== "undefined") {
+      const slug = getPerfumeSlug(p);
+      window.history.pushState({ scent: slug }, "", `/catalog?scent=${slug}`);
+    }
+  };
 
   const handleClose = () => {
     setIsClosing(true);
@@ -165,9 +180,45 @@ export default function CatalogView({
         setSelectedPerfume(null);
         setSelectionSource(null);
         setIsClosing(false);
+        if (typeof window !== "undefined" && window.location.search) {
+          window.history.pushState(null, "", "/catalog");
+        }
       });
     });
   };
+
+  const handleCopyDirectLink = () => {
+    if (!selectedPerfume || typeof window === "undefined") return;
+    const slug = getPerfumeSlug(selectedPerfume);
+    const url = `${window.location.origin}/catalog?scent=${slug}`;
+    navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    toast.success(`Copied direct link for ${selectedPerfume.brand} ${selectedPerfume.scent_name}!`);
+    setTimeout(() => setLinkCopied(false), 2500);
+  };
+
+  // Open scent automatically if URL specifies it on initial load
+  useEffect(() => {
+    if (initialSelectedScent) {
+      const found = findPerfumeBySlug(initialPerfumes, initialSelectedScent);
+      if (found) {
+        setSelectedPerfume(found);
+        setSelectionSource("grid");
+      }
+    }
+  }, [initialSelectedScent, initialPerfumes]);
+
+  // Support browser Back/Forward buttons closing the modal
+  useEffect(() => {
+    const onPopState = () => {
+      if (selectedPerfume) {
+        setSelectedPerfume(null);
+        setSelectionSource(null);
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [selectedPerfume]);
 
   const shuffleAll = (items: Perfume[]) => {
     const pool = items.filter(
@@ -340,10 +391,7 @@ export default function CatalogView({
         <HeroCarousel3D 
           key={carouselPerfumes.map(p => p.id).join('-')}
           perfumes={carouselPerfumes}
-          onSelect={(p) => {
-            setSelectedPerfume(p);
-            setSelectionSource("carousel");
-          }}
+          onSelect={(p) => handleSelectPerfume(p, "carousel")}
           selectedPerfume={selectedPerfume}
           selectionSource={selectionSource}
         />
@@ -463,10 +511,7 @@ export default function CatalogView({
                   perfume={perfume}
                   index={index}
                   isSelected={selectedPerfume?.id === perfume.id}
-                  onClick={() => {
-                    setSelectedPerfume(perfume);
-                    setSelectionSource("grid");
-                  }}
+                  onClick={() => handleSelectPerfume(perfume, "grid")}
                 />
               ))}
             </div>
@@ -687,6 +732,31 @@ export default function CatalogView({
                         {actionError}
                       </motion.p>
                     )}
+
+                    {/* Share Direct Link & Standalone Product Page */}
+                    <div className="mt-6 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleCopyDirectLink}
+                        className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-mono uppercase tracking-wider text-white/80 hover:text-white hover:border-[#e1b854]/50 transition-all cursor-pointer"
+                        title="Copy direct link to this fragrance"
+                      >
+                        {linkCopied ? (
+                          <Check className="h-3.5 w-3.5 text-emerald-400" />
+                        ) : (
+                          <Share2 className="h-3.5 w-3.5 text-[#e1b854]" />
+                        )}
+                        <span>{linkCopied ? "Link Copied!" : "Share Link"}</span>
+                      </button>
+
+                      <Link
+                        href={`/perfumes/${getPerfumeSlug(selectedPerfume)}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-white/60 hover:text-[#e1b854] transition-colors py-2 px-1"
+                      >
+                        <span>Full Page Details</span>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </motion.div>
 
                   {/* Fragrance DNA block */}

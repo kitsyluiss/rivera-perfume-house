@@ -3,10 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import CatalogView from "@/components/CatalogView";
 import type { Perfume } from "@/lib/types";
 import { getAvifUrl, getCatalogPhoto } from "@/lib/get-avif";
+import { getPerfumeSlug } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://riverafragrances.com";
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://rivera.perfumehouse.workers.dev").replace(/\/+$/, "");
 
 export const metadata: Metadata = {
   title: "Fragrance Catalog & Live Stock (₱) | Rivera Fragrance House",
@@ -31,7 +32,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<{ scent?: string; fragrance?: string; brand?: string; tag?: string }>;
+}) {
+  const resolvedParams = searchParams ? await searchParams : {};
+  const initialScent = resolvedParams.scent || resolvedParams.fragrance;
+
   const supabase = await createClient();
   const { data } = await supabase
     .from("perfumes")
@@ -90,6 +98,7 @@ export default async function Home() {
     "description": "Authentic factory-sealed Middle Eastern and designer perfumes available in the Philippines.",
     "numberOfItems": perfumes.length,
     "itemListElement": perfumes.slice(0, 25).map((p, index) => {
+      const slug = getPerfumeSlug(p);
       const photo = getCatalogPhoto(p) || p.image_url || getAvifUrl(p);
       const photoUrl = photo.startsWith("http") ? photo : `${siteUrl}${photo}`;
       const effectivePrice = p.flash_sale_price ?? p.target_sale_price;
@@ -112,7 +121,7 @@ export default async function Home() {
             "priceCurrency": "PHP",
             "priceValidUntil": "2026-12-31",
             "availability": p.quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-            "url": `${siteUrl}/catalog?scent=${encodeURIComponent(p.scent_name)}`,
+            "url": `${siteUrl}/perfumes/${slug}`,
             "seller": {
               "@type": "Organization",
               "name": "Rivera Fragrance House",
@@ -131,7 +140,8 @@ export default async function Home() {
       />
       <CatalogView 
         initialPerfumes={perfumes} 
-        initialCarouselPerfumes={carouselPerfumes.slice(0, 8)} 
+        initialCarouselPerfumes={carouselPerfumes.slice(0, 8)}
+        initialSelectedScent={initialScent}
       />
     </>
   );

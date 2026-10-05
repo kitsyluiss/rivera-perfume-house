@@ -1,14 +1,15 @@
 import type { MetadataRoute } from "next";
+import { getPerfumeSlug } from "@/lib/slug";
 
 export const revalidate = 3600; // revalidate hourly
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://riverafragrances.com";
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://rivera.perfumehouse.workers.dev").replace(/\/+$/, "");
 
   // High-priority core customer-facing routes
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: `${baseUrl}/`,
+      url: `${baseUrl}`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1.0,
@@ -79,15 +80,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const productRoutes: MetadataRoute.Sitemap = [];
 
     for (const p of perfumes) {
-      const key = `${p.brand.toLowerCase()}-${p.scent_name.toLowerCase()}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        const searchParam = encodeURIComponent(p.scent_name);
+      const slug = getPerfumeSlug(p);
+      if (!seen.has(slug)) {
+        seen.add(slug);
+        const lastMod = p.created_at ? new Date(p.created_at) : new Date();
+
+        // 1. Dedicated standalone product route
         productRoutes.push({
-          url: `${baseUrl}/catalog?scent=${searchParam}`,
-          lastModified: p.created_at ? new Date(p.created_at) : new Date(),
+          url: `${baseUrl}/perfumes/${slug}`,
+          lastModified: lastMod,
           changeFrequency: "daily",
-          priority: 0.8,
+          priority: 0.85,
+        });
+
+        // 2. Direct catalog deep-link
+        productRoutes.push({
+          url: `${baseUrl}/catalog?scent=${slug}`,
+          lastModified: lastMod,
+          changeFrequency: "daily",
+          priority: 0.75,
         });
       }
     }
