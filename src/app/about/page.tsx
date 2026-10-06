@@ -40,12 +40,9 @@ export default function AboutUsPage() {
 
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="mx-auto mb-6 h-px w-10 bg-primary" />
-          
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] text-primary mb-6">
-            <Sparkles className="h-3 w-3" />
-            Malabon, Metro Manila &bull; Family Owned
-          </div>
+          <span className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.25em] text-primary mb-3 block">
+            About Our Family
+          </span>
 
           <h1 className="font-display text-4xl sm:text-6xl md:text-7xl font-light tracking-wide leading-tight mb-6">
             Authentic Perfumes. <br />
@@ -58,7 +55,6 @@ export default function AboutUsPage() {
             Rivera Fragrance House was founded on a simple family promise: to give fragrance collectors and resellers in the Philippines access to original, factory-sealed Middle Eastern and international perfumes at honest local prices with zero counterfeit risk.
           </p>
 
-          <div className="mx-auto mt-8 h-px w-10 bg-primary" />
         </div>
 
         {/* 3 Core Value Columns — Clean, open, minimal borders */}

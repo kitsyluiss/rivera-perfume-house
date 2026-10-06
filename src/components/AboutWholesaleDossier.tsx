@@ -107,26 +107,33 @@ export default function AboutWholesaleDossier() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Awwwards-Worthy Minimalist Editorial Ledger (Zero cramped boxes, spacious single-line channels) */}
+        <div className="mt-8 w-full text-left divide-y divide-white/10">
           {WHOLESALE_CHANNELS.map((ch) => (
             <div
               key={ch.id}
-              className="group flex flex-col justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-all duration-300 hover:border-[#e1b854]/40"
+              className="py-5 sm:py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group transition-colors hover:bg-white/[0.015] px-2 sm:px-4 -mx-2 sm:-mx-4 rounded-xl"
             >
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 border border-white/10 text-white/80 group-hover:text-[#e1b854] group-hover:border-[#e1b854]/30 transition-colors">
-                    <ChannelIcon id={ch.id} className="h-4 w-4" />
-                  </span>
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#e1b854]/80 bg-[#e1b854]/10 px-2 py-0.5 rounded-full">
-                    {ch.badge}
-                  </span>
+              {/* Left: Platform & Description */}
+              <div className="flex items-center gap-4 min-w-0">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white/80 group-hover:text-[#e1b854] group-hover:border-[#e1b854]/40 transition-colors">
+                  <ChannelIcon id={ch.id} className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2.5">
+                    <span className="font-display text-xl sm:text-2xl text-white font-light tracking-wide">{ch.name}</span>
+                    <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{ch.badge}</span>
+                  </div>
+                  <p className="text-xs text-white/55 font-body line-clamp-1 mt-0.5">
+                    {ch.description}
+                  </p>
                 </div>
+              </div>
 
-                <h3 className="font-display text-xl text-white font-light mb-1">{ch.name}</h3>
-
-                <div className="flex items-center justify-between gap-1 py-1.5 border-b border-white/5 mb-3">
-                  <span className="font-mono text-xs text-white/90 truncate">{ch.displayValue}</span>
+              {/* Right: Display Value + Copy + Connect Action (Spacious, Never Squeezed) */}
+              <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t border-white/5 sm:border-0">
+                <div className="flex items-center gap-1.5 font-mono text-xs text-white/80 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full whitespace-nowrap">
+                  <span>{ch.displayValue}</span>
                   <button
                     type="button"
                     onClick={() => handleCopy(ch.displayValue, ch.id, ch.name)}
@@ -135,27 +142,23 @@ export default function AboutWholesaleDossier() {
                     aria-label={`Copy ${ch.name}`}
                   >
                     {copiedId === ch.id ? (
-                      <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      <Check className="h-3 w-3 text-emerald-400" />
                     ) : (
-                      <Copy className="h-3.5 w-3.5" />
+                      <Copy className="h-3 w-3" />
                     )}
                   </button>
                 </div>
 
-                <p className="text-xs text-white/55 font-body leading-relaxed mb-5">
-                  {ch.description}
-                </p>
+                <a
+                  href={ch.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white text-black hover:bg-[#e1b854] px-4 py-1.5 text-xs font-mono font-medium transition-all cursor-pointer whitespace-nowrap shadow-sm hover:scale-105 active:scale-95"
+                >
+                  <span>Connect</span>
+                  <ArrowRight className="h-3 w-3" />
+                </a>
               </div>
-
-              <a
-                href={ch.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 w-full rounded-full border border-white/15 bg-white/5 py-2 px-3 text-xs font-mono font-medium text-white transition-all hover:bg-[#e1b854] hover:text-black hover:border-[#e1b854] cursor-pointer"
-              >
-                <span>{ch.actionText}</span>
-                <ArrowRight className="h-3 w-3" />
-              </a>
             </div>
           ))}
         </div>

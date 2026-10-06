@@ -70,7 +70,6 @@ export default function AtelierPage() {
 
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="mx-auto mb-6 h-px w-10 bg-primary" />
           
           <span className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.25em] text-primary mb-3 block">
             Olfactory Science &amp; Education
@@ -82,7 +81,6 @@ export default function AtelierPage() {
             Essential perfumery knowledge, molecular concentration analysis, and practical wear strategies tailored specifically for the tropical Philippine climate.
           </p>
 
-          <div className="mx-auto mt-6 h-px w-10 bg-primary" />
         </div>
 
         {/* Guides Grid */}

@@ -350,7 +350,6 @@ export default function CatalogView({
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: 1.2, delay: 0.05, ease }}
-          className="mx-auto mb-6 h-px w-10 bg-primary sm:mb-8"
         />
 
         <motion.h1
@@ -384,7 +383,6 @@ export default function CatalogView({
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: 1.2, delay: 0.35, ease }}
-          className="mx-auto mt-6 h-px w-10 bg-primary sm:mt-8"
         />
       </header>
 

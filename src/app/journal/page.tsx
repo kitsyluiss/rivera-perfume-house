@@ -78,7 +78,6 @@ export default function JournalPage() {
 
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="mx-auto mb-6 h-px w-10 bg-primary" />
           
           <span className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.25em] text-primary mb-3 block">
             Editorial &amp; Reviews
@@ -90,7 +89,6 @@ export default function JournalPage() {
             Honest reviews, head-to-head comparisons, and practical buyer guides for fragrance collectors and resellers in the Philippines.
           </p>
 
-          <div className="mx-auto mt-6 h-px w-10 bg-primary" />
         </div>
 
         {/* Articles List */}
