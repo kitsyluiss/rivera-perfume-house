@@ -6,7 +6,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://riverafragrances.com";
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://rivera.perfumehouse.workers.dev").replace(/\/+$/, "");
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -64,8 +64,15 @@ export const metadata: Metadata = {
     images: ["/perfumes/hawas_black.png"],
   },
   icons: {
-    icon: "/logo.svg",
-    apple: "/logo.svg",
+    icon: [
+      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
   },
   robots: {
     index: true,
@@ -95,8 +102,11 @@ const jsonLd = {
       "url": siteUrl,
       "logo": {
         "@type": "ImageObject",
-        "url": `${siteUrl}/logo.svg`,
+        "url": `${siteUrl}/logo.png`,
+        "width": 2000,
+        "height": 2000,
       },
+      "image": `${siteUrl}/icon-192.png`,
       "description":
         "Curated authentic Middle Eastern and designer perfumes at honest direct prices in the Philippines.",
       "contactPoint": {
@@ -171,6 +181,10 @@ export default async function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
+        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
