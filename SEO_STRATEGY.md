@@ -7,7 +7,7 @@ This guide details the off-page SEO strategy, Google Search Console indexing, lo
 ## 1. Google Search Console Setup & Verification
 
 1. Go to [Google Search Console](https://search.google.com/search-console).
-2. Add your property (e.g. `https://riverafragrances.com` or domain property).
+2. Add your property (e.g. `https://rivera.perfumehouse.workers.dev` or domain property).
 3. Under **HTML Tag Verification**, copy the verification code string (e.g., `google-site-verification=XYZ123...`).
 4. In your `.env.local` or Cloudflare Environment Variables, add:
    ```env

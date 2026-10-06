@@ -22,8 +22,8 @@ Rivera Fragrance House is a growing, family-run fragrance shop based in Malabon,
 
 ## Key Website Links
 
-- [Live Fragrance Catalog & Current Stock](https://riverafragrances.com/catalog): Real-time inventory of in-stock perfumes with retail prices, notes, and flash sale discounts.
-- [Curated Collections](https://riverafragrances.com/collections): Browse fragrances by scent profile, season, and occasion.
-- [About Rivera Fragrance House](https://riverafragrances.com/about): Our family story, authenticity commitment, and batch code verification.
-- [The Atelier](https://riverafragrances.com/atelier): Olfactory guides, concentration ratings, and tropical heat longevity techniques.
-- [Fragrance Journal](https://riverafragrances.com/journal): Educational reviews and fragrance comparisons.
+- [Live Fragrance Catalog & Current Stock](https://rivera.perfumehouse.workers.dev/catalog): Real-time inventory of in-stock perfumes with retail prices, notes, and flash sale discounts.
+- [Curated Collections](https://rivera.perfumehouse.workers.dev/collections): Browse fragrances by scent profile, season, and occasion.
+- [About Rivera Fragrance House](https://rivera.perfumehouse.workers.dev/about): Our family story, authenticity commitment, and batch code verification.
+- [The Atelier](https://rivera.perfumehouse.workers.dev/atelier): Olfactory guides, concentration ratings, and tropical heat longevity techniques.
+- [Fragrance Journal](https://rivera.perfumehouse.workers.dev/journal): Educational reviews and fragrance comparisons.
