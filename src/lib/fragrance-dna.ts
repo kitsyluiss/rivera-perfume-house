@@ -416,6 +416,40 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
       base: ["Clean Woody Finishes", "Musky Finishes"]
     }
   },
+  "daarej pour homme sport": {
+    description: "A fresh and dynamic scent blending aquatic and aromatic notes with a crisp finish.",
+    accords: [
+      { name: "Aquatic", value: 100, color: "aquatic" },
+      { name: "Fresh", value: 95, color: "fresh" },
+      { name: "Aromatic", value: 85, color: "aromatic" },
+      { name: "Woody", value: 70, color: "woody" },
+      { name: "Musky", value: 65, color: "musky" },
+      { name: "Green", value: 60, color: "green" },
+      { name: "Fresh Spicy", value: 50, color: "fresh_spicy" }
+    ],
+    notes: {
+      top: ["Crisp Fresh Accords", "Marine Notes"],
+      heart: ["Aromatic Nuances", "Green Nuances", "Subtle Spicy Touches"],
+      base: ["Clean Woody Finishes", "Musky Finishes"]
+    }
+  },
+  "daarej": {
+    description: "A fresh and dynamic scent blending aquatic and aromatic notes with a crisp finish.",
+    accords: [
+      { name: "Aquatic", value: 100, color: "aquatic" },
+      { name: "Fresh", value: 95, color: "fresh" },
+      { name: "Aromatic", value: 85, color: "aromatic" },
+      { name: "Woody", value: 70, color: "woody" },
+      { name: "Musky", value: 65, color: "musky" },
+      { name: "Green", value: 60, color: "green" },
+      { name: "Fresh Spicy", value: 50, color: "fresh_spicy" }
+    ],
+    notes: {
+      top: ["Crisp Fresh Accords", "Marine Notes"],
+      heart: ["Aromatic Nuances", "Green Nuances", "Subtle Spicy Touches"],
+      base: ["Clean Woody Finishes", "Musky Finishes"]
+    }
+  },
   "rose of dreams": {
     description: "A captivating, powdery floral fragrance grounded by deep woods and a touch of fruit.",
     accords: [
