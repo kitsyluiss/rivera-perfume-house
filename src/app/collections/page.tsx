@@ -24,7 +24,7 @@ export default function CollectionsPage() {
       badge: "Best for Philippine Heat",
       icon: Droplets,
       description: "Crisp, breezy, energizing marine fragrances engineered to project strongly through tropical heat and humidity without cloying.",
-      featured: ["Rasasi Hawas", "Hawas Ice", "Rayhaan Pacific Aloha", "Rayhaan Aquatica", "Shiyaaka Snow"],
+      featured: ["Rasasi Hawas", "Hawas Ice", "Armaf Odyssey Mega Man", "Rayhaan Pacific Aloha", "Rayhaan Aquatica", "Shiyaaka Snow"],
       link: "/catalog?tag=Fresh",
     },
     {

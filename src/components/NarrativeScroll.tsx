@@ -66,6 +66,7 @@ function ZeroGravityScatter({ scrollYProgress, isMobile }: { scrollYProgress: Mo
     "/perfumes/hawas_black.avif",
     "/perfumes/varakh_silver.avif",
     "/perfumes/momento.avif",
+    "/perfumes/odysseymegaman.avif",
   ]);
 
   // User requested to keep 32 bottles but make them more random

@@ -489,6 +489,25 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
       heart: ["Tonka Bean", "Damask Rose", "Agarwood"],
       base: ["Caramel", "Amberwood", "Cedar"]
     }
+  },
+  "odyssey mega man": {
+    description: "An energizing, ultra-crisp surge of zesty citrus, fiery ginger, and cool mint layered over juicy pineapple and aromatic herbal greens. Dries down to an effortless, masculine blend of clean cedarwood, vetiver, and subtle tonka bean.",
+    accords: [
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "Aromatic", value: 85, color: "aromatic" },
+      { name: "Fresh Spicy", value: 80, color: "fresh_spicy" },
+      { name: "Sweet", value: 55, color: "sweet" },
+      { name: "Woody", value: 54, color: "woody" },
+      { name: "Fresh", value: 50, color: "fresh" },
+      { name: "Green", value: 49, color: "green" },
+      { name: "Musky", value: 48, color: "musky" },
+      { name: "Fruity", value: 47, color: "fruity" }
+    ],
+    notes: {
+      top: ["Lemon", "Bergamot", "Orange", "Ginger", "Mint"],
+      heart: ["Pineapple", "Sage", "Juniper", "Geranium"],
+      base: ["Musk", "Cedar", "Tonka Bean", "Vetiver"]
+    }
   }
 };
 
