@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Perfume } from "@/lib/types";
 import { Loader2 } from "lucide-react";
@@ -16,7 +16,7 @@ const ProductScene = dynamic(() => import("./ProductScene"), {
 });
 
 export default function HeroCarousel3D({
-  perfumes,
+  perfumes: rawPerfumes,
   onSelect,
   selectedPerfume,
   selectionSource,
@@ -26,6 +26,10 @@ export default function HeroCarousel3D({
   selectedPerfume?: Perfume | null;
   selectionSource?: "grid" | "carousel" | null;
 }) {
+  const perfumes = useMemo(
+    () => rawPerfumes.filter((p) => !(p.scent_name || "").toLowerCase().includes("daarej")),
+    [rawPerfumes]
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(true);

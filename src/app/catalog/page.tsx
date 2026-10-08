@@ -77,11 +77,17 @@ export default async function Home({
   });
 
   // Prepare a truly randomized carousel on every single request / refresh:
-  // Filter to in-stock items with available artwork
+  // Filter to in-stock items with available artwork, excluding Daarej Sport Pour Homme
   const eligibleForCarousel = perfumes.filter(
-    (p) => p.quantity > 0 && (getAvifUrl(p) !== "/logo.svg" || p.image_url)
+    (p) =>
+      p.quantity > 0 &&
+      (getAvifUrl(p) !== "/logo.svg" || p.image_url) &&
+      !(p.scent_name || "").toLowerCase().includes("daarej")
   );
-  const carouselPool = eligibleForCarousel.length >= 4 ? eligibleForCarousel : perfumes;
+  const nonDaarejPerfumes = perfumes.filter(
+    (p) => !(p.scent_name || "").toLowerCase().includes("daarej")
+  );
+  const carouselPool = eligibleForCarousel.length >= 4 ? eligibleForCarousel : nonDaarejPerfumes;
 
   // Complete Fisher-Yates shuffle across the entire catalog pool
   const carouselPerfumes = [...carouselPool];
