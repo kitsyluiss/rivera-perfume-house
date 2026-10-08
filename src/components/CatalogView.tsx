@@ -243,11 +243,9 @@ export default function CatalogView({
   });
 
   useEffect(() => {
-    // Only randomize on the client if we didn't receive a subset from the server
-    if (!initialCarouselPerfumes || initialCarouselPerfumes.length === 0) {
-      setCarouselPerfumes(shuffleAll(initialPerfumes).slice(0, 8));
-    }
-  }, [initialPerfumes, initialCarouselPerfumes]);
+    // Dynamically randomize the carousel bottles on client mount so each session / refresh is fresh and distinct
+    setCarouselPerfumes(shuffleAll(initialPerfumes).slice(0, 8));
+  }, [initialPerfumes]);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const router = useRouter();

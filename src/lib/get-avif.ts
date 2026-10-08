@@ -27,6 +27,7 @@ export function getAvifUrl(p: Perfume): string {
   else if (name.includes("ameerat")) fileName = "ameerat.avif";
   else if (name.includes("freeze")) fileName = "riffsfreeze.avif";
   else if (name.includes("rose of dreams") || name.includes("zimaaya") || name.includes("zimaya")) fileName = "zimaaya.avif";
+  else if (name.includes("momento")) fileName = "momento.avif";
 
   if (fileName) {
     return `/perfumes/${fileName.replace(/ /g, '_')}`;
@@ -63,6 +64,7 @@ export function getCatalogPhoto(p: Perfume): string | null {
   if (name.includes("supremacy")) return "/perfumes/supremacy%20collectors%20edition.jpg";
   if (name.includes("varakh")) return "/perfumes/varakh%20silver.jpg";
   if (name.includes("vulcan")) return "/perfumes/vulcan%20baie.jpg";
+  if (name.includes("momento")) return "/perfumes/momento.png";
 
   // If perfume has an image_url (even if .avif) and no local photo exists, return it
   if (p.image_url) return p.image_url;
@@ -94,6 +96,7 @@ export function getFallbackCatalogPhoto(p: Perfume): string | null {
   if (name.includes("supremacy")) return "/perfumes/supremacy_collectors_edition.png";
   if (name.includes("varakh")) return "/perfumes/varakh_silver.png";
   if (name.includes("vulcan")) return "/perfumes/vulcan_baie.png";
+  if (name.includes("momento")) return "/perfumes/momento.png";
 
   return null;
 }

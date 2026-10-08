@@ -469,6 +469,26 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
       heart: ["Ice", "Tea", "Ginger", "Sage"],
       base: ["Ambermax™", "Peony", "Cedar"]
     }
+  },
+  "momento": {
+    description: "A sumptuous, gourmand-oriental blend where sweet spun sugar, spicy saffron, and mandarin dissolve into an opulent heart of damask rose and agarwood, resting on a decadently warm base of melted caramel, amberwood, and cedar.",
+    accords: [
+      { name: "Sweet", value: 100, color: "sweet" },
+      { name: "Vanilla", value: 93, color: "vanilla" },
+      { name: "Amber", value: 90, color: "amber" },
+      { name: "Warm Spicy", value: 87, color: "warm_spicy" },
+      { name: "Rose", value: 85, color: "rose" },
+      { name: "Woody", value: 81, color: "woody" },
+      { name: "Oud", value: 78, color: "oud" },
+      { name: "Caramel", value: 77, color: "caramel" },
+      { name: "Aromatic", value: 74, color: "aromatic" },
+      { name: "Metallic", value: 72, color: "metallic" }
+    ],
+    notes: {
+      top: ["Sugar", "Saffron", "Mandarin"],
+      heart: ["Tonka Bean", "Damask Rose", "Agarwood"],
+      base: ["Caramel", "Amberwood", "Cedar"]
+    }
   }
 };
 
@@ -555,6 +575,14 @@ export function getAccordGradient(color: string): string {
       return "linear-gradient(90deg, #374151, #4b5563)";
     case "animalic":
       return "linear-gradient(90deg, #a0522d, #8b4513)";
+    case "rose":
+      return "linear-gradient(90deg, #f43f5e, #fb7185)";
+    case "oud":
+      return "linear-gradient(90deg, #3e2723, #5d4037)";
+    case "caramel":
+      return "linear-gradient(90deg, #d97706, #f59e0b)";
+    case "metallic":
+      return "linear-gradient(90deg, #94a3b8, #cbd5e1)";
     default:
       return "linear-gradient(90deg, #d6b36d, #e8c547)";
   }

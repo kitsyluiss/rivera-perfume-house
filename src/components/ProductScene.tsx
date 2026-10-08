@@ -115,17 +115,23 @@ function ProductCard({
         materialRef2.current.opacity = THREE.MathUtils.damp(materialRef2.current.opacity, targetOpacityGlass, 4, delta);
       }
 
-      // Static circle position (CarouselRig rotates the whole group)
-      groupRef.current.position.lerp(new THREE.Vector3(baseX, 0, baseZ), 0.1);
+      // Static circle position with subtle organic height breathing
+      const idleYOffset = isSelected ? 0 : Math.sin(index * 1.8) * 0.08;
+      groupRef.current.position.lerp(new THREE.Vector3(baseX, idleYOffset, baseZ), 0.1);
       groupRef.current.rotation.y = angle;
     }
   });
 
+  // Staggered organic floating speeds and intensities per bottle
+  const floatSpeed = isSelected ? 0.8 : 1.6 + ((index * 37) % 7) * 0.12;
+  const floatIntensity = isSelected ? 0.25 : 0.35 + ((index * 53) % 5) * 0.05;
+  const rotationIntensity = isSelected ? 0.08 : 0.08 + ((index * 29) % 5) * 0.015;
+
   return (
     <Float 
-      speed={isSelected ? 0.8 : 2} 
-      rotationIntensity={isSelected ? 0.08 : 0.1} 
-      floatIntensity={isSelected ? 0.25 : 0.5} 
+      speed={floatSpeed} 
+      rotationIntensity={rotationIntensity} 
+      floatIntensity={floatIntensity} 
     >
       <group ref={groupRef} onClick={(e) => {
         e.stopPropagation();
@@ -178,14 +184,19 @@ function CarouselRig({
   const selectedIndex = selectedId ? perfumes.findIndex(p => p.id === selectedId) : -1;
   const targetAngle = selectedIndex !== -1 ? -((selectedIndex / perfumes.length) * Math.PI * 2) : null;
   
-  // Update internal offset when dragged
+  // Update internal offset when dragged (using modern motion .on('change') API)
   useEffect(() => {
     if (!dragX) return;
-    return dragX.onChange((v: number) => {
+    const unsub = dragX.on ? dragX.on("change", (v: number) => {
+      if (!selectedId) {
+        dragOffsetRef.current = randomInitialRotation + (v / 1000) * Math.PI * 2;
+      }
+    }) : dragX.onChange((v: number) => {
       if (!selectedId) {
         dragOffsetRef.current = randomInitialRotation + (v / 1000) * Math.PI * 2;
       }
     });
+    return unsub;
   }, [dragX, selectedId, randomInitialRotation]);
 
   useFrame((state, delta) => {
