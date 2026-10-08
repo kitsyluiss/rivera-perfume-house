@@ -222,14 +222,11 @@ export default function CatalogView({
     return () => window.removeEventListener("popstate", onPopState);
   }, [selectedPerfume]);
 
-  const isExcludedFromCarousel = (p: Perfume) => (p.scent_name || "").toLowerCase().includes("daarej");
-
   const shuffleAll = (items: Perfume[]) => {
-    const nonExcluded = items.filter((p) => !isExcludedFromCarousel(p));
-    const pool = nonExcluded.filter(
+    const pool = items.filter(
       (p) => p.quantity > 0 && (getAvifUrl(p) !== "/logo.svg" || p.image_url)
     );
-    const candidate = pool.length >= 4 ? pool : nonExcluded;
+    const candidate = pool.length >= 4 ? pool : items;
     const shuffled = [...candidate];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -239,9 +236,8 @@ export default function CatalogView({
   };
 
   const [carouselPerfumes, setCarouselPerfumes] = useState<Perfume[]>(() => {
-    const sanitizedInitial = (initialCarouselPerfumes || []).filter((p) => !isExcludedFromCarousel(p));
-    if (sanitizedInitial.length > 0) {
-      return sanitizedInitial;
+    if (initialCarouselPerfumes && initialCarouselPerfumes.length > 0) {
+      return initialCarouselPerfumes;
     }
     return shuffleAll(initialPerfumes).slice(0, 8);
   });
