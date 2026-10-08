@@ -29,6 +29,7 @@ export default function HeroCarousel3D({
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(false);
   
   // 1. Framer Motion robust physics value for drag
   const dragX = useMotionValue(0);
@@ -36,12 +37,14 @@ export default function HeroCarousel3D({
   // 2. Invert drag translation so Canvas stays stationary while inheriting spring physics
   const inverseX = useTransform(dragX, (v) => -v);
 
-  // Only render on client, and respect reduced motion
+  // Mount on client and detect reduced motion without hiding the component
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!prefersReducedMotion) {
-      setMounted(true);
-    }
+    setMounted(true);
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener?.("change", handler);
+    return () => mediaQuery.removeEventListener?.("change", handler);
   }, []);
 
   // Pause Three.js rendering when carousel is scrolled off-screen
@@ -59,7 +62,7 @@ export default function HeroCarousel3D({
   }, []);
 
   if (!mounted || perfumes.length === 0) {
-    return null; // Fallback to normal layout if reduced motion or SSR
+    return null;
   }
 
   return (
@@ -68,13 +71,13 @@ export default function HeroCarousel3D({
       <div className="pointer-events-none absolute inset-y-0 left-0 w-4 sm:w-8 bg-gradient-to-r from-background via-background/60 to-transparent z-20" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-4 sm:w-8 bg-gradient-to-l from-background/60 to-transparent z-20" />
       
-      {/* Heavy Liquid Drag Layer */}
+      {/* Heavy Liquid Drag Layer - touch-pan-y allows smooth vertical scrolling on iPad/mobile */}
       <motion.div
         drag={selectedPerfume ? false : "x"} // Disable drag when modal is open
         dragElastic={0.15}
         dragTransition={{ bounceStiffness: 120, bounceDamping: 22, power: 0.25 }}
         style={{ x: dragX }}
-        className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing"
+        className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing touch-pan-y"
       >
         <motion.div style={{ x: inverseX }} className="w-full h-full relative z-0">
           <ProductScene 
@@ -84,6 +87,7 @@ export default function HeroCarousel3D({
             dragX={dragX}
             selectionSource={selectionSource}
             isVisible={isVisible}
+            reducedMotion={reducedMotion}
           />
         </motion.div>
       </motion.div>

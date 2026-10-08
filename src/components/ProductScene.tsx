@@ -35,7 +35,6 @@ function ResponsiveCamera({ radius }: { radius: number }) {
   return null;
 }
 
-// The individual product card in 3D space
 function ProductCard({ 
   perfume, 
   index, 
@@ -45,7 +44,8 @@ function ProductCard({
   isSelected,
   hasSelection,
   dragX,
-  isMobile
+  isMobile,
+  reducedMotion = false,
 }: { 
   perfume: Perfume; 
   index: number; 
@@ -56,6 +56,7 @@ function ProductCard({
   hasSelection: boolean;
   dragX: any;
   isMobile: boolean;
+  reducedMotion?: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const materialRef1 = useRef<THREE.MeshBasicMaterial>(null);
@@ -115,8 +116,8 @@ function ProductCard({
         materialRef2.current.opacity = THREE.MathUtils.damp(materialRef2.current.opacity, targetOpacityGlass, 4, delta);
       }
 
-      // Static circle position with subtle organic height breathing
-      const idleYOffset = isSelected ? 0 : Math.sin(index * 1.8) * 0.08;
+      // Static circle position with subtle organic height breathing (calmed if reducedMotion)
+      const idleYOffset = (isSelected || reducedMotion) ? 0 : Math.sin(index * 1.8) * 0.08;
       groupRef.current.position.lerp(new THREE.Vector3(baseX, idleYOffset, baseZ), 0.1);
       groupRef.current.rotation.y = angle;
     }
@@ -129,9 +130,10 @@ function ProductCard({
 
   return (
     <Float 
-      speed={floatSpeed} 
-      rotationIntensity={rotationIntensity} 
-      floatIntensity={floatIntensity} 
+      speed={reducedMotion ? 0 : floatSpeed} 
+      rotationIntensity={reducedMotion ? 0 : rotationIntensity} 
+      floatIntensity={reducedMotion ? 0 : floatIntensity}
+      enabled={!reducedMotion}
     >
       <group ref={groupRef} onClick={(e) => {
         e.stopPropagation();
@@ -166,7 +168,8 @@ function CarouselRig({
   onSelect,
   selectedId,
   dragX,
-  isMobile
+  isMobile,
+  reducedMotion = false,
 }: { 
   perfumes: Perfume[];
   radius: number;
@@ -174,6 +177,7 @@ function CarouselRig({
   selectedId?: string;
   dragX?: any;
   isMobile: boolean;
+  reducedMotion?: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const targetRotation = useRef(0);
@@ -235,7 +239,8 @@ function CarouselRig({
         groupRef.current.position.y = THREE.MathUtils.damp(groupRef.current.position.y, 0, 6, delta);
         groupRef.current.position.z = THREE.MathUtils.damp(groupRef.current.position.z, 0, 6, delta);
         
-        const autoSpin = state.clock.elapsedTime * 0.15;
+        // Disable autonomous continuous spin if user prefers reduced motion
+        const autoSpin = reducedMotion ? 0 : state.clock.elapsedTime * 0.15;
         
         // Prevent rotation snapping when exiting the product view
         if (wasSelectedRef.current) {
@@ -272,6 +277,7 @@ function CarouselRig({
           hasSelection={!!selectedId}
           dragX={dragX}
           isMobile={isMobile}
+          reducedMotion={reducedMotion}
         />
       ))}
     </group>
@@ -285,6 +291,7 @@ export default function ProductScene({
   dragX,
   selectionSource,
   isVisible = true,
+  reducedMotion = false,
 }: { 
   perfumes: Perfume[];
   onSelect: (p: Perfume) => void;
@@ -292,17 +299,27 @@ export default function ProductScene({
   dragX?: any;
   selectionSource?: "grid" | "carousel" | null;
   isVisible?: boolean;
+  reducedMotion?: boolean;
 }) {
   // If no perfumes, render nothing
   if (!perfumes || perfumes.length === 0) return null;
 
-  // Responsive radius: slightly tighter on portrait mobile to ensure flanking bottles stay nicely framed
+  // Responsive device profiling (mobile, tablet, low-power touch devices)
   const [isMobile, setIsMobile] = useState(false);
+  const [isLowPower, setIsLowPower] = useState(false);
+
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    const checkPerformanceProfile = () => {
+      const w = window.innerWidth;
+      const isTouch = window.matchMedia("(pointer: coarse)").matches || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+      const lowCores = typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4;
+      setIsMobile(w < 768);
+      // Low-power profile triggers for touch tablets (like iPad), narrow screens, or devices with <= 4 CPU threads
+      setIsLowPower(isTouch || w < 1024 || lowCores);
+    };
+    checkPerformanceProfile();
+    window.addEventListener("resize", checkPerformanceProfile);
+    return () => window.removeEventListener("resize", checkPerformanceProfile);
   }, []);
 
   const radius = isMobile
@@ -312,9 +329,16 @@ export default function ProductScene({
   return (
     <Canvas 
       camera={{ position: [0, 0, radius + 5], fov: 40 }}
-      dpr={isMobile ? 1 : [1, 2]}
+      // DPR: capped to 1 on tablet/touch/low-power to avoid rendering 4+ million pixels on Retina iPads; max 1.5 on desktop
+      dpr={isLowPower ? 1 : [1, 1.5]}
       frameloop={isVisible ? "always" : "never"}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      gl={{ 
+        antialias: !isLowPower, 
+        alpha: true, 
+        powerPreference: isLowPower ? "low-power" : "default",
+        preserveDrawingBuffer: false,
+        stencil: false,
+      }}
     >
       <ResponsiveCamera radius={radius} />
 
@@ -344,21 +368,22 @@ export default function ProductScene({
           selectedId={selectionSource === "carousel" ? selectedPerfume?.id : undefined}
           dragX={dragX}
           isMobile={isMobile}
+          reducedMotion={reducedMotion}
         />
       </Suspense>
       
       <Environment preset="city" />
       
-      {/* Ground plane for shadows */}
+      {/* Ground plane for shadows - frames={1} bakes once on mount, saving 60 shadow render passes/sec */}
       <ContactShadows 
         position={[0, isMobile ? -1.6 : -2, 0]} 
         opacity={0.35} 
         scale={20} 
-        blur={isMobile ? 1 : 2} 
+        blur={isLowPower ? 1 : 1.8} 
         far={4.5} 
         color="#d6b36d"
-        resolution={isMobile ? 256 : 512}
-        frames={isMobile ? 1 : Infinity}
+        resolution={isLowPower ? 128 : 256}
+        frames={1}
       />
     </Canvas>
   );
