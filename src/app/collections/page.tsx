@@ -40,7 +40,7 @@ export default function CollectionsPage() {
       badge: "Date Night & Air-Conditioned Spaces",
       icon: Moon,
       description: "Decadent bourbon vanilla, roasted praline, velvety cinnamon bark, rich leather, and sensual dark resins.",
-      featured: ["French Avenue Liquid Brun", "RiiFFS Momento", "Rayhaan Nocturno", "Fragrance World Varakh Silver", "Delilah Blanc"],
+      featured: ["French Avenue Liquid Brun", "RiiFFS Momento", "Lattafa Haya", "Rayhaan Nocturno", "Fragrance World Varakh Silver", "Delilah Blanc"],
       link: "/catalog?tag=Warm",
     },
     {

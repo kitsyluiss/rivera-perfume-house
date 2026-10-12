@@ -542,6 +542,66 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
       heart: ["Pineapple", "Sage", "Juniper", "Geranium"],
       base: ["Musk", "Cedar", "Tonka Bean", "Vetiver"]
     }
+  },
+  "haya": {
+    description: "A sparkling, effervescent cocktail of chilled champagne, ripe strawberries, and zesty blood orange wrapped in lush white florals. Dries down into a creamy, comforting base of warm amber, sandalwood, and sweet roasted chestnut.",
+    accords: [
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "Fruity", value: 95, color: "fruity" },
+      { name: "White Floral", value: 90, color: "white_floral" },
+      { name: "Sweet", value: 85, color: "sweet" },
+      { name: "Champagne", value: 77, color: "champagne" },
+      { name: "Aldehydic", value: 73, color: "aldehydic" },
+      { name: "Floral", value: 70, color: "floral" },
+      { name: "Amber", value: 69, color: "amber" },
+      { name: "Lactonic", value: 68, color: "lactonic" },
+      { name: "Rose", value: 68, color: "rose" }
+    ],
+    notes: {
+      top: ["Champagne", "Strawberry", "Tangerine", "Blood Orange", "Rose"],
+      heart: ["Gardenia", "Jasmine", "Vanilla Orchid"],
+      base: ["Amber", "Sandalwood", "Chestnut"]
+    }
+  },
+  "lattafa haya": {
+    description: "A sparkling, effervescent cocktail of chilled champagne, ripe strawberries, and zesty blood orange wrapped in lush white florals. Dries down into a creamy, comforting base of warm amber, sandalwood, and sweet roasted chestnut.",
+    accords: [
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "Fruity", value: 95, color: "fruity" },
+      { name: "White Floral", value: 90, color: "white_floral" },
+      { name: "Sweet", value: 85, color: "sweet" },
+      { name: "Champagne", value: 77, color: "champagne" },
+      { name: "Aldehydic", value: 73, color: "aldehydic" },
+      { name: "Floral", value: 70, color: "floral" },
+      { name: "Amber", value: 69, color: "amber" },
+      { name: "Lactonic", value: 68, color: "lactonic" },
+      { name: "Rose", value: 68, color: "rose" }
+    ],
+    notes: {
+      top: ["Champagne", "Strawberry", "Tangerine", "Blood Orange", "Rose"],
+      heart: ["Gardenia", "Jasmine", "Vanilla Orchid"],
+      base: ["Amber", "Sandalwood", "Chestnut"]
+    }
+  },
+  "lataffa haya": {
+    description: "A sparkling, effervescent cocktail of chilled champagne, ripe strawberries, and zesty blood orange wrapped in lush white florals. Dries down into a creamy, comforting base of warm amber, sandalwood, and sweet roasted chestnut.",
+    accords: [
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "Fruity", value: 95, color: "fruity" },
+      { name: "White Floral", value: 90, color: "white_floral" },
+      { name: "Sweet", value: 85, color: "sweet" },
+      { name: "Champagne", value: 77, color: "champagne" },
+      { name: "Aldehydic", value: 73, color: "aldehydic" },
+      { name: "Floral", value: 70, color: "floral" },
+      { name: "Amber", value: 69, color: "amber" },
+      { name: "Lactonic", value: 68, color: "lactonic" },
+      { name: "Rose", value: 68, color: "rose" }
+    ],
+    notes: {
+      top: ["Champagne", "Strawberry", "Tangerine", "Blood Orange", "Rose"],
+      heart: ["Gardenia", "Jasmine", "Vanilla Orchid"],
+      base: ["Amber", "Sandalwood", "Chestnut"]
+    }
   }
 };
 
@@ -636,6 +696,12 @@ export function getAccordGradient(color: string): string {
       return "linear-gradient(90deg, #d97706, #f59e0b)";
     case "metallic":
       return "linear-gradient(90deg, #94a3b8, #cbd5e1)";
+    case "champagne":
+      return "linear-gradient(90deg, #fef08a, #f59e0b)";
+    case "aldehydic":
+      return "linear-gradient(90deg, #e0f2fe, #7dd3fc)";
+    case "lactonic":
+      return "linear-gradient(90deg, #fffbeb, #fde68a)";
     default:
       return "linear-gradient(90deg, #d6b36d, #e8c547)";
   }
