@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { addToCartSchema } from "./validations";
+import { logger } from "./logger";
 
 export async function getCartItems() {
   const supabase = await createClient();
@@ -49,6 +51,14 @@ export async function getCartItems() {
 }
 
 export async function addToCart(perfumeId: string, quantity: number = 1) {
+  const parsed = addToCartSchema.safeParse({ perfumeId, quantity });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Invalid cart item parameters" };
+  }
+
+  const validPerfumeId = parsed.data.perfumeId;
+  const validQuantity = parsed.data.quantity;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -61,13 +71,13 @@ export async function addToCart(perfumeId: string, quantity: number = 1) {
     .from("cart_items")
     .select("id, quantity")
     .eq("user_id", user.id)
-    .eq("perfume_id", perfumeId)
+    .eq("perfume_id", validPerfumeId)
     .single();
 
   if (existing) {
     const { error } = await supabase
       .from("cart_items")
-      .update({ quantity: existing.quantity + quantity })
+      .update({ quantity: existing.quantity + validQuantity })
       .eq("id", existing.id);
     if (error) return { error: error.message };
   } else {
@@ -75,12 +85,13 @@ export async function addToCart(perfumeId: string, quantity: number = 1) {
       .from("cart_items")
       .insert({
         user_id: user.id,
-        perfume_id: perfumeId,
-        quantity
+        perfume_id: validPerfumeId,
+        quantity: validQuantity
       });
     if (error) return { error: error.message };
   }
 
+  await logger.info("cart_item_added", { userId: user.id, perfumeId: validPerfumeId, quantity: validQuantity });
   revalidatePath("/");
   revalidatePath("/cart");
   return { success: true };

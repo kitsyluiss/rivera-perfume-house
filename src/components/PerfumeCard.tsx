@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Perfume } from "@/lib/types";
@@ -47,42 +47,23 @@ export default function PerfumeCard({
     onClick?.();
   };
 
-  // Robust photo resolution for the catalog grid:
-  // 1. Primary catalog environment photo (JPG / uploaded Supabase photo)
-  // 2. Fallback secondary catalog photo (PNG)
-  // 3. Fallback AVIF cutout bottle if no catalog photo exists
-  const catalogPhoto = getCatalogPhoto(perfume);
-  const avifPhoto = getAvifUrl(perfume);
-  const initialPhoto = catalogPhoto || (avifPhoto !== "/logo.svg" ? avifPhoto : null);
+  const [failedAttempt, setFailedAttempt] = useState(0);
 
-  const [imgSrc, setImgSrc] = useState<string | null>(initialPhoto);
-  const [hasTriedFallback, setHasTriedFallback] = useState(false);
+  const photoSources = useMemo(() => {
+    const list: string[] = [];
+    const cat = getCatalogPhoto(perfume);
+    if (cat) list.push(cat);
+    const fb = getFallbackCatalogPhoto(perfume);
+    if (fb && !list.includes(fb)) list.push(fb);
+    const avif = getAvifUrl(perfume);
+    if (avif && avif !== "/logo.svg" && !list.includes(avif)) list.push(avif);
+    return list;
+  }, [perfume]);
 
-  useEffect(() => {
-    const nextPhoto = getCatalogPhoto(perfume) || (getAvifUrl(perfume) !== "/logo.svg" ? getAvifUrl(perfume) : null);
-    setImgSrc(nextPhoto);
-    setHasTriedFallback(false);
-  }, [perfume.id, perfume.image_url, perfume.scent_name]);
+  const imgSrc = failedAttempt < photoSources.length ? photoSources[failedAttempt] : null;
 
   const handleImageError = () => {
-    if (!hasTriedFallback) {
-      setHasTriedFallback(true);
-      const fallback = getFallbackCatalogPhoto(perfume);
-      if (fallback && fallback !== imgSrc) {
-        setImgSrc(fallback);
-        return;
-      }
-      if (avifPhoto && avifPhoto !== "/logo.svg" && avifPhoto !== imgSrc) {
-        setImgSrc(avifPhoto);
-        return;
-      }
-    } else {
-      if (avifPhoto && avifPhoto !== "/logo.svg" && avifPhoto !== imgSrc) {
-        setImgSrc(avifPhoto);
-        return;
-      }
-      setImgSrc(null);
-    }
+    setFailedAttempt((prev) => prev + 1);
   };
 
   const isAvif = imgSrc?.toLowerCase().split("?")[0].endsWith(".avif");

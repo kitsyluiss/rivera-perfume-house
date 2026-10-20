@@ -70,7 +70,7 @@ export default function CustomerOrdersPage() {
       {orders.length === 0 ? (
         <div className="text-center py-20 border border-border border-dashed rounded-[1.1rem] bg-card/30">
           <Package className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-          <p className="text-muted-foreground mb-6">You haven't placed any orders yet.</p>
+          <p className="text-muted-foreground mb-6">You haven&apos;t placed any orders yet.</p>
           <Link href="/">
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
               Discover Fragrances

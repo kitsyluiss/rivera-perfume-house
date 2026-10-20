@@ -188,7 +188,7 @@ export default function FlashSaleDialog({
                         onMouseDown={() => setShowEventDropdown(false)}
                         className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-secondary text-primary font-medium"
                       >
-                        Use "{eventName}"
+                        Use &ldquo;{eventName}&rdquo;
                         <Check className="h-3 w-3 text-primary" />
                       </button>
                     )}

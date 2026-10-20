@@ -38,20 +38,17 @@ export default function PreloaderIdent({
 
   // 2. Dismiss only when choreography has finished AND all 3D assets are 100% loaded
   useEffect(() => {
-    if (alwaysShow) {
-      setVisible(true);
-      return;
-    }
+    if (alwaysShow) return;
 
     // Both the minimum presentation time has passed and Three.js loading is inactive
     if (minTimeElapsed && (!active || progress >= 100)) {
       setVisible(false);
       try {
         sessionStorage.setItem("rivera-preloader-seen", "true");
-      } catch (e) {}
+      } catch {
+        // Ignore sessionStorage restrictions
+      }
       onComplete?.();
-    } else {
-      setVisible(true);
     }
   }, [minTimeElapsed, active, progress, alwaysShow, onComplete]);
 

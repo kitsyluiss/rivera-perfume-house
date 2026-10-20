@@ -2,12 +2,10 @@ import { useState, useEffect } from "react";
 
 export function useCountdown(endDateStr: string | null) {
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
-  const [isExpired, setIsExpired] = useState(false);
+  const [isExpired, setIsExpired] = useState(() => !endDateStr);
 
   useEffect(() => {
     if (!endDateStr) {
-      setTimeLeft(null);
-      setIsExpired(true);
       return;
     }
 

@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { paymentMethodSchema } from "./validations";
+import { logger } from "./logger";
 
 export interface PaymentMethod {
   id: string;
@@ -60,16 +62,33 @@ export async function addPaymentMethod(
   accountNumber: string,
   qrCodeUrl: string | null
 ) {
-  const { supabase } = await verifyAdmin();
-  const { error } = await supabase.from("payment_methods").insert({
-    provider_name: providerName.trim(),
-    account_name: accountName.trim(),
-    account_number: accountNumber.trim(),
+  const parsed = paymentMethodSchema.safeParse({
+    provider_name: providerName,
+    account_name: accountName,
+    account_number: accountNumber,
     qr_code_url: qrCodeUrl,
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message || "Invalid payment method parameters");
+  }
+
+  const { supabase, user } = await verifyAdmin();
+  const { error } = await supabase.from("payment_methods").insert({
+    provider_name: parsed.data.provider_name,
+    account_name: parsed.data.account_name,
+    account_number: parsed.data.account_number,
+    qr_code_url: parsed.data.qr_code_url ?? null,
     is_active: true,
   });
 
   if (error) throw new Error(error.message);
+
+  await logger.info("payment_method_added", {
+    provider: parsed.data.provider_name,
+    adminId: user.id,
+  });
+
   revalidatePath("/admin");
   revalidatePath("/checkout/success");
 }

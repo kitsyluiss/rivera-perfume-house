@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { getAvifUrl } from "./get-avif";
+import { addressSchema } from "./validations";
+import { logger } from "./logger";
 
 export async function getAddresses() {
   const supabase = await createClient();
@@ -20,20 +22,29 @@ export async function getAddresses() {
 }
 
 export async function saveAddress(formData: FormData) {
+  const rawInput = {
+    full_name: formData.get("full_name"),
+    phone: formData.get("phone"),
+    line1: formData.get("line1"),
+    line2: formData.get("line2") || null,
+    city: formData.get("city"),
+    province: formData.get("province"),
+    postal_code: formData.get("postal_code"),
+    is_default: formData.get("is_default") === "true",
+  };
+
+  const parsed = addressSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Invalid address details" };
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
   const address = {
     user_id: user.id,
-    full_name: String(formData.get("full_name") ?? ""),
-    phone: String(formData.get("phone") ?? ""),
-    line1: String(formData.get("line1") ?? ""),
-    line2: String(formData.get("line2") ?? ""),
-    city: String(formData.get("city") ?? ""),
-    province: String(formData.get("province") ?? ""),
-    postal_code: String(formData.get("postal_code") ?? ""),
-    is_default: formData.get("is_default") === "true",
+    ...parsed.data,
   };
 
   const { data, error } = await supabase
@@ -42,7 +53,12 @@ export async function saveAddress(formData: FormData) {
     .select()
     .single();
 
-  if (error) return { error: error.message };
+  if (error) {
+    await logger.error("address_save_db_error", { error: error.message, userId: user.id });
+    return { error: error.message };
+  }
+
+  await logger.info("address_saved", { userId: user.id, addressId: data.id });
   return { data };
 }
 
@@ -186,5 +202,6 @@ export async function createOrder(addressId: string | null) {
     .delete()
     .eq("user_id", user.id);
 
+  await logger.info("order_created", { orderId: order.id, userId: user.id, total, itemCount: cartItems.length });
   return { orderId: order.id };
 }

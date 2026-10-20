@@ -180,9 +180,7 @@ function CarouselRig({
   reducedMotion?: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
-  const targetRotation = useRef(0);
-  const randomInitialRotation = useMemo(() => Math.random() * Math.PI * 2, []);
-  const dragOffsetRef = useRef(randomInitialRotation);
+  const dragOffsetRef = useRef(Math.PI);
   const wasSelectedRef = useRef(false);
   
   const selectedIndex = selectedId ? perfumes.findIndex(p => p.id === selectedId) : -1;
@@ -193,15 +191,15 @@ function CarouselRig({
     if (!dragX) return;
     const unsub = dragX.on ? dragX.on("change", (v: number) => {
       if (!selectedId) {
-        dragOffsetRef.current = randomInitialRotation + (v / 1000) * Math.PI * 2;
+        dragOffsetRef.current = Math.PI + (v / 1000) * Math.PI * 2;
       }
     }) : dragX.onChange((v: number) => {
       if (!selectedId) {
-        dragOffsetRef.current = randomInitialRotation + (v / 1000) * Math.PI * 2;
+        dragOffsetRef.current = Math.PI + (v / 1000) * Math.PI * 2;
       }
     });
     return unsub;
-  }, [dragX, selectedId, randomInitialRotation]);
+  }, [dragX, selectedId]);
 
   useFrame((state, delta) => {
     if (groupRef.current) {
@@ -301,9 +299,6 @@ export default function ProductScene({
   isVisible?: boolean;
   reducedMotion?: boolean;
 }) {
-  // If no perfumes, render nothing
-  if (!perfumes || perfumes.length === 0) return null;
-
   // Responsive device profiling (mobile, tablet, low-power touch devices)
   const [isMobile, setIsMobile] = useState(false);
   const [isLowPower, setIsLowPower] = useState(false);
@@ -321,6 +316,9 @@ export default function ProductScene({
     window.addEventListener("resize", checkPerformanceProfile);
     return () => window.removeEventListener("resize", checkPerformanceProfile);
   }, []);
+
+  // If no perfumes, render nothing
+  if (!perfumes || perfumes.length === 0) return null;
 
   const radius = isMobile
     ? Math.max(2.8, perfumes.length * 0.48)

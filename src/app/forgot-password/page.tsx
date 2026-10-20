@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
                 Check Your Email
               </h2>
               <p className="text-muted-foreground mb-8 text-sm">
-                We've sent a password reset link to <strong>{email}</strong>. Please click the link to choose a new password.
+                We&apos;ve sent a password reset link to <strong>{email}</strong>. Please click the link to choose a new password.
               </p>
               <Link href="/login" className="w-full">
                 <Button className="w-full h-11 text-xs uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90">

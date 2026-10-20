@@ -4,6 +4,10 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
+
   // Immediately bypass middleware for search engine crawlers, static files, and sitemaps
   if (
     pathname === "/sitemap.xml" ||
@@ -12,10 +16,17 @@ export async function middleware(request: NextRequest) {
     pathname === "/llms-full.txt" ||
     pathname.startsWith("/perfumes/")
   ) {
-    return NextResponse.next();
+    const res = NextResponse.next({ request: { headers: requestHeaders } });
+    res.headers.set("x-request-id", requestId);
+    return res;
   }
 
-  let supabaseResponse = NextResponse.next({ request });
+  let supabaseResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+  supabaseResponse.headers.set("x-request-id", requestId);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,7 +38,12 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
+          supabaseResponse = NextResponse.next({
+            request: {
+              headers: requestHeaders,
+            },
+          });
+          supabaseResponse.headers.set("x-request-id", requestId);
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );

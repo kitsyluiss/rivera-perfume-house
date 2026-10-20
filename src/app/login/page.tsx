@@ -167,7 +167,7 @@ export default function LoginPage() {
           </CardContent>
           <div className="flex justify-center border-t border-border/50 bg-secondary/10 px-6 py-4">
             <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/signup" className="text-primary hover:underline font-medium transition-all">
                 Sign up
               </Link>

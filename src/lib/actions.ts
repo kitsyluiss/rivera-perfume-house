@@ -4,13 +4,39 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Perfume, Sale } from "@/lib/types";
 import { getAvifUrl } from "./get-avif";
+import { logger } from "./logger";
+import {
+  signInSchema,
+  signUpSchema,
+  passwordResetSchema,
+  updatePasswordSchema,
+  addPerfumeSchema,
+  updatePerfumeSchema,
+  flashSaleSchema,
+  bulkFlashSaleSchema,
+  recordSaleSchema,
+} from "./validations";
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
 
 export async function signIn(email: string, password: string) {
+  const parsed = signInSchema.safeParse({ email, password });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Invalid input" };
+  }
+
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: error.message };
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    await logger.warn("auth_sign_in_failed", { email: parsed.data.email, error: error.message });
+    return { error: error.message };
+  }
+
+  await logger.info("auth_sign_in_success", { userId: data.user?.id });
 
   // Create profile upon first login if it doesn't exist
   if (data.user) {
@@ -21,7 +47,7 @@ export async function signIn(email: string, password: string) {
       .single();
 
     if (!profile) {
-      const displayName = data.user.user_metadata?.display_name || email.split("@")[0];
+      const displayName = data.user.user_metadata?.display_name || parsed.data.email.split("@")[0];
       await supabase.from("profiles").upsert({
         id: data.user.id,
         display_name: displayName,
@@ -33,61 +59,81 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signUp(email: string, password: string, name: string, redirectUrl: string) {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return { error: "Invalid email format" };
+  const parsed = signUpSchema.safeParse({ email, password, name, redirectUrl });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Invalid input" };
   }
 
   const supabase = await createClient();
   const { error: signUpError, data } = await supabase.auth.signUp({
-    email,
-    password,
+    email: parsed.data.email,
+    password: parsed.data.password,
     options: {
       data: {
-        display_name: name.trim(),
+        display_name: parsed.data.name,
       },
-      emailRedirectTo: redirectUrl,
+      emailRedirectTo: parsed.data.redirectUrl,
     },
   });
-  if (signUpError) return { error: signUpError.message };
+
+  if (signUpError) {
+    await logger.warn("auth_sign_up_failed", { email: parsed.data.email, error: signUpError.message });
+    return { error: signUpError.message };
+  }
   
   if (data.user && data.user.identities && data.user.identities.length === 0) {
     return { error: "Email address already registered" };
   }
 
   if (data.session && data.user) {
-    // If email confirmation is disabled, the user is logged in immediately.
-    // We can insert their profile now since they have a valid session.
     await supabase.from("profiles").upsert({
       id: data.user.id,
-      display_name: name.trim(),
+      display_name: parsed.data.name,
       role: "customer",
     });
   }
 
+  await logger.info("auth_sign_up_success", { userId: data.user?.id });
   return { success: true };
 }
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  await logger.info("auth_sign_out");
 }
 
 export async function sendPasswordReset(email: string, redirectUrl: string) {
+  const parsed = passwordResetSchema.safeParse({ email, redirectUrl });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Invalid input" };
+  }
+
   const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: redirectUrl,
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: parsed.data.redirectUrl,
   });
-  if (error) return { error: error.message };
+  if (error) {
+    await logger.warn("auth_password_reset_failed", { email: parsed.data.email, error: error.message });
+    return { error: error.message };
+  }
+
+  await logger.info("auth_password_reset_sent", { email: parsed.data.email });
   return { success: true };
 }
 
 export async function updatePassword(password: string) {
+  const parsed = updatePasswordSchema.safeParse({ password });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Password must be at least 6 characters" };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({
-    password: password,
+    password: parsed.data.password,
   });
   if (error) return { error: error.message };
+  await logger.info("auth_password_updated");
   return { success: true };
 }
 
@@ -196,12 +242,21 @@ export async function addPerfume(formData: FormData) {
   if (!user) throw new Error("Unauthorized");
   await requireAdmin(supabase, user.id);
 
-  const brand = String(formData.get("brand") ?? "");
-  const scent_name = String(formData.get("scent_name") ?? "");
-  const tag = String(formData.get("tag") ?? formData.get("season") ?? "");
-  const quantity = Number(formData.get("quantity"));
-  const cost_price = Number(formData.get("cost_price"));
-  const target_sale_price = Number(formData.get("target_sale_price"));
+  const rawInput = {
+    brand: formData.get("brand"),
+    scent_name: formData.get("scent_name"),
+    season: formData.get("tag") ?? formData.get("season") ?? null,
+    quantity: formData.get("quantity"),
+    cost_price: formData.get("cost_price"),
+    target_sale_price: formData.get("target_sale_price"),
+  };
+
+  const parsed = addPerfumeSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Invalid perfume details" };
+  }
+
+  const { brand, scent_name, season, quantity, cost_price, target_sale_price } = parsed.data;
   const image = formData.get("image") as File | null;
 
   let image_url: string | null = null;
@@ -231,7 +286,7 @@ export async function addPerfume(formData: FormData) {
     user_id: user.id, // ← stamp owner
     brand,
     scent_name,
-    season: tag || null,
+    season: season || null,
     quantity,
     cost_price,
     target_sale_price,
@@ -239,9 +294,11 @@ export async function addPerfume(formData: FormData) {
   });
 
   if (error) {
-    console.error("[addPerfume] DB Error:", error);
+    await logger.error("perfume_add_db_error", { error: error.message, brand, scent_name });
     return { error: error.message };
   }
+
+  await logger.info("perfume_added", { brand, scent_name, quantity, adminId: user.id });
   revalidatePath("/");
   revalidatePath("/admin");
   return { success: true };
@@ -256,19 +313,11 @@ export async function updatePerfume(id: string, updates: Record<string, unknown>
   if (!user) throw new Error("Unauthorized");
   await requireAdmin(supabase, user.id);
 
-  const allowedFields = [
-    "brand",
-    "scent_name",
-    "season",
-    "quantity",
-    "cost_price",
-    "target_sale_price",
-    "image_url",
-  ];
-  const sanitizedUpdates: Record<string, unknown> = {};
-  for (const key of allowedFields) {
-    if (key in updates) sanitizedUpdates[key] = updates[key];
+  const parsed = updatePerfumeSchema.safeParse(updates);
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message || "Invalid perfume updates");
   }
+  const sanitizedUpdates: Record<string, unknown> = parsed.data;
 
   // 1. Fetch current perfume info to get brand & scent name
   const { data: perfume } = await supabase
@@ -304,6 +353,7 @@ export async function updatePerfume(id: string, updates: Record<string, unknown>
       .eq("scent_name", perfume.scent_name);
   }
 
+  await logger.info("perfume_updated", { perfumeId: id, adminId: user.id });
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/catalog");
@@ -362,6 +412,7 @@ export async function updatePerfumePhoto(id: string, image: File) {
 
   if (updateError) throw new Error(updateError.message);
 
+  await logger.info("perfume_photo_updated", { perfumeId: id, adminId: user.id });
   revalidatePath("/");
   revalidatePath("/admin");
 }
@@ -382,11 +433,24 @@ export async function deletePerfume(id: string, imageUrl?: string | null) {
 
   const { error } = await supabase.from("perfumes").delete().eq("id", id);
   if (error) throw new Error(error.message);
+
+  await logger.info("perfume_deleted", { perfumeId: id, adminId: user.id });
   revalidatePath("/");
   revalidatePath("/admin");
 }
 
 export async function setFlashSale(id: string, flashSalePrice: number | null, flashSaleEnd: string | null, flashSaleStock?: number | null, flashSaleName?: string | null) {
+  const parsed = flashSaleSchema.safeParse({
+    id,
+    flashSalePrice,
+    flashSaleEnd,
+    flashSaleStock,
+    flashSaleName,
+  });
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message || "Invalid flash sale parameters");
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -398,22 +462,23 @@ export async function setFlashSale(id: string, flashSalePrice: number | null, fl
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "admin") throw new Error("Unauthorized: Admins only");
 
-  const { data: perfume } = await supabase.from("perfumes").select("brand, scent_name").eq("id", id).single();
+  const { data: perfume } = await supabase.from("perfumes").select("brand, scent_name").eq("id", parsed.data.id).single();
   if (!perfume) throw new Error("Perfume not found");
 
   const { error } = await supabase
     .from("perfumes")
     .update({ 
-      flash_sale_price: flashSalePrice, 
-      flash_sale_end: flashSaleEnd,
-      flash_sale_stock: flashSaleStock ?? null,
-      flash_sale_name: flashSaleName ?? null
+      flash_sale_price: parsed.data.flashSalePrice, 
+      flash_sale_end: parsed.data.flashSaleEnd,
+      flash_sale_stock: parsed.data.flashSaleStock ?? null,
+      flash_sale_name: parsed.data.flashSaleName ?? null
     })
     .eq("brand", perfume.brand)
     .eq("scent_name", perfume.scent_name);
 
   if (error) throw new Error(error.message);
   
+  await logger.info("flash_sale_set", { perfumeId: id, price: parsed.data.flashSalePrice });
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/cart");
@@ -421,6 +486,16 @@ export async function setFlashSale(id: string, flashSalePrice: number | null, fl
 }
 
 export async function setBulkFlashSale(ids: string[], discountPercent: number, flashSaleEnd: string | null, flashSaleName?: string | null) {
+  const parsed = bulkFlashSaleSchema.safeParse({
+    ids,
+    discountPercent,
+    flashSaleEnd,
+    flashSaleName,
+  });
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message || "Invalid bulk flash sale parameters");
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
@@ -429,23 +504,24 @@ export async function setBulkFlashSale(ids: string[], discountPercent: number, f
   if (profile?.role !== "admin") throw new Error("Unauthorized: Admins only");
 
   // Fetch target perfumes to get their brands and scents
-  const { data: perfumes } = await supabase.from("perfumes").select("brand, scent_name, target_sale_price").in("id", ids);
+  const { data: perfumes } = await supabase.from("perfumes").select("brand, scent_name, target_sale_price").in("id", parsed.data.ids);
   if (!perfumes || perfumes.length === 0) return;
 
   // We want to apply the discount to ALL rows that match the selected brands + scent names
   for (const perfume of perfumes) {
-    const discountedPrice = Math.floor(perfume.target_sale_price * (1 - discountPercent / 100));
+    const discountedPrice = Math.floor(perfume.target_sale_price * (1 - parsed.data.discountPercent / 100));
     
     await supabase.from("perfumes").update({
       flash_sale_price: discountedPrice,
-      flash_sale_end: flashSaleEnd,
+      flash_sale_end: parsed.data.flashSaleEnd,
       flash_sale_stock: null, // Bulk doesn't set specific stock limits
-      flash_sale_name: flashSaleName ?? null
+      flash_sale_name: parsed.data.flashSaleName ?? null
     })
     .eq("brand", perfume.brand)
     .eq("scent_name", perfume.scent_name);
   }
 
+  await logger.info("bulk_flash_sale_set", { count: perfumes.length, discountPercent: parsed.data.discountPercent });
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/cart");
@@ -455,6 +531,21 @@ export async function setBulkFlashSale(ids: string[], discountPercent: number, f
 // ─── Sales ────────────────────────────────────────────────────────────────────
 
 export async function recordSale(formData: FormData) {
+  const rawInput = {
+    perfume_id: formData.get("perfume_id"),
+    quantity_sold: formData.get("quantity_sold"),
+    unit_price: formData.get("unit_price"),
+    customer_name: formData.get("customer_name") || null,
+    notes: formData.get("notes") || null,
+  };
+
+  const parsed = recordSaleSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message || "Invalid sale details");
+  }
+
+  const { perfume_id, quantity_sold, unit_price, customer_name, notes } = parsed.data;
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -462,16 +553,6 @@ export async function recordSale(formData: FormData) {
 
   if (!user) throw new Error("Unauthorized");
   await requireAdmin(supabase, user.id);
-
-  const perfume_id = String(formData.get("perfume_id") ?? "");
-  const quantity_sold = Number(formData.get("quantity_sold"));
-  const unit_price = Number(formData.get("unit_price"));
-  const customer_name = String(formData.get("customer_name") ?? "") || null;
-  const notes = String(formData.get("notes") ?? "") || null;
-
-  if (!perfume_id || !quantity_sold || !unit_price) {
-    throw new Error("Missing required fields");
-  }
 
   // Fetch current perfume to get cost and check stock
   const { data: perfume, error: fetchError } = await supabase
@@ -507,6 +588,7 @@ export async function recordSale(formData: FormData) {
 
   if (updateError) throw new Error(updateError.message);
 
+  await logger.info("sale_recorded", { perfume_id, quantity_sold, unit_price, adminId: user.id });
   revalidatePath("/");
   revalidatePath("/admin");
 }
