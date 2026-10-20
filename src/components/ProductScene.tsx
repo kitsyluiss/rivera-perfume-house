@@ -368,9 +368,8 @@ export default function ProductScene({
           isMobile={isMobile}
           reducedMotion={reducedMotion}
         />
+        <Environment files="/hdri/potsdamer_platz_1k.hdr" />
       </Suspense>
-      
-      <Environment preset="city" />
       
       {/* Ground plane for shadows - frames={1} bakes once on mount, saving 60 shadow render passes/sec */}
       <ContactShadows 

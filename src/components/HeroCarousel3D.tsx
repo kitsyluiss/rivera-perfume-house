@@ -1,10 +1,29 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Component, useEffect, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Perfume } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { motion, useMotionValue, useTransform } from "motion/react";
+
+class SceneErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.warn("HeroCarousel3D caught an error in ProductScene:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null;
+    }
+    return this.props.children;
+  }
+}
 
 const ProductScene = dynamic(() => import("./ProductScene"), {
   ssr: false,
@@ -80,15 +99,17 @@ export default function HeroCarousel3D({
         className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing touch-pan-y"
       >
         <motion.div style={{ x: inverseX }} className="w-full h-full relative z-0">
-          <ProductScene 
-            perfumes={perfumes} 
-            onSelect={onSelect} 
-            selectedPerfume={selectedPerfume}
-            dragX={dragX}
-            selectionSource={selectionSource}
-            isVisible={isVisible}
-            reducedMotion={reducedMotion}
-          />
+          <SceneErrorBoundary>
+            <ProductScene 
+              perfumes={perfumes} 
+              onSelect={onSelect} 
+              selectedPerfume={selectedPerfume}
+              dragX={dragX}
+              selectionSource={selectionSource}
+              isVisible={isVisible}
+              reducedMotion={reducedMotion}
+            />
+          </SceneErrorBoundary>
         </motion.div>
       </motion.div>
 

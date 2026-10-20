@@ -23,8 +23,9 @@ const nextConfig: NextConfig = {
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' blob: data: https://*.supabase.co https://rivera.perfumehouse.workers.dev",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cloudflareinsights.com",
+      "img-src 'self' blob: data: https://*.supabase.co https://rivera.perfumehouse.workers.dev https://raw.githubusercontent.com https://cdn.jsdelivr.net",
+      "connect-src 'self' blob: data: https://*.supabase.co wss://*.supabase.co https://cloudflareinsights.com https://raw.githubusercontent.com https://cdn.jsdelivr.net https://raw.githack.com https://market-assets.fra1.cdn.digitaloceanspaces.com https://dl.polyhaven.org",
+      "worker-src 'self' blob:",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -33,6 +34,15 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/perfumes/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/hdri/:path*",
         headers: [
           {
             key: "Cache-Control",
