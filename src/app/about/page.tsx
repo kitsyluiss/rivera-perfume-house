@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShieldCheck, Users, Truck, ArrowRight, CheckCircle2, Sparkles, BadgeCheck, AlertCircle } from "lucide-react";
+import { ShieldCheck, Users, Truck, ArrowRight, CheckCircle2, Sparkles, BadgeCheck } from "lucide-react";
 import AboutWholesaleDossier from "@/components/AboutWholesaleDossier";
 
 function InstagramIcon({ className = "h-5 w-5" }: { className?: string }) {
@@ -151,21 +151,21 @@ export default function AboutUsPage() {
         {/* Dedicated Wholesale & Reseller Partnership Protocol */}
         <AboutWholesaleDossier />
 
-        {/* Official Brand Identity & Entity Disambiguation Section */}
-        <section className="my-20 border border-primary/20 bg-gradient-to-b from-primary/5 via-black/40 to-black/80 rounded-3xl p-8 sm:p-12 text-left relative overflow-hidden">
+        {/* Official Channels Section — Luxury, Positive & Confident */}
+        <section className="my-20 border border-white/10 bg-gradient-to-b from-white/[0.04] via-black/40 to-black/80 rounded-3xl p-8 sm:p-12 text-left relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 max-w-3xl space-y-8">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] mb-4">
                 <BadgeCheck className="h-3.5 w-3.5" />
-                <span>Verified Independent Identity</span>
+                <span>Direct Connection</span>
               </div>
               <h2 className="font-display text-2xl sm:text-4xl text-white font-light tracking-wide leading-tight mb-3">
-                Official Brand Identity &amp; Verification
+                Connect With Our House
               </h2>
               <p className="text-xs sm:text-sm text-white/70 font-body leading-relaxed">
-                To guarantee complete transparency and protect our customers from confusion with other businesses sharing the Rivera name, please verify our official digital channels below.
+                Follow our official social channels for live fragrance arrivals, decant menus, bottle lookbooks, and direct customer care from our family.
               </p>
             </div>
 
@@ -206,25 +206,6 @@ export default function AboutUsPage() {
                 </div>
                 <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
               </a>
-            </div>
-
-            {/* Disambiguation & Authenticity Callout */}
-            <div className="rounded-2xl border border-white/10 bg-black/60 p-6 space-y-3">
-              <div className="flex items-center gap-2 text-primary font-mono text-xs uppercase tracking-wider">
-                <AlertCircle className="h-4 w-4 text-primary shrink-0" />
-                <span>Entity Independence &amp; Product Scope</span>
-              </div>
-              <div className="space-y-2 text-xs sm:text-sm text-white/75 font-body leading-relaxed">
-                <p>
-                  <strong className="text-white">Independent Family House:</strong> Rivera Fragrance House operates exclusively from <strong className="text-white">Malabon, Metro Manila, Philippines</strong>. We are a dedicated importer and retailer of 100% factory-sealed original Middle Eastern and international perfumes.
-                </p>
-                <p>
-                  <strong className="text-white">100% Factory-Sealed Bottles Only (No Decants):</strong> We distribute solely original, unopened manufacturer boxes with cellophane and verifiable batch codes. We do not sell decants, testers, split bottles, or rebottled fragrance oils.
-                </p>
-                <p>
-                  <strong className="text-white">Non-Affiliation Notice:</strong> Rivera Fragrance House is completely independent and has <strong className="text-white">no affiliation, partnership, endorsement, or connection</strong> with perfumer Adrian Rivera / Rivera Parfums (@riveraparfums), actress Marian Rivera, or other entities bearing the Rivera surname.
-                </p>
-              </div>
             </div>
           </div>
         </section>

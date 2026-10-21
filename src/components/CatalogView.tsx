@@ -547,7 +547,7 @@ export default function CatalogView({
           </a>
         </div>
         <p className="text-[10px] text-white/40 max-w-xl mx-auto px-4">
-          Independent family-run perfume store in Malabon, Metro Manila. 100% factory-sealed original bottles with verified batch codes (no decants). Unaffiliated with Adrian Rivera / Rivera Parfums or other Rivera namesakes.
+          Rivera Fragrance House &mdash; Independent family perfumery based in Malabon, Metro Manila. 100% authentic full bottles &amp; verified decants.
         </p>
       </motion.footer>
 

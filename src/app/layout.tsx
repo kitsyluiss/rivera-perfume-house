@@ -118,9 +118,9 @@ const jsonLd = {
       },
       "image": `${siteUrl}/icon-192.png`,
       "description":
-        "Independent family-run perfume store and direct importer in Malabon, Metro Manila, Philippines. Exclusively distributing 100% authentic, factory-sealed Middle Eastern and designer perfumes with verified manufacturer batch codes.",
+        "Independent family-run perfume house and direct importer in Malabon, Metro Manila, Philippines. Distributing 100% authentic Middle Eastern and designer perfumes — factory-sealed full presentation bottles and verified genuine decants with manufacturer batch codes.",
       "disambiguatingDescription":
-        "Rivera Fragrance House is an independent family-run perfume retailer and direct importer based in Malabon, Metro Manila, Philippines (Official Instagram: @riverafragrancehouse._07; Facebook: @riverafraghouse). Rivera Fragrance House is strictly independent and is NOT affiliated, associated, authorized, endorsed by, or in any way officially connected with perfumer Adrian Rivera, Rivera Parfums (@riveraparfums), actress Marian Rivera, Beautéderm Reverie, or any decant operations. Rivera Fragrance House exclusively distributes 100% original, factory-sealed full presentation bottles with verifiable batch codes.",
+        "Rivera Fragrance House is an independent family-run perfume retailer and direct importer based in Malabon, Metro Manila, Philippines (Official Instagram: @riverafragrancehouse._07; Facebook: @riverafraghouse). Rivera Fragrance House is strictly independent and is NOT affiliated, associated, authorized, endorsed by, or in any way officially connected with perfumer Adrian Rivera, Rivera Parfums (@riveraparfums), actress Marian Rivera, or Beautéderm Reverie. Rivera Fragrance House distributes 100% original, factory-sealed full presentation bottles as well as verified genuine decants with verifiable manufacturer batch codes.",
       "sameAs": [
         "https://www.instagram.com/riverafragrancehouse._07/",
         "https://www.facebook.com/riverafraghouse",
@@ -139,7 +139,7 @@ const jsonLd = {
         "Khadlaj",
         "Zimaya"
       ],
-      "slogan": "100% Authentic Factory-Sealed Middle Eastern & Designer Fragrances",
+      "slogan": "100% Authentic Middle Eastern & Designer Fragrances — Full Bottles & Verified Decants",
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "customer support & orders",
@@ -162,9 +162,9 @@ const jsonLd = {
       "alternateName": "Rivera Fragrance House Philippines",
       "url": siteUrl,
       "description":
-        "100% genuine factory-sealed perfumes with verified batch codes. Retail single bottles and reseller orders in Metro Manila and nationwide. Official Instagram: @riverafragrancehouse._07.",
+        "100% genuine Middle Eastern and designer perfumes with verified batch codes. Factory-sealed full bottles and verified authentic decants. Retail single orders, decants, and reseller bundles in Metro Manila and nationwide. Official Instagram: @riverafragrancehouse._07.",
       "disambiguatingDescription":
-        "Independent fragrance shop operating exclusively from Malabon, Metro Manila. Specializes in 100% original factory-sealed retail and wholesale bottles. Unaffiliated with Adrian Rivera, Rivera Parfums, Marian Rivera, or decant businesses.",
+        "Independent fragrance shop operating exclusively from Malabon, Metro Manila. Specializes in 100% original factory-sealed retail and wholesale bottles as well as verified genuine decants. Unaffiliated with Adrian Rivera, Rivera Parfums, or Marian Rivera.",
       "sameAs": [
         "https://www.instagram.com/riverafragrancehouse._07/",
         "https://www.facebook.com/riverafraghouse"

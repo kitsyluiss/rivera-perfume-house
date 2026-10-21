@@ -500,10 +500,7 @@ export default function NarrativeScroll() {
               <h3 className="font-display text-lg text-[#e1b854] tracking-widest uppercase">Our Family Guarantee</h3>
               <div className="flex flex-col gap-2 font-body text-xs text-white/70 leading-relaxed">
                 <p>We are an independent, local family dedicated to bringing authentic perfumes at honest prices.</p>
-                <p>Every bottle is 100% genuine with real batch codes in factory-sealed boxes. No imitations, no decants, and no fake promises.</p>
-                <p className="text-[11px] text-white/40 border-t border-white/5 pt-2">
-                  Independent house based in Malabon, Metro Manila. Unaffiliated with Adrian Rivera / Rivera Parfums or other Rivera namesakes.
-                </p>
+                <p>Every full bottle and verified decant is 100% genuine with real manufacturer batch codes. Zero counterfeits, zero watered-down oils, and honest care.</p>
               </div>
             </div>
 
