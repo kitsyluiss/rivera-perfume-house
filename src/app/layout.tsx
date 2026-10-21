@@ -90,6 +90,11 @@ export const metadata: Metadata = {
       process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
       "fh0ukwnjRFruexaFFvbWGpAwUk5XZXa32_MCH8Uur-c",
   },
+  other: {
+    "instagram:site": "@riverafragrancehouse._07",
+    "instagram:creator": "@riverafragrancehouse._07",
+    "facebook:page": "riverafraghouse",
+  },
 };
 
 const jsonLd = {
@@ -99,6 +104,11 @@ const jsonLd = {
       "@type": "Organization",
       "@id": `${siteUrl}/#organization`,
       "name": "Rivera Fragrance House",
+      "alternateName": [
+        "Rivera Fragrance House Philippines",
+        "Rivera Fragrance House Malabon",
+        "Rivera Fragrance House (@riverafragrancehouse._07)",
+      ],
       "url": siteUrl,
       "logo": {
         "@type": "ImageObject",
@@ -108,21 +118,57 @@ const jsonLd = {
       },
       "image": `${siteUrl}/icon-192.png`,
       "description":
-        "Curated authentic Middle Eastern and designer perfumes at honest direct prices in the Philippines.",
+        "Independent family-run perfume store and direct importer in Malabon, Metro Manila, Philippines. Exclusively distributing 100% authentic, factory-sealed Middle Eastern and designer perfumes with verified manufacturer batch codes.",
+      "disambiguatingDescription":
+        "Rivera Fragrance House is an independent family-run perfume retailer and direct importer based in Malabon, Metro Manila, Philippines (Official Instagram: @riverafragrancehouse._07; Facebook: @riverafraghouse). Rivera Fragrance House is strictly independent and is NOT affiliated, associated, authorized, endorsed by, or in any way officially connected with perfumer Adrian Rivera, Rivera Parfums (@riveraparfums), actress Marian Rivera, Beautéderm Reverie, or any decant operations. Rivera Fragrance House exclusively distributes 100% original, factory-sealed full presentation bottles with verifiable batch codes.",
+      "sameAs": [
+        "https://www.instagram.com/riverafragrancehouse._07/",
+        "https://www.facebook.com/riverafraghouse",
+        "https://rivera.perfumehouse.workers.dev"
+      ],
+      "knowsAbout": [
+        "Authentic Middle Eastern Perfumes",
+        "Factory Sealed Fragrances",
+        "Rasasi",
+        "Armaf",
+        "Fragrance World",
+        "French Avenue",
+        "Rayhaan",
+        "Afnan",
+        "Lattafa",
+        "Khadlaj",
+        "Zimaya"
+      ],
+      "slogan": "100% Authentic Factory-Sealed Middle Eastern & Designer Fragrances",
       "contactPoint": {
         "@type": "ContactPoint",
-        "contactType": "customer support",
+        "contactType": "customer support & orders",
+        "telephone": "+63-961-592-9770",
+        "email": "orders@riverafragrance.com",
         "areaServed": "PH",
         "availableLanguage": ["en", "fil"],
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Malabon",
+        "addressRegion": "Metro Manila",
+        "addressCountry": "PH",
       },
     },
     {
       "@type": "Store",
       "@id": `${siteUrl}/#store`,
       "name": "Rivera Fragrance House",
+      "alternateName": "Rivera Fragrance House Philippines",
       "url": siteUrl,
       "description":
-        "100% genuine sealed perfumes with verified batch codes. Retail single bottles and wholesale supplier in Metro Manila.",
+        "100% genuine factory-sealed perfumes with verified batch codes. Retail single bottles and reseller orders in Metro Manila and nationwide. Official Instagram: @riverafragrancehouse._07.",
+      "disambiguatingDescription":
+        "Independent fragrance shop operating exclusively from Malabon, Metro Manila. Specializes in 100% original factory-sealed retail and wholesale bottles. Unaffiliated with Adrian Rivera, Rivera Parfums, Marian Rivera, or decant businesses.",
+      "sameAs": [
+        "https://www.instagram.com/riverafragrancehouse._07/",
+        "https://www.facebook.com/riverafraghouse"
+      ],
       "image": `${siteUrl}/perfumes/hawas_black.png`,
       "priceRange": "₱1,200 - ₱4,500",
       "currenciesAccepted": "PHP",

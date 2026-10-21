@@ -1,7 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShieldCheck, Users, Truck, ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { ShieldCheck, Users, Truck, ArrowRight, CheckCircle2, Sparkles, BadgeCheck, AlertCircle } from "lucide-react";
 import AboutWholesaleDossier from "@/components/AboutWholesaleDossier";
+
+function InstagramIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+    </svg>
+  );
+}
+
+function FacebookIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.914 1.455 5.518 3.735 7.172V22l3.418-1.875c.915.253 1.884.39 2.847.39 5.523 0 10-4.145 10-9.257C22 6.145 17.523 2 12 2zm1.002 12.445l-2.56-2.73-4.996 2.73 5.496-5.834 2.62 2.73 4.936-2.73-5.496 5.834z"/>
+    </svg>
+  );
+}
 
 export const metadata: Metadata = {
   title: "About Us & Our Family Guarantee | Rivera Fragrance House",
@@ -134,6 +150,84 @@ export default function AboutUsPage() {
 
         {/* Dedicated Wholesale & Reseller Partnership Protocol */}
         <AboutWholesaleDossier />
+
+        {/* Official Brand Identity & Entity Disambiguation Section */}
+        <section className="my-20 border border-primary/20 bg-gradient-to-b from-primary/5 via-black/40 to-black/80 rounded-3xl p-8 sm:p-12 text-left relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 max-w-3xl space-y-8">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] mb-4">
+                <BadgeCheck className="h-3.5 w-3.5" />
+                <span>Verified Independent Identity</span>
+              </div>
+              <h2 className="font-display text-2xl sm:text-4xl text-white font-light tracking-wide leading-tight mb-3">
+                Official Brand Identity &amp; Verification
+              </h2>
+              <p className="text-xs sm:text-sm text-white/70 font-body leading-relaxed">
+                To guarantee complete transparency and protect our customers from confusion with other businesses sharing the Rivera name, please verify our official digital channels below.
+              </p>
+            </div>
+
+            {/* Official Channels Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <a
+                href="https://www.instagram.com/riverafragrancehouse._07/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center justify-between p-4 rounded-2xl border border-white/10 bg-white/5 hover:border-primary/50 hover:bg-primary/10 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-rose-500 text-white shadow-lg">
+                    <InstagramIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-white/50 block">Official Instagram</span>
+                    <span className="font-display text-sm text-white group-hover:text-primary transition-colors">@riverafragrancehouse._07</span>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+              </a>
+
+              <a
+                href="https://www.facebook.com/riverafraghouse"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center justify-between p-4 rounded-2xl border border-white/10 bg-white/5 hover:border-primary/50 hover:bg-primary/10 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1877F2] text-white shadow-lg">
+                    <FacebookIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-white/50 block">Official Facebook</span>
+                    <span className="font-display text-sm text-white group-hover:text-primary transition-colors">@riverafraghouse</span>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+              </a>
+            </div>
+
+            {/* Disambiguation & Authenticity Callout */}
+            <div className="rounded-2xl border border-white/10 bg-black/60 p-6 space-y-3">
+              <div className="flex items-center gap-2 text-primary font-mono text-xs uppercase tracking-wider">
+                <AlertCircle className="h-4 w-4 text-primary shrink-0" />
+                <span>Entity Independence &amp; Product Scope</span>
+              </div>
+              <div className="space-y-2 text-xs sm:text-sm text-white/75 font-body leading-relaxed">
+                <p>
+                  <strong className="text-white">Independent Family House:</strong> Rivera Fragrance House operates exclusively from <strong className="text-white">Malabon, Metro Manila, Philippines</strong>. We are a dedicated importer and retailer of 100% factory-sealed original Middle Eastern and international perfumes.
+                </p>
+                <p>
+                  <strong className="text-white">100% Factory-Sealed Bottles Only (No Decants):</strong> We distribute solely original, unopened manufacturer boxes with cellophane and verifiable batch codes. We do not sell decants, testers, split bottles, or rebottled fragrance oils.
+                </p>
+                <p>
+                  <strong className="text-white">Non-Affiliation Notice:</strong> Rivera Fragrance House is completely independent and has <strong className="text-white">no affiliation, partnership, endorsement, or connection</strong> with perfumer Adrian Rivera / Rivera Parfums (@riveraparfums), actress Marian Rivera, or other entities bearing the Rivera surname.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Navigation CTAs */}
         <div className="mt-16 text-center border-t border-white/10 pt-12 flex flex-col sm:flex-row items-center justify-center gap-4">

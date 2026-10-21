@@ -522,10 +522,32 @@ export default function CatalogView({
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8 }}
-        className="border-t border-border py-10 text-center"
+        className="border-t border-border py-12 text-center space-y-3"
       >
         <p className="font-body text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-          Rivera Fragrance House &mdash; Fine Fragrances
+          Rivera Fragrance House &mdash; Authentic Perfumes Philippines
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-muted-foreground">
+          <a
+            href="https://www.instagram.com/riverafragrancehouse._07/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-primary transition-colors"
+          >
+            Instagram: @riverafragrancehouse._07
+          </a>
+          <span>•</span>
+          <a
+            href="https://www.facebook.com/riverafraghouse"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-primary transition-colors"
+          >
+            Facebook: @riverafraghouse
+          </a>
+        </div>
+        <p className="text-[10px] text-white/40 max-w-xl mx-auto px-4">
+          Independent family-run perfume store in Malabon, Metro Manila. 100% factory-sealed original bottles with verified batch codes (no decants). Unaffiliated with Adrian Rivera / Rivera Parfums or other Rivera namesakes.
         </p>
       </motion.footer>
 

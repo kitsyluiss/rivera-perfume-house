@@ -125,6 +125,11 @@ export default async function Home({
             "seller": {
               "@type": "Organization",
               "name": "Rivera Fragrance House",
+              "url": siteUrl,
+              "sameAs": [
+                "https://www.instagram.com/riverafragrancehouse._07/",
+                "https://www.facebook.com/riverafraghouse"
+              ],
             },
           },
         },
