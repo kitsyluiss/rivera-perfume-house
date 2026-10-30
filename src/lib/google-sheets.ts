@@ -323,10 +323,19 @@ export async function syncToGoogleSheetsViaOAuth(
   existingSpreadsheetId?: string
 ): Promise<GoogleSheetsSyncResult> {
   const payload = prepareGoogleSheetsPayload(ledger);
-  const sheetNames = ["Executive_Summary", "Brand_Allocation", "Restock_Forecast", "Top_Profit_Makers"];
+  const sheetNames = [
+    "Cover_and_Audit",
+    "Executive_Summary",
+    "Income_Statement",
+    "Balance_Sheet",
+    "Brand_Allocation",
+    "Restock_Forecast",
+    "Top_Profit_Makers",
+    "Inventory_Valuation",
+  ];
   let spreadsheetId = existingSpreadsheetId?.trim();
 
-  // 1. If no existing spreadsheet, create a new one with the 4 tabs
+  // 1. If no existing spreadsheet, create a new one with all 8 tabs
   if (!spreadsheetId) {
     const createRes = await fetch("https://sheets.googleapis.com/v4/spreadsheets", {
       method: "POST",
@@ -381,7 +390,7 @@ export async function syncToGoogleSheetsViaOAuth(
     }
   }
 
-  // 2. Clear old contents on all 4 tabs
+  // 2. Clear old contents on all 8 tabs
   await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchClear`, {
     method: "POST",
     headers: {
@@ -389,11 +398,11 @@ export async function syncToGoogleSheetsViaOAuth(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      ranges: sheetNames.map((name) => `${name}!A1:Z200`),
+      ranges: sheetNames.map((name) => `${name}!A1:Z500`),
     }),
   });
 
-  // 3. Write data to all 4 tabs in a single batchUpdate
+  // 3. Write data to all 8 tabs in a single batchUpdate
   const batchWriteRes = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`,
     {
@@ -406,8 +415,20 @@ export async function syncToGoogleSheetsViaOAuth(
         valueInputOption: "USER_ENTERED",
         data: [
           {
+            range: "Cover_and_Audit!A1",
+            values: payload.sheets.Cover_and_Audit,
+          },
+          {
             range: "Executive_Summary!A1",
             values: payload.sheets.Executive_Summary,
+          },
+          {
+            range: "Income_Statement!A1",
+            values: payload.sheets.Income_Statement,
+          },
+          {
+            range: "Balance_Sheet!A1",
+            values: payload.sheets.Balance_Sheet,
           },
           {
             range: "Brand_Allocation!A1",
@@ -420,6 +441,10 @@ export async function syncToGoogleSheetsViaOAuth(
           {
             range: "Top_Profit_Makers!A1",
             values: payload.sheets.Top_Profit_Makers,
+          },
+          {
+            range: "Inventory_Valuation!A1",
+            values: payload.sheets.Inventory_Valuation,
           },
         ],
       }),
@@ -469,7 +494,16 @@ export async function syncToGoogleSheetsWebhook(
     success: true,
     message: data?.message || "Successfully synchronized financial ledgers to Google Sheet.",
     syncedAt: new Date().toISOString(),
-    sheetsUpdated: ["Executive_Summary", "Brand_Allocation", "Restock_Forecast", "Top_Profit_Makers"],
+    sheetsUpdated: [
+      "Cover_and_Audit",
+      "Executive_Summary",
+      "Income_Statement",
+      "Balance_Sheet",
+      "Brand_Allocation",
+      "Restock_Forecast",
+      "Top_Profit_Makers",
+      "Inventory_Valuation",
+    ],
   };
 }
 
@@ -488,17 +522,29 @@ function doPost(e) {
     var data = JSON.parse(raw);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    // 1. Update Executive_Summary
+    // 1. Update Cover_and_Audit
+    updateSheet(ss, "Cover_and_Audit", data.sheets.Cover_and_Audit, false);
+
+    // 2. Update Executive_Summary
     updateSheet(ss, "Executive_Summary", data.sheets.Executive_Summary, true);
 
-    // 2. Update Brand_Allocation
+    // 3. Update Income_Statement
+    updateSheet(ss, "Income_Statement", data.sheets.Income_Statement, false);
+
+    // 4. Update Balance_Sheet
+    updateSheet(ss, "Balance_Sheet", data.sheets.Balance_Sheet, false);
+
+    // 5. Update Brand_Allocation
     updateSheet(ss, "Brand_Allocation", data.sheets.Brand_Allocation, false);
 
-    // 3. Update Restock_Forecast
+    // 6. Update Restock_Forecast
     updateSheet(ss, "Restock_Forecast", data.sheets.Restock_Forecast, false);
 
-    // 4. Update Top_Profit_Makers
+    // 7. Update Top_Profit_Makers
     updateSheet(ss, "Top_Profit_Makers", data.sheets.Top_Profit_Makers, false);
+
+    // 8. Update Inventory_Valuation (Complete Physical Stock & Cost)
+    updateSheet(ss, "Inventory_Valuation", data.sheets.Inventory_Valuation, false);
 
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",

@@ -345,7 +345,7 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
         setLastSyncedAt(timestamp);
       } catch {}
 
-      toast.success("Google Sheets synchronized! 4 tabs updated with live financial records.");
+      toast.success("Google Sheets synchronized! 8 tabs updated with live financial records.");
     } catch (err: any) {
       toast.error(err?.message || "Sync failed. Please verify the Webhook URL.");
     } finally {
@@ -1442,6 +1442,11 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                         name: "Tab 7: Top_Profit_Makers",
                         formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=top_sellers")',
                         id: "top_sellers",
+                      },
+                      {
+                        name: "Tab 8: Inventory_Valuation (Physical Stock & Cost)",
+                        formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=inventory")',
+                        id: "inventory",
                       },
                     ].map((feed) => (
                       <div

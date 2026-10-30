@@ -46,6 +46,8 @@ export async function GET(req: Request) {
       rows = payload.sheets.Restock_Forecast;
     } else if (tab === "top_sellers" || tab === "top_profit_makers") {
       rows = payload.sheets.Top_Profit_Makers;
+    } else if (tab === "inventory" || tab === "inventory_valuation" || tab === "stock") {
+      rows = payload.sheets.Inventory_Valuation;
     } else {
       rows = payload.sheets.Executive_Summary;
     }
