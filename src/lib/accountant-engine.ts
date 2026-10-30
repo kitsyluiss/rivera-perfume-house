@@ -355,12 +355,13 @@ export function buildAccountantSystemPrompt(ledger: FinancialLedger): string {
 
   return `You are the Chief Financial Officer (CFO) and Senior Accountant for Rivera Fragrance House, a boutique perfumery and direct fragrance importer located in Malabon, Metro Manila, Philippines.
 
-### CRITICAL ANTI-HALLUCINATION RULES:
-1. All financial numbers provided below are PRE-COMPUTED AND EXACT from the live PostgreSQL database.
+### CRITICAL ANTI-HALLUCINATION & STYLE RULES:
+1. All financial numbers provided below are PRE-COMPUTED AND EXACT from the live database.
 2. You MUST NEVER fabricate, guess, or modify these figures. Quote these numbers verbatim.
 3. Currency is strictly Philippine Peso (PHP, ₱).
-4. Use clean Markdown tables, crisp bullet points, and authoritative, respectful executive tone.
+4. Use clean Markdown tables, crisp bullet points, and an authoritative executive tone.
 5. Provide actionable managerial commentary (cash flow safety, margin health, reorder priorities).
+6. STRICT ZERO-EMOJI POLICY: DO NOT include emojis or pictograms anywhere in your output. Maintain a refined, luxury agency-grade corporate aesthetic.
 
 ### LIVE FINANCIAL BALANCE SHEET (VERIFIED AS OF ${new Date(ledger.timestamp).toLocaleString("en-PH")}):
 - **Inventory Capital Invested (Asset at Cost)**: ${php(ledger.inventory.costValue)} (${ledger.inventory.totalUnits} physical bottles across ${ledger.inventory.totalSKUs} SKUs)
@@ -403,7 +404,8 @@ Whenever asked for a P&L, stock audit, restock forecast, or receivables check, f
 export async function queryGeminiAccountant(
   userPrompt: string,
   systemPrompt: string,
-  apiKey: string
+  apiKey: string,
+  history?: Array<{ sender: "user" | "assistant"; text: string }>
 ): Promise<{ text: string; modelUsed: string }> {
   // Ordered fallback models
   const candidateModels = [
@@ -413,6 +415,24 @@ export async function queryGeminiAccountant(
   ];
 
   let lastError: Error | null = null;
+
+  // Build conversational contents array
+  const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
+
+  if (history && history.length > 0) {
+    for (const item of history.slice(-6)) {
+      if (item.sender === "assistant" && item.text.includes("Executive Financial Controller")) continue;
+      contents.push({
+        role: item.sender === "user" ? "user" : "model",
+        parts: [{ text: item.text }],
+      });
+    }
+  }
+
+  contents.push({
+    role: "user",
+    parts: [{ text: userPrompt }],
+  });
 
   for (const model of candidateModels) {
     try {
@@ -426,12 +446,7 @@ export async function queryGeminiAccountant(
           systemInstruction: {
             parts: [{ text: systemPrompt }],
           },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: userPrompt }],
-            },
-          ],
+          contents,
           generationConfig: {
             temperature: 0.2, // Low temperature for accounting precision
             maxOutputTokens: 2048,
@@ -477,7 +492,7 @@ export function generateDeterministicAudit(
   const php = (n: number) => `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   if (queryType === "pnl") {
-    return `### 📊 Executive Financial Statement — Rivera Fragrance House
+    return `### Executive Financial Statement — Rivera Fragrance House
 **Period:** Current Month & Historical Total  
 **Audit Timestamp:** ${new Date(ledger.timestamp).toLocaleString("en-PH")}  
 **Currency:** Philippine Peso (PHP, ₱)
@@ -516,7 +531,7 @@ export function generateDeterministicAudit(
       )
       .join("\n");
 
-    return `### 📦 Inventory Valuation & Restock Capital Forecast
+    return `### Inventory Valuation & Restock Capital Forecast
 **Audit Timestamp:** ${new Date(ledger.timestamp).toLocaleString("en-PH")}  
 **Warehouse Location:** Malabon, Metro Manila  
 **Currency:** Philippine Peso (PHP, ₱)
@@ -550,7 +565,7 @@ Ensure that fast-moving Middle Eastern staples (Rasasi Hawas, French Avenue Liqu
   }
 
   if (queryType === "receivables") {
-    return `### 💵 Payment Reconciliation & Receivables Audit
+    return `### Payment Reconciliation & Receivables Audit
 **Audit Timestamp:** ${new Date(ledger.timestamp).toLocaleString("en-PH")}  
 **Currency:** Philippine Peso (PHP, ₱)
 
@@ -572,7 +587,7 @@ Ensure that fast-moving Middle Eastern staples (Rasasi Hawas, French Avenue Liqu
   }
 
   // General audit
-  return `### 🏛️ Executive Ledger Overview — Rivera Fragrance House
+  return `### Executive Ledger Overview — Rivera Fragrance House
 **Audit Timestamp:** ${new Date(ledger.timestamp).toLocaleString("en-PH")}  
 **Currency:** Philippine Peso (PHP, ₱)
 

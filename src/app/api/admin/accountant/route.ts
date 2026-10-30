@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { prompt, apiKey: clientApiKey, action = "chat", queryType } = body;
+    const { prompt, apiKey: clientApiKey, action = "chat", queryType, history } = body;
 
     // Fetch live inventory, sales, and orders
     const [perfumesRes, salesRes, ordersRes] = await Promise.all([
@@ -66,7 +66,12 @@ export async function POST(req: Request) {
     }
 
     // Determine API Key priority: Client provided > Process ENV
-    const effectiveApiKey = clientApiKey || process.env.GEMINI_API_KEY;
+    const effectiveApiKey =
+      clientApiKey && typeof clientApiKey === "string" && clientApiKey.trim() !== ""
+        ? clientApiKey.trim()
+        : process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim() !== ""
+        ? process.env.GEMINI_API_KEY.trim()
+        : undefined;
 
     // If no prompt provided, default to executive overview
     const userPrompt =
@@ -79,7 +84,12 @@ export async function POST(req: Request) {
     if (effectiveApiKey && effectiveApiKey.trim() !== "") {
       try {
         const systemPrompt = buildAccountantSystemPrompt(ledger);
-        const aiResponse = await queryGeminiAccountant(userPrompt, systemPrompt, effectiveApiKey.trim());
+        const aiResponse = await queryGeminiAccountant(
+          userPrompt,
+          systemPrompt,
+          effectiveApiKey.trim(),
+          history
+        );
         reply = aiResponse.text;
         modelUsed = aiResponse.modelUsed;
       } catch (aiErr: any) {

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Calculator,
   DollarSign,
@@ -13,12 +15,18 @@ import {
   Key,
   CheckCircle2,
   RefreshCw,
-  Sparkles,
-  Bot,
   User,
-  HelpCircle,
+  Building2,
   X,
+  FileText,
+  AlertCircle,
+  Receipt,
+  Layers,
+  Award,
   FileSpreadsheet,
+  Copy,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,17 +63,17 @@ export default function AccountantAssistant({
     {
       id: "initial",
       sender: "assistant",
-      text: `### 🏛️ Good day. I am your Executive AI Accountant & Financial Controller.
+      text: `### Executive Financial Controller & Accountant
 
-I monitor your live inventory valuation, calculate exact profit and loss margins, reconcile pending customer receivables, and track your restock capital requirements.
+Live inventory valuation, exact profit and loss margins, pending customer receivables, and restock capital requirements.
 
-**Live Financial Snapshot:**
+**Live Financial Balance Sheet:**
 - **Inventory Capital Invested (At Cost):** **${formatPhp(ledger.inventory.costValue)}** (${ledger.inventory.totalUnits} bottles)
 - **Target Retail Potential:** **${formatPhp(ledger.inventory.retailValue)}** (**${ledger.inventory.projectedMarginPct}%** projected margin)
 - **Realized Gross Profit:** **${formatPhp(ledger.sales.totalGrossProfit)}** (**${ledger.sales.grossMarginPct}%** realized margin)
 - **Pending Receivables:** **${formatPhp(ledger.orders.pendingReceivables)}** across ${ledger.orders.pendingCount} unverified orders
 
-*Click any quick audit action below or ask me any question about your bookkeeping, tax journals, margins, or reorder budget.*`,
+*Select any audit action below or enter a question regarding bookkeeping, P&L statements, margins, or reorder budgets.*`,
       timestamp: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" }),
       modelUsed: "gemini-2.5-flash-lite",
     },
@@ -74,6 +82,12 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
   const [loading, setLoading] = useState(false);
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [customApiKey, setCustomApiKey] = useState("");
+  const [sheetsModalOpen, setSheetsModalOpen] = useState(false);
+  const [sheetsWebhookUrl, setSheetsWebhookUrl] = useState("");
+  const [sheetsSyncing, setSheetsSyncing] = useState(false);
+  const [sheetsCopied, setSheetsCopied] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const [appsScriptCode, setAppsScriptCode] = useState<string>("");
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // Recalculate local ledger when props change
@@ -82,15 +96,35 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
     setLedger(updated);
   }, [perfumes, sales, orders]);
 
-  // Load custom key from localStorage if present
+  // Load custom key & Google Sheets settings from localStorage
   useEffect(() => {
     try {
       const savedKey = localStorage.getItem("rivera_gemini_api_key");
       if (savedKey) setCustomApiKey(savedKey);
+      const savedWebhook = localStorage.getItem("rivera_sheets_webhook_url");
+      if (savedWebhook) setSheetsWebhookUrl(savedWebhook);
+      const savedSync = localStorage.getItem("rivera_sheets_last_synced");
+      if (savedSync) setLastSyncedAt(savedSync);
     } catch {
       // Ignore localStorage access errors
     }
   }, []);
+
+  // Fetch the Google Apps Script template code
+  const loadAppsScriptCode = useCallback(async () => {
+    if (appsScriptCode) return;
+    try {
+      const res = await fetch("/api/admin/accountant/sheets-sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "get_script" }),
+      });
+      const data = await res.json();
+      if (data?.script) setAppsScriptCode(data.script);
+    } catch (err) {
+      console.error("Failed to load Apps Script template", err);
+    }
+  }, [appsScriptCode]);
 
   // Auto scroll to bottom of chat
   useEffect(() => {
@@ -107,6 +141,48 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
     } catch {
       toast.error("Failed to save API key to local storage.");
     }
+  };
+
+  const handleSyncGoogleSheets = async () => {
+    if (!sheetsWebhookUrl.trim()) {
+      toast.error("Please enter your Google Apps Script Webhook URL.");
+      return;
+    }
+
+    setSheetsSyncing(true);
+    try {
+      const res = await fetch("/api/admin/accountant/sheets-sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ webhookUrl: sheetsWebhookUrl.trim(), action: "sync" }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Failed to sync to Google Sheets");
+      }
+
+      try {
+        localStorage.setItem("rivera_sheets_webhook_url", sheetsWebhookUrl.trim());
+        const timestamp = new Date().toLocaleString("en-PH");
+        localStorage.setItem("rivera_sheets_last_synced", timestamp);
+        setLastSyncedAt(timestamp);
+      } catch {}
+
+      toast.success("Google Sheets synchronized! 4 tabs updated with live financial records.");
+    } catch (err: any) {
+      toast.error(err?.message || "Sync failed. Please verify the Webhook URL.");
+    } finally {
+      setSheetsSyncing(false);
+    }
+  };
+
+  const handleCopyScript = () => {
+    if (!appsScriptCode) return;
+    navigator.clipboard.writeText(appsScriptCode);
+    setSheetsCopied(true);
+    toast.success("Apps Script code copied to clipboard!");
+    setTimeout(() => setSheetsCopied(false), 2500);
   };
 
   const handleSendMessage = async (promptText: string, queryType?: string) => {
@@ -133,6 +209,7 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
           apiKey: customApiKey.trim() || undefined,
           action: "chat",
           queryType,
+          history: messages.map((m) => ({ sender: m.sender, text: m.text })),
         }),
       });
 
@@ -163,7 +240,7 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
         {
           id: `error-${Date.now()}`,
           sender: "assistant",
-          text: `⚠️ **Audit Alert**: We encountered an issue connecting to the AI model (${err?.message}). Your database values are safe. Please check your internet connection or verify your Gemini API key in settings.`,
+          text: `**Audit Alert**: We encountered an issue connecting to the AI model (${err?.message}). Database values remain intact. Please verify network connectivity or check your Gemini API key in settings.`,
           timestamp: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
@@ -289,6 +366,19 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
           <Button
             variant="outline"
             size="sm"
+            onClick={() => {
+              setSheetsModalOpen(true);
+              loadAppsScriptCode();
+            }}
+            className="h-8 gap-1.5 text-xs font-mono uppercase tracking-wider border-white/10 hover:border-emerald-500/40 bg-white/5 text-emerald-300"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="hidden sm:inline">Google Sheets</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setApiKeyModalOpen(true)}
             className="h-8 gap-1.5 text-xs font-mono uppercase tracking-wider border-white/10 hover:border-[#e1b854]/40 bg-white/5 text-white/80"
           >
@@ -397,11 +487,11 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
         </div>
       </div>
 
-      {/* ── 2. One-Touch Quick Audit Action Pills ──────────────────────────── */}
+      {/* ── 2. One-Touch Quick Audit Action Pills (No Emojis) ─────────────── */}
       <div className="space-y-2">
         <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
-          <Sparkles className="h-3 w-3 text-[#e1b854]" />
-          Instant Executive Audits
+          <FileText className="h-3 w-3 text-[#e1b854]" />
+          Executive Financial Audits
         </span>
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -414,9 +504,10 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
                 "pnl"
               )
             }
-            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-[#e1b854]/40 hover:bg-[#e1b854]/10 transition-all font-body text-white/90"
+            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-[#e1b854]/40 hover:bg-[#e1b854]/10 transition-all font-body text-white/90 gap-1.5"
           >
-            📊 Monthly P&amp;L Statement
+            <FileText className="h-3 w-3 text-[#e1b854]" />
+            <span>Monthly P&amp;L Statement</span>
           </Button>
 
           <Button
@@ -429,9 +520,10 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
                 "restock"
               )
             }
-            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-amber-500/40 hover:bg-amber-500/10 transition-all font-body text-white/90"
+            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-amber-500/40 hover:bg-amber-500/10 transition-all font-body text-white/90 gap-1.5"
           >
-            ⚠️ Restock Capital Forecast
+            <AlertCircle className="h-3 w-3 text-amber-400" />
+            <span>Restock Capital Forecast</span>
           </Button>
 
           <Button
@@ -444,9 +536,10 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
                 "receivables"
               )
             }
-            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-emerald-500/40 hover:bg-emerald-500/10 transition-all font-body text-white/90"
+            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-emerald-500/40 hover:bg-emerald-500/10 transition-all font-body text-white/90 gap-1.5"
           >
-            💵 Reconcile Receivables
+            <Receipt className="h-3 w-3 text-emerald-400" />
+            <span>Reconcile Receivables</span>
           </Button>
 
           <Button
@@ -459,9 +552,10 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
                 "inventory"
               )
             }
-            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-primary/40 hover:bg-primary/10 transition-all font-body text-white/90"
+            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-primary/40 hover:bg-primary/10 transition-all font-body text-white/90 gap-1.5"
           >
-            🏷️ Brand Capital Allocation
+            <Layers className="h-3 w-3 text-primary" />
+            <span>Brand Capital Allocation</span>
           </Button>
 
           <Button
@@ -474,9 +568,10 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
                 "pnl"
               )
             }
-            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-rose-400/40 hover:bg-rose-400/10 transition-all font-body text-white/90"
+            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-rose-400/40 hover:bg-rose-400/10 transition-all font-body text-white/90 gap-1.5"
           >
-            🏆 Top Margin Champions
+            <Award className="h-3 w-3 text-rose-400" />
+            <span>Top Margin Champions</span>
           </Button>
         </div>
       </div>
@@ -503,7 +598,7 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
                     : "bg-white/5 text-[#e1b854] border-white/10"
                 }`}
               >
-                {msg.sender === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                {msg.sender === "user" ? <User className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
               </div>
 
               {/* Message body */}
@@ -515,8 +610,10 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
                 }`}
               >
                 {/* Header tag */}
-                <div className="flex items-center justify-between gap-4 mb-2 pb-1 border-b border-white/5 text-[10px] font-mono text-muted-foreground">
-                  <span>{msg.sender === "user" ? "You (Admin)" : "Senior Accountant (AI)"}</span>
+                <div className="flex items-center justify-between gap-4 mb-2.5 pb-1.5 border-b border-white/5 text-[10px] font-mono text-muted-foreground">
+                  <span className="font-medium text-white/70">
+                    {msg.sender === "user" ? "You (Admin)" : "Senior Accountant"}
+                  </span>
                   <div className="flex items-center gap-2">
                     {msg.modelUsed && (
                       <span className="rounded bg-white/5 px-1.5 py-0.5 text-[9px] text-[#e1b854] border border-[#e1b854]/20">
@@ -527,9 +624,100 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
                   </div>
                 </div>
 
-                {/* Render formatted message content */}
-                <div className="prose prose-invert prose-xs sm:prose-sm max-w-none space-y-2 [&_h3]:font-display [&_h3]:text-base [&_h3]:text-[#e1b854] [&_h4]:font-display [&_h4]:text-sm [&_h4]:text-white [&_table]:w-full [&_table]:border [&_table]:border-white/10 [&_table]:rounded-lg [&_table]:overflow-hidden [&_th]:bg-white/10 [&_th]:text-[#e1b854] [&_th]:p-2.5 [&_th]:font-mono [&_th]:text-[11px] [&_td]:p-2 [&_td]:border-t [&_td]:border-white/5 [&_td]:font-body [&_strong]:text-white">
-                  <div className="whitespace-pre-wrap">{msg.text}</div>
+                {/* Render fully formatted Markdown with GFM tables and custom luxury styling */}
+                <div className="prose prose-invert prose-xs sm:prose-sm max-w-none text-xs sm:text-sm font-body leading-relaxed">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({ children }) => (
+                        <h1 className="font-display text-lg font-light text-white mt-4 mb-2 tracking-wide border-b border-white/5 pb-1">
+                          {children}
+                        </h1>
+                      ),
+                      h2: ({ children }) => (
+                        <h2 className="font-display text-base font-light text-white mt-3.5 mb-2 tracking-wide">
+                          {children}
+                        </h2>
+                      ),
+                      h3: ({ children }) => (
+                        <h3 className="font-display text-sm font-medium text-[#e1b854] mt-3 mb-1.5 tracking-wide">
+                          {children}
+                        </h3>
+                      ),
+                      h4: ({ children }) => (
+                        <h4 className="font-display text-xs font-semibold text-white/90 mt-2.5 mb-1 tracking-wider uppercase">
+                          {children}
+                        </h4>
+                      ),
+                      p: ({ children }) => (
+                        <p className="mb-2 leading-relaxed text-white/85 last:mb-0">
+                          {children}
+                        </p>
+                      ),
+                      strong: ({ children }) => (
+                        <strong className="font-semibold text-white">
+                          {children}
+                        </strong>
+                      ),
+                      em: ({ children }) => (
+                        <em className="italic text-white/70">
+                          {children}
+                        </em>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="my-2.5 space-y-1 list-disc list-inside text-white/80 marker:text-[#e1b854]">
+                          {children}
+                        </ul>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="my-2.5 space-y-1 list-decimal list-inside text-white/80 marker:text-[#e1b854]">
+                          {children}
+                        </ol>
+                      ),
+                      li: ({ children }) => (
+                        <li className="leading-relaxed">
+                          {children}
+                        </li>
+                      ),
+                      hr: () => (
+                        <hr className="my-3 border-white/10" />
+                      ),
+                      blockquote: ({ children }) => (
+                        <blockquote className="border-l-2 border-[#e1b854]/60 pl-3 my-2 text-white/70 italic text-xs">
+                          {children}
+                        </blockquote>
+                      ),
+                      table: ({ children }) => (
+                        <div className="overflow-x-auto my-3 rounded-xl border border-white/10 bg-black/40 shadow-inner">
+                          <table className="w-full text-left border-collapse text-xs font-mono">
+                            {children}
+                          </table>
+                        </div>
+                      ),
+                      thead: ({ children }) => (
+                        <thead className="bg-white/5 text-[#e1b854] uppercase tracking-wider text-[10px] border-b border-white/10">
+                          {children}
+                        </thead>
+                      ),
+                      th: ({ children }) => (
+                        <th className="p-2.5 font-medium whitespace-nowrap">
+                          {children}
+                        </th>
+                      ),
+                      td: ({ children }) => (
+                        <td className="p-2.5 border-t border-white/5 tabular-nums text-white/85">
+                          {children}
+                        </td>
+                      ),
+                      code: ({ children }) => (
+                        <code className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-mono text-[#e1b854]">
+                          {children}
+                        </code>
+                      ),
+                    }}
+                  >
+                    {msg.text}
+                  </ReactMarkdown>
                 </div>
               </div>
             </motion.div>
@@ -543,7 +731,7 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
               className="flex items-start gap-3"
             >
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/5 text-[#e1b854] border border-white/10">
-                <Bot className="h-4 w-4 animate-pulse" />
+                <Building2 className="h-4 w-4 animate-pulse" />
               </div>
               <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-4 text-xs font-mono text-muted-foreground flex items-center gap-3">
                 <RefreshCw className="h-3.5 w-3.5 animate-spin text-[#e1b854]" />
@@ -579,7 +767,7 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
             </Button>
           </form>
           <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground px-2 font-mono">
-            <span>Powered by Google Gemini 100% Free Tier &amp; Deterministic CPA Math</span>
+            <span>Powered by Google Gemini Free Tier &amp; Deterministic CPA Math</span>
             <span>Zero Arithmetic Hallucinations</span>
           </div>
         </div>
@@ -656,6 +844,176 @@ I monitor your live inventory valuation, calculate exact profit and loss margins
                     Save Key
                   </Button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 5. Google Sheets Sync Modal ────────────────────────────────────── */}
+      <AnimatePresence>
+        {sheetsModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-card p-6 shadow-2xl relative"
+            >
+              <button
+                type="button"
+                onClick={() => setSheetsModalOpen(false)}
+                className="absolute top-4 right-4 rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                  <FileSpreadsheet className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-display text-lg text-foreground">Google Sheets Synchronization</h3>
+                  <span className="text-[10px] font-mono uppercase text-emerald-400">
+                    Live 4-Tab Ledger Sync &bull; 100% Free
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground font-body leading-relaxed mb-4">
+                Automatically formats and populates 4 tabs in your Google Sheet: <strong className="text-white">Executive_Summary</strong>, <strong className="text-white">Brand_Allocation</strong>, <strong className="text-white">Restock_Forecast</strong>, and <strong className="text-white">Top_Profit_Makers</strong> with Rivera styling.
+              </p>
+
+              {/* Sync Action Card */}
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3 mb-5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                    Google Apps Script Webhook URL
+                  </label>
+                  {lastSyncedAt && (
+                    <span className="text-[10px] font-mono text-emerald-400">
+                      Last synced: {lastSyncedAt}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="url"
+                    value={sheetsWebhookUrl}
+                    onChange={(e) => setSheetsWebhookUrl(e.target.value)}
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    className="flex-1 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-xs text-foreground font-mono focus:outline-none focus:border-emerald-400 placeholder:text-muted-foreground/60"
+                  />
+                  <Button
+                    size="sm"
+                    disabled={sheetsSyncing || !sheetsWebhookUrl.trim()}
+                    onClick={handleSyncGoogleSheets}
+                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs h-10 px-4 shrink-0 gap-1.5"
+                  >
+                    {sheetsSyncing ? (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                        <span>Syncing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5" />
+                        <span>Sync to Sheet</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Step-by-Step Setup Guide */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#e1b854] flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                    2-Minute Setup Instructions (Zero API Console Required)
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopyScript}
+                    className="h-7 text-xs font-mono text-[#e1b854] hover:bg-[#e1b854]/10 gap-1"
+                  >
+                    {sheetsCopied ? (
+                      <>
+                        <Check className="h-3 w-3 text-emerald-400" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" />
+                        <span>Copy Script</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <ol className="text-xs text-muted-foreground font-body space-y-2.5 list-decimal list-inside leading-relaxed">
+                  <li>
+                    Open or create a blank spreadsheet on{" "}
+                    <a
+                      href="https://sheets.new"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#e1b854] underline inline-flex items-center gap-1"
+                    >
+                      Google Sheets (sheets.new)
+                      <ExternalLink className="h-3 w-3 inline" />
+                    </a>
+                  </li>
+                  <li>
+                    In Google Sheets, click menu <strong className="text-white">Extensions &gt; Apps Script</strong>.
+                  </li>
+                  <li>
+                    Replace the placeholder code in <code className="text-[#e1b854]">Code.gs</code> with our prepared script (click <strong>Copy Script</strong> above).
+                  </li>
+                  <li>
+                    Click <strong className="text-white">Deploy &gt; New deployment</strong>:
+                    <ul className="list-disc list-inside ml-4 mt-1 space-y-1 text-[11px]">
+                      <li>Select type: <strong className="text-white">Web app</strong></li>
+                      <li>Description: <strong className="text-white">Rivera Fragrance Sync</strong></li>
+                      <li>Execute as: <strong className="text-white">Me (your google email)</strong></li>
+                      <li>Who has access: <strong className="text-white">Anyone</strong></li>
+                    </ul>
+                  </li>
+                  <li>
+                    Click <strong className="text-white">Deploy</strong>, grant permission, copy the <strong className="text-white">Web app URL</strong>, and paste it into the box above!
+                  </li>
+                </ol>
+
+                {/* Google Cloud API Clarification Box */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-[11px] text-muted-foreground font-body space-y-1.5">
+                  <div className="text-white font-medium flex items-center gap-1.5">
+                    <Key className="h-3.5 w-3.5 text-[#e1b854]" />
+                    <span>Which Google APIs Are Needed?</span>
+                  </div>
+                  <p>
+                    <strong className="text-emerald-400">Google Apps Script Webhook (Recommended):</strong> Requires <strong>ZERO Google Cloud Console APIs</strong>, zero billing account, and zero GCP IAM keys. It runs natively inside Google Sheets 100% free.
+                  </p>
+                  <p>
+                    <strong className="text-white">Direct GCP Service Account (Alternative):</strong> If you prefer server-to-server OAuth instead of Apps Script, enable:
+                  </p>
+                  <ul className="list-disc list-inside ml-2 text-[10px] space-y-0.5 font-mono text-white/80">
+                    <li>1. <span className="text-[#e1b854]">Google Sheets API v4</span> (<code className="text-emerald-400">sheets.googleapis.com</code>)</li>
+                    <li>2. <span className="text-[#e1b854]">Google Drive API v3</span> (<code className="text-emerald-400">drive.googleapis.com</code>)</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/10 mt-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSheetsModalOpen(false)}
+                  className="text-xs"
+                >
+                  Close
+                </Button>
               </div>
             </motion.div>
           </div>
