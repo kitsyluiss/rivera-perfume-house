@@ -147,7 +147,7 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
     a.download = `Rivera_Fragrance_House_Ledger_${new Date().toISOString().split("T")[0]}.xls`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Downloaded 7-tab institutional workbook! Drag into Google Drive to open directly in Google Sheets.");
+    toast.success("Downloaded 8-tab institutional workbook! Drag into Google Drive to open directly in Google Sheets.");
   };
 
   const handleCopyTabTsv = async (
@@ -158,7 +158,8 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
       | "Balance_Sheet"
       | "Brand_Allocation"
       | "Restock_Forecast"
-      | "Top_Profit_Makers",
+      | "Top_Profit_Makers"
+      | "Inventory_Valuation",
     title: string
   ) => {
     try {
@@ -740,8 +741,24 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
             disabled={loading}
             onClick={() =>
               handleSendMessage(
+                "Audit our complete warehouse physical inventory: list all 29 catalog SKUs, verified physical bottles, unit costs, target retail prices, and inventory asset valuation totals.",
+                "inventory"
+              )
+            }
+            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-emerald-400/40 hover:bg-emerald-400/10 transition-all font-body text-white/90 gap-1.5"
+          >
+            <Package className="h-3 w-3 text-emerald-400" />
+            <span>Physical Inventory Valuation</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            onClick={() =>
+              handleSendMessage(
                 "Execute an immediate forensic accounting audit: check for negative margin sales, verify zero-loss double-entry balance, inspect unverified receivables aging, and flag inventory shrinkage risks.",
-                "general"
+                "forensic"
               )
             }
             className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-amber-500/40 hover:bg-amber-500/10 transition-all font-body text-white/90 gap-1.5"
@@ -757,7 +774,7 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
             onClick={() =>
               handleSendMessage(
                 "Provide an official BIR-compliant internal store receipt format for our customer orders, complete with 12% VAT separation, global invoice numbering (RFH-INV-XXXXX), and mandatory non-affiliation disclaimer.",
-                "general"
+                "receipt"
               )
             }
             className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-cyan-400/40 hover:bg-cyan-400/10 transition-all font-body text-white/90 gap-1.5"
@@ -805,7 +822,7 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
             onClick={() =>
               handleSendMessage(
                 "Break down our inventory capital allocation across all fragrance houses (Rasasi, French Avenue, Armaf, Lattafa, etc.). Where is our capital most heavily concentrated?",
-                "inventory"
+                "brands"
               )
             }
             className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-primary/40 hover:bg-primary/10 transition-all font-body text-white/90 gap-1.5"
@@ -821,7 +838,7 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
             onClick={() =>
               handleSendMessage(
                 "Rank our top profit-generating fragrances by total realized peso profit and profit margin percentage. Which perfumes are our highest margin champions?",
-                "pnl"
+                "champions"
               )
             }
             className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-rose-400/40 hover:bg-rose-400/10 transition-all font-body text-white/90 gap-1.5"
@@ -1324,7 +1341,7 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                       <button
                         type="button"
                         onClick={() => handleCopyTabTsv("Top_Profit_Makers", "Top Margin Champions")}
-                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white sm:col-span-2"
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
                       >
                         <div>
                           <div className="font-medium text-white/95">Tab 7: Top Profit Makers &amp; Champions</div>
@@ -1336,15 +1353,33 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                           <Copy className="h-4 w-4 text-[#e1b854] shrink-0" />
                         )}
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyTabTsv("Inventory_Valuation", "Physical Inventory Valuation (All SKUs)")}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-emerald-400/60 hover:bg-emerald-400/10 transition-all text-left text-xs font-body text-white"
+                      >
+                        <div>
+                          <div className="font-medium text-white/95">Tab 8: Physical Inventory Valuation</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">
+                            {ledger.inventory.totalSKUs} SKUs &bull; {ledger.inventory.totalUnits} bottles &bull; Cost: {formatPhp(ledger.inventory.costValue)}
+                          </div>
+                        </div>
+                        {copiedTab === "Inventory_Valuation" ? (
+                          <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-emerald-400 shrink-0" />
+                        )}
+                      </button>
                     </div>
                   </div>
 
-                  {/* Option B: Download Full 7-Tab Spreadsheet */}
+                  {/* Option B: Download Full 8-Tab Spreadsheet */}
                   <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div>
                       <div className="font-medium text-xs text-white">Download Multi-Tab Formatted Institutional Workbook (.xls)</div>
                       <p className="text-[11px] text-muted-foreground font-body mt-0.5">
-                        Contains all 7 tabs pre-formatted with Rivera luxury gold styling and accounting double-underlines. Drag into Google Drive to open directly in Google Sheets.
+                        Contains all 8 tabs pre-formatted with Rivera luxury gold styling and accounting double-underlines. Drag into Google Drive to open directly in Google Sheets.
                       </p>
                     </div>
                     <Button
@@ -1353,7 +1388,7 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                       className="bg-white/10 hover:bg-white text-white hover:text-black font-semibold text-xs h-10 px-4 shrink-0 gap-1.5 transition-all"
                     >
                       <Download className="h-4 w-4 text-[#e1b854]" />
-                      <span>Download 7-Tab Workbook</span>
+                      <span>Download 8-Tab Workbook</span>
                     </Button>
                   </div>
                 </div>

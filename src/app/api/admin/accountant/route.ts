@@ -78,9 +78,82 @@ export async function POST(req: Request) {
       prompt ||
       "Please give me a complete executive financial audit and review for Rivera Fragrance House.";
 
-    let reply = "";
-    let modelUsed = "deterministic-engine";
+    const lowerPrompt = userPrompt.toLowerCase();
 
+    // Determine if query is an executive directive
+    const isExecutiveDirective =
+      queryType &&
+      [
+        "pnl",
+        "inventory",
+        "receivables",
+        "restock",
+        "brands",
+        "champions",
+        "forensic",
+        "receipt",
+      ].includes(queryType);
+
+    // Intent detection for standard reports requested via chat
+    const detectedReportType =
+      isExecutiveDirective
+        ? (queryType as any)
+        : lowerPrompt.includes("inventory valuation") ||
+          lowerPrompt.includes("inventory breakdown") ||
+          lowerPrompt.includes("inventory list") ||
+          lowerPrompt.includes("show all inventory") ||
+          lowerPrompt.includes("what perfumes do we have") ||
+          lowerPrompt.includes("all perfumes") ||
+          lowerPrompt.includes("catalog list") ||
+          lowerPrompt.includes("stock breakdown")
+        ? "inventory"
+        : lowerPrompt.includes("brand capital") ||
+          lowerPrompt.includes("brand allocation") ||
+          lowerPrompt.includes("break down our inventory capital allocation")
+        ? "brands"
+        : lowerPrompt.includes("top margin") ||
+          lowerPrompt.includes("margin champions") ||
+          lowerPrompt.includes("top sellers") ||
+          lowerPrompt.includes("top profit")
+        ? "champions"
+        : lowerPrompt.includes("multi-step") ||
+          lowerPrompt.includes("income statement") ||
+          lowerPrompt.includes("p&l")
+        ? "pnl"
+        : lowerPrompt.includes("forensic") ||
+          lowerPrompt.includes("anomalies") ||
+          lowerPrompt.includes("audit anomalies")
+        ? "forensic"
+        : lowerPrompt.includes("bir store receipt") ||
+          lowerPrompt.includes("store receipt format") ||
+          lowerPrompt.includes("sample receipt")
+        ? "receipt"
+        : lowerPrompt.includes("restock forecast") ||
+          lowerPrompt.includes("reorder budget") ||
+          lowerPrompt.includes("low-stock fragrances") ||
+          lowerPrompt.includes("wholesale replenishment")
+        ? "restock"
+        : lowerPrompt.includes("reconcile receivables") ||
+          lowerPrompt.includes("pending customer orders") ||
+          lowerPrompt.includes("accounts receivable")
+        ? "receivables"
+        : null;
+
+    let reply = "";
+    let modelUsed = "deterministic-cpa-engine";
+
+    // If an executive report was requested directly via directive pill or explicit prompt intent
+    if (detectedReportType) {
+      reply = generateDeterministicAudit(detectedReportType, ledger);
+      return NextResponse.json({
+        success: true,
+        reply,
+        modelUsed: "deterministic-cpa-engine",
+        ledger,
+      });
+    }
+
+    // For free-form conversational queries, query Gemini with full grounded catalog
     if (effectiveApiKey && effectiveApiKey.trim() !== "") {
       try {
         const systemPrompt = buildAccountantSystemPrompt(ledger);
@@ -94,32 +167,12 @@ export async function POST(req: Request) {
         modelUsed = aiResponse.modelUsed;
       } catch (aiErr: any) {
         console.warn("Gemini API call failed, falling back to deterministic CPA engine:", aiErr?.message);
-        // Fallback to deterministic audit
-        const fallbackType =
-          queryType ||
-          (userPrompt.toLowerCase().includes("p&l") || userPrompt.toLowerCase().includes("profit")
-            ? "pnl"
-            : userPrompt.toLowerCase().includes("reorder") || userPrompt.toLowerCase().includes("stock")
-            ? "restock"
-            : userPrompt.toLowerCase().includes("receivable") || userPrompt.toLowerCase().includes("order")
-            ? "receivables"
-            : "general");
-        reply = generateDeterministicAudit(fallbackType, ledger);
+        reply = generateDeterministicAudit("general", ledger);
         modelUsed = `deterministic-fallback (${aiErr?.message || "API busy"})`;
       }
     } else {
-      // Deterministic generation
-      const fallbackType =
-        queryType ||
-        (userPrompt.toLowerCase().includes("p&l") || userPrompt.toLowerCase().includes("profit")
-          ? "pnl"
-          : userPrompt.toLowerCase().includes("reorder") || userPrompt.toLowerCase().includes("stock")
-          ? "restock"
-          : userPrompt.toLowerCase().includes("receivable") || userPrompt.toLowerCase().includes("order")
-          ? "receivables"
-          : "general");
-      reply = generateDeterministicAudit(fallbackType, ledger);
-      modelUsed = "deterministic-engine";
+      reply = generateDeterministicAudit("general", ledger);
+      modelUsed = "deterministic-cpa-engine";
     }
 
     return NextResponse.json({

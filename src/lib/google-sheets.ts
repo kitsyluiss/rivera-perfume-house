@@ -163,6 +163,23 @@ export function prepareGoogleSheetsPayload(ledger: FinancialLedger) {
     ]),
   ];
 
+  // Tab 8: Complete Physical Inventory Valuation
+  const inventoryRows = [
+    ["Brand", "Scent Name", "Physical Stock", "Unit Cost (PHP)", "Total Cost (PHP)", "Target Retail (PHP)", "Total Retail (PHP)", "Projected Margin %", "Stock Status"],
+    ...(ledger.inventory.allItems || []).map((i) => [
+      i.brand,
+      i.scent_name,
+      i.quantity,
+      i.cost_price,
+      i.totalCost,
+      i.target_sale_price,
+      i.totalRetail,
+      `${i.marginPct}%`,
+      i.status,
+    ]),
+    ["TOTAL", `${ledger.inventory.totalSKUs} SKUs`, ledger.inventory.totalUnits, "", ledger.inventory.costValue, "", ledger.inventory.retailValue, `${ledger.inventory.projectedMarginPct}%`, "VERIFIED"],
+  ];
+
   return {
     timestamp: ledger.timestamp,
     sheets: {
@@ -173,6 +190,7 @@ export function prepareGoogleSheetsPayload(ledger: FinancialLedger) {
       Brand_Allocation: brandRows,
       Restock_Forecast: restockRows,
       Top_Profit_Makers: topSellerRows,
+      Inventory_Valuation: inventoryRows,
     },
   };
 }
@@ -703,6 +721,11 @@ export function generateSpreadsheetXml(ledger: FinancialLedger): string {
  <Worksheet ss:Name="Top_Profit_Makers">
   <Table>
    ${renderTable(payload.sheets.Top_Profit_Makers)}
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Inventory_Valuation">
+  <Table>
+   ${renderTable(payload.sheets.Inventory_Valuation)}
   </Table>
  </Worksheet>
 </Workbook>`;
