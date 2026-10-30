@@ -214,7 +214,8 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
   };
 
   const handleOAuthConnect = () => {
-    window.location.href = "/api/admin/accountant/sheets-oauth/authorize";
+    const originParam = encodeURIComponent(window.location.origin);
+    window.location.href = `/api/admin/accountant/sheets-oauth/authorize?origin=${originParam}`;
   };
 
   const handleOAuthDisconnect = async () => {
@@ -1156,9 +1157,14 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                     <div className="space-y-2 text-xs font-body text-muted-foreground leading-relaxed">
                       {/* Redirect URIs */}
                       <div>
-                        <span className="text-white/90 font-medium block mb-1">
-                          1. Add Authorized Redirect URI (in your OAuth client dialog):
-                        </span>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-white/90 font-medium">
+                            1. Add Authorized Redirect URI in Google Cloud Console:
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mb-2">
+                          Google requires an exact match. If you saw <code className="text-rose-400">Error 400: redirect_uri_mismatch</code>, click your Client ID in Google Cloud Console, add the URI below under <strong>Authorized redirect URIs</strong>, and click <strong>Save</strong>.
+                        </p>
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/40 border border-white/10 font-mono text-[10px] text-[#e1b854]">
                             <span className="truncate">https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-oauth/callback</span>
@@ -1203,9 +1209,9 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                           <span>Important: Add Test Users in OAuth Consent Screen</span>
                         </div>
                         <p>
-                          As noted in your screenshot, Google restricts access to <strong>Test users</strong>. You must go to{" "}
+                          Google restricts testing apps to registered <strong>Test users</strong>. Go to{" "}
                           <strong className="text-white">Google Cloud Console &gt; APIs &amp; Services &gt; OAuth consent screen &gt; Test users</strong>{" "}
-                          and click <strong className="text-white">+ ADD USERS</strong> with your Google email. Otherwise Google returns <code>Error 403: access_denied</code>.
+                          and click <strong className="text-white">+ ADD USERS</strong> to add your email (<code className="text-white">LuisRivera24349@gmail.com</code>). Otherwise Google returns <code>Error 403: access_denied</code>.
                         </p>
                       </div>
 

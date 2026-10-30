@@ -5,9 +5,19 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const origin = url.origin;
   const code = url.searchParams.get("code");
   const error = url.searchParams.get("error");
+  const stateRaw = url.searchParams.get("state");
+
+  let origin = url.origin;
+  if (stateRaw) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(stateRaw));
+      if (parsed.origin) origin = parsed.origin;
+    } catch {
+      // Ignore JSON parse errors
+    }
+  }
 
   if (error || !code) {
     console.error("Google OAuth Callback Error:", error || "Missing code");

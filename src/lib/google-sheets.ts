@@ -115,15 +115,34 @@ export function getGoogleOAuthCredentials() {
 }
 
 /**
- * Builds Google OAuth 2.0 authorization URL
+ * Normalizes an origin, ensuring public domains always use HTTPS
  */
-export function buildGoogleOAuthConsentUrl(origin: string, state?: string): string {
+export function normalizeOAuthOrigin(rawOrigin: string): string {
+  let cleaned = rawOrigin.trim().replace(/\/$/, "");
+  const isLocal = cleaned.includes("localhost") || cleaned.includes("127.0.0.1");
+  if (!isLocal) {
+    cleaned = cleaned.replace(/^http:\/\//i, "https://");
+    if (!cleaned.startsWith("https://")) {
+      cleaned = `https://${cleaned}`;
+    }
+  }
+  return cleaned;
+}
+
+/**
+ * Builds Google OAuth 2.0 authorization URL with HTTPS normalization
+ */
+export function buildGoogleOAuthConsentUrl(rawOrigin: string, customState?: string): string {
   const { clientId } = getGoogleOAuthCredentials();
+  const origin = normalizeOAuthOrigin(rawOrigin);
   const redirectUri = `${origin}/api/admin/accountant/sheets-oauth/callback`;
   const scopes = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.file",
   ].join(" ");
+
+  const stateObj = { origin, custom: customState || "" };
+  const state = encodeURIComponent(JSON.stringify(stateObj));
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -133,9 +152,8 @@ export function buildGoogleOAuthConsentUrl(origin: string, state?: string): stri
     access_type: "offline",
     prompt: "consent",
     include_granted_scopes: "true",
+    state,
   });
-
-  if (state) params.set("state", state);
 
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
@@ -145,9 +163,10 @@ export function buildGoogleOAuthConsentUrl(origin: string, state?: string): stri
  */
 export async function exchangeGoogleCodeForTokens(
   code: string,
-  origin: string
+  rawOrigin: string
 ): Promise<GoogleOAuthTokens> {
   const { clientId, clientSecret } = getGoogleOAuthCredentials();
+  const origin = normalizeOAuthOrigin(rawOrigin);
   const redirectUri = `${origin}/api/admin/accountant/sheets-oauth/callback`;
 
   const res = await fetch("https://oauth2.googleapis.com/token", {

@@ -26,8 +26,10 @@ export async function GET(req: Request) {
     }
 
     const url = new URL(req.url);
-    const origin = url.origin;
-    const authUrl = buildGoogleOAuthConsentUrl(origin);
+    const clientOrigin = url.searchParams.get("origin");
+    const forwardedHost = req.headers.get("x-forwarded-host") || req.headers.get("host");
+    const rawOrigin = clientOrigin || (forwardedHost ? `https://${forwardedHost}` : url.origin);
+    const authUrl = buildGoogleOAuthConsentUrl(rawOrigin);
 
     return NextResponse.redirect(authUrl);
   } catch (err: any) {
