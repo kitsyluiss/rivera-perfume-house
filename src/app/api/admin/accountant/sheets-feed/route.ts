@@ -34,7 +34,13 @@ export async function GET(req: Request) {
     const payload = prepareGoogleSheetsPayload(ledger);
 
     let rows: any[][] = [];
-    if (tab === "brands" || tab === "brand_allocation") {
+    if (tab === "cover" || tab === "audit") {
+      rows = payload.sheets.Cover_and_Audit;
+    } else if (tab === "pnl" || tab === "income_statement" || tab === "income") {
+      rows = payload.sheets.Income_Statement;
+    } else if (tab === "balance_sheet" || tab === "balancesheet" || tab === "balance") {
+      rows = payload.sheets.Balance_Sheet;
+    } else if (tab === "brands" || tab === "brand_allocation") {
       rows = payload.sheets.Brand_Allocation;
     } else if (tab === "restock" || tab === "restock_forecast") {
       rows = payload.sheets.Restock_Forecast;

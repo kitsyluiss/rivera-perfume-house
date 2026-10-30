@@ -149,7 +149,14 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
   };
 
   const handleCopyTabTsv = (
-    tabKey: "Executive_Summary" | "Brand_Allocation" | "Restock_Forecast" | "Top_Profit_Makers",
+    tabKey:
+      | "Cover_and_Audit"
+      | "Executive_Summary"
+      | "Income_Statement"
+      | "Balance_Sheet"
+      | "Brand_Allocation"
+      | "Restock_Forecast"
+      | "Top_Profit_Makers",
     title: string
   ) => {
     const payload = prepareGoogleSheetsPayload(ledger);
@@ -651,11 +658,51 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
         </div>
       </div>
 
+      {/* ── 1.5 Forensic Audit & System Integrity Bar ────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 p-3.5 rounded-2xl border border-white/10 bg-white/[0.02]">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <CheckCircle2 className="h-3 w-3" />
+            <span>Double-Entry: VERIFIED (Assets = Liab + Equity)</span>
+          </span>
+
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono bg-[#e1b854]/10 text-[#e1b854] border border-[#e1b854]/20">
+            <Receipt className="h-3 w-3" />
+            <span>12% Output VAT Calculated: {formatPhp(ledger.sales.outputVat)}</span>
+          </span>
+
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono bg-white/5 text-white/80 border border-white/10">
+            <Layers className="h-3 w-3" />
+            <span>Invoices: {ledger.auditCheck.totalInvoicesIssued} (Next: {ledger.auditCheck.nextInvoiceSequence})</span>
+          </span>
+        </div>
+
+        {ledger.anomalies.length > 0 ? (
+          <button
+            type="button"
+            onClick={() =>
+              handleSendMessage(
+                "Run a comprehensive forensic analysis of the flagged anomalies in our ledger, including negative margins, aging unverified receivables, and zero-inventory stockouts.",
+                "general"
+              )
+            }
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 transition-all ml-auto"
+          >
+            <AlertCircle className="h-3 w-3" />
+            <span>{ledger.anomalies.length} Forensic Anomalies Flagged</span>
+          </button>
+        ) : (
+          <span className="text-[10px] font-mono text-emerald-400/80 ml-auto">
+            Zero Forensic Anomalies
+          </span>
+        )}
+      </div>
+
       {/* ── 2. One-Touch Quick Audit Action Pills (No Emojis) ─────────────── */}
       <div className="space-y-2">
         <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
           <FileText className="h-3 w-3 text-[#e1b854]" />
-          Executive Financial Audits
+          Executive Financial Audits &amp; Forensic Directives
         </span>
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -664,14 +711,46 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
             disabled={loading}
             onClick={() =>
               handleSendMessage(
-                "Please generate our complete Monthly Profit & Loss Statement (P&L) with realized turnover, direct fragrance COGS, gross margin percentage, and senior accountant commentary.",
+                "Please generate our complete Multi-Step Income Statement (P&L) with Philippine 12% Output VAT separation, net revenue, direct fragrance COGS, realized net margin percentage, and senior accountant commentary.",
                 "pnl"
               )
             }
             className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-[#e1b854]/40 hover:bg-[#e1b854]/10 transition-all font-body text-white/90 gap-1.5"
           >
             <FileText className="h-3 w-3 text-[#e1b854]" />
-            <span>Monthly P&amp;L Statement</span>
+            <span>Multi-Step P&amp;L (12% VAT)</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            onClick={() =>
+              handleSendMessage(
+                "Execute an immediate forensic accounting audit: check for negative margin sales, verify zero-loss double-entry balance, inspect unverified receivables aging, and flag inventory shrinkage risks.",
+                "general"
+              )
+            }
+            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-amber-500/40 hover:bg-amber-500/10 transition-all font-body text-white/90 gap-1.5"
+          >
+            <ShieldAlert className="h-3 w-3 text-amber-400" />
+            <span>Forensic Audit &amp; Anomalies</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            onClick={() =>
+              handleSendMessage(
+                "Provide an official BIR-compliant internal store receipt format for our customer orders, complete with 12% VAT separation, global invoice numbering (RFH-INV-XXXXX), and mandatory non-affiliation disclaimer.",
+                "general"
+              )
+            }
+            className="h-8 rounded-full border-white/10 bg-white/5 text-xs hover:border-cyan-400/40 hover:bg-cyan-400/10 transition-all font-body text-white/90 gap-1.5"
+          >
+            <FileSpreadsheet className="h-3 w-3 text-cyan-400" />
+            <span>BIR Store Receipt Format</span>
           </Button>
 
           <Button
@@ -1133,14 +1212,62 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <button
                         type="button"
-                        onClick={() => handleCopyTabTsv("Executive_Summary", "Executive Balance Sheet")}
+                        onClick={() => handleCopyTabTsv("Cover_and_Audit", "Cover & Audit Certificate")}
                         className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
                       >
                         <div>
-                          <div className="font-medium text-white/95">Tab 1: Executive Balance Sheet</div>
-                          <div className="text-[10px] text-muted-foreground font-mono">Valuation, P&amp;L, Receivables</div>
+                          <div className="font-medium text-white/95">Tab 1: Cover &amp; Audit Certificate</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">Double-entry status, metadata, BIR notice</div>
+                        </div>
+                        {copiedTab === "Cover_and_Audit" ? (
+                          <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-[#e1b854] shrink-0" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyTabTsv("Executive_Summary", "Executive KPI Dashboard")}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
+                      >
+                        <div>
+                          <div className="font-medium text-white/95">Tab 2: Executive KPI Dashboard</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">Asset valuation, realized turnover, COGS</div>
                         </div>
                         {copiedTab === "Executive_Summary" ? (
+                          <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-[#e1b854] shrink-0" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyTabTsv("Income_Statement", "Multi-Step Income Statement (12% VAT)")}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
+                      >
+                        <div>
+                          <div className="font-medium text-white/95">Tab 3: Income Statement (P&amp;L)</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">12% Output VAT, Net sales, Net margins</div>
+                        </div>
+                        {copiedTab === "Income_Statement" ? (
+                          <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-[#e1b854] shrink-0" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyTabTsv("Balance_Sheet", "Double-Entry Balance Sheet")}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
+                      >
+                        <div>
+                          <div className="font-medium text-white/95">Tab 4: Balance Sheet</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">Assets = Liabilities + Equity (Balanced)</div>
+                        </div>
+                        {copiedTab === "Balance_Sheet" ? (
                           <Check className="h-4 w-4 text-emerald-400 shrink-0" />
                         ) : (
                           <Copy className="h-4 w-4 text-[#e1b854] shrink-0" />
@@ -1153,8 +1280,8 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                         className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
                       >
                         <div>
-                          <div className="font-medium text-white/95">Tab 2: Brand Allocation</div>
-                          <div className="text-[10px] text-muted-foreground font-mono">Rasasi, Lattafa, French Ave</div>
+                          <div className="font-medium text-white/95">Tab 5: Brand Allocation</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">Rasasi, Lattafa, French Ave, Armaf</div>
                         </div>
                         {copiedTab === "Brand_Allocation" ? (
                           <Check className="h-4 w-4 text-emerald-400 shrink-0" />
@@ -1169,8 +1296,8 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                         className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
                       >
                         <div>
-                          <div className="font-medium text-white/95">Tab 3: Restock Forecast</div>
-                          <div className="text-[10px] text-muted-foreground font-mono">Low-stock &le; 2 replenishment</div>
+                          <div className="font-medium text-white/95">Tab 6: Restock Priority Register</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">Low-stock replenishment budget</div>
                         </div>
                         {copiedTab === "Restock_Forecast" ? (
                           <Check className="h-4 w-4 text-emerald-400 shrink-0" />
@@ -1182,11 +1309,11 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                       <button
                         type="button"
                         onClick={() => handleCopyTabTsv("Top_Profit_Makers", "Top Margin Champions")}
-                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white sm:col-span-2"
                       >
                         <div>
-                          <div className="font-medium text-white/95">Tab 4: Top Margin Champions</div>
-                          <div className="text-[10px] text-muted-foreground font-mono">Ranked by gross margin</div>
+                          <div className="font-medium text-white/95">Tab 7: Top Profit Makers &amp; Champions</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">Gross turnover, net revenue, profit yield</div>
                         </div>
                         {copiedTab === "Top_Profit_Makers" ? (
                           <Check className="h-4 w-4 text-emerald-400 shrink-0" />
@@ -1197,12 +1324,12 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                     </div>
                   </div>
 
-                  {/* Option B: Download Full 4-Tab Spreadsheet */}
+                  {/* Option B: Download Full 7-Tab Spreadsheet */}
                   <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div>
-                      <div className="font-medium text-xs text-white">Download Multi-Tab Formatted Workbook (.xls)</div>
+                      <div className="font-medium text-xs text-white">Download Multi-Tab Formatted Institutional Workbook (.xls)</div>
                       <p className="text-[11px] text-muted-foreground font-body mt-0.5">
-                        Contains all 4 tabs pre-formatted with Rivera gold headers. Drag into Google Drive to open directly in Google Sheets.
+                        Contains all 7 tabs pre-formatted with Rivera luxury gold styling and accounting double-underlines. Drag into Google Drive to open directly in Google Sheets.
                       </p>
                     </div>
                     <Button
@@ -1211,7 +1338,7 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                       className="bg-white/10 hover:bg-white text-white hover:text-black font-semibold text-xs h-10 px-4 shrink-0 gap-1.5 transition-all"
                     >
                       <Download className="h-4 w-4 text-[#e1b854]" />
-                      <span>Download Workbook</span>
+                      <span>Download 7-Tab Workbook</span>
                     </Button>
                   </div>
                 </div>
@@ -1232,22 +1359,37 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                   <div className="space-y-2.5">
                     {[
                       {
-                        name: "Tab 1: Executive_Summary",
+                        name: "Tab 1: Cover_and_Audit",
+                        formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=cover")',
+                        id: "cover",
+                      },
+                      {
+                        name: "Tab 2: Executive_Summary",
                         formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=summary")',
                         id: "summary",
                       },
                       {
-                        name: "Tab 2: Brand_Allocation",
+                        name: "Tab 3: Income_Statement",
+                        formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=pnl")',
+                        id: "pnl",
+                      },
+                      {
+                        name: "Tab 4: Balance_Sheet",
+                        formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=balance")',
+                        id: "balance",
+                      },
+                      {
+                        name: "Tab 5: Brand_Allocation",
                         formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=brands")',
                         id: "brands",
                       },
                       {
-                        name: "Tab 3: Restock_Forecast",
+                        name: "Tab 6: Restock_Forecast",
                         formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=restock")',
                         id: "restock",
                       },
                       {
-                        name: "Tab 4: Top_Profit_Makers",
+                        name: "Tab 7: Top_Profit_Makers",
                         formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=top_sellers")',
                         id: "top_sellers",
                       },

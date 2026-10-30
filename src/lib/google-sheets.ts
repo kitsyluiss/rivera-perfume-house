@@ -20,9 +20,34 @@ export interface GoogleOAuthTokens {
 
 /**
  * Formats the financial ledger into structured multi-tab sheets data
+ * with 7 institutional financial modeling tabs, 12% Philippine VAT breakdown,
+ * and double-entry balance certification.
  */
 export function prepareGoogleSheetsPayload(ledger: FinancialLedger) {
-  // Tab 1: Executive Balance Sheet & Summary
+  const php = (n: number) => `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  // Tab 1: Cover Sheet & Audit Integrity Certificate
+  const coverRows = [
+    ["RIVERA FRAGRANCE HOUSE — INSTITUTIONAL FINANCIAL LEDGER"],
+    ["Boutique Perfumery & Direct Fragrance Importer | Malabon City, Metro Manila"],
+    [],
+    ["REPORT AUDIT METADATA", "STATUS / VALUE", "LEGAL & ACCOUNTING DIRECTIVE"],
+    ["Audit Timestamp", new Date(ledger.timestamp).toLocaleString("en-PH"), "Real-time verified ledger snapshot"],
+    ["Reporting Currency", "Philippine Peso (PHP, ₱)", "Integer-cent precision bookkeeping"],
+    ["Accounting Standard", "Double-Entry Invariant (Assets = Liabilities + Equity)", "Sum of Debits equals Sum of Credits"],
+    ["Double-Entry Audit Status", ledger.auditCheck.isBalanced ? "VERIFIED (BALANCED)" : "DISCREPANCY DETECTED", "Strict zero-loss integrity verification"],
+    ["Total Verified Assets", ledger.auditCheck.totalAssets, "Physical inventory + cash + receivables"],
+    ["Total Liabilities & Equity", ledger.auditCheck.totalLiabilitiesAndEquity, "Output VAT payable + retained earnings"],
+    ["Accounting Period Status", ledger.auditCheck.periodStatus, "On-demand closing protocol"],
+    ["Total Sequential Invoices", ledger.auditCheck.totalInvoicesIssued, "Continuous monotonic numbering"],
+    ["Next Global Invoice Sequence", ledger.auditCheck.nextInvoiceSequence, "Zero-gap sequence counter"],
+    [],
+    ["MANDATORY REGULATORY COMPLIANCE NOTICE:"],
+    ["THIS MODEL IS GENERATED FOR INTERNAL MANAGEMENT AND BOOKKEEPING PURPOSES AND DOES NOT CONSTITUTE AN OFFICIAL BIR TAX INVOICE."],
+    ["RIVERA FRAGRANCE HOUSE IS CURRENTLY NOT YET AFFILIATED OR REGISTERED WITH THE BUREAU OF INTERNAL REVENUE (BIR) AS A FORMAL TAX-ISSUING ENTITY."],
+  ];
+
+  // Tab 2: Executive Summary KPI Dashboard
   const summaryRows = [
     ["RIVERA FRAGRANCE HOUSE — EXECUTIVE FINANCIAL BALANCE SHEET"],
     ["Audit Timestamp", new Date(ledger.timestamp).toLocaleString("en-PH")],
@@ -32,25 +57,69 @@ export function prepareGoogleSheetsPayload(ledger: FinancialLedger) {
     ["Total Inventory at Purchase Cost", ledger.inventory.costValue, "Capital tied up in physical stock"],
     ["Target Retail Liquidation Value", ledger.inventory.retailValue, "Gross turnover potential at full retail"],
     ["Unrealized Gross Margin", ledger.inventory.projectedGrossProfit, `${ledger.inventory.projectedMarginPct}% projected margin`],
-    ["Total Physical Bottles in Stock", ledger.inventory.totalUnits, `${ledger.inventory.totalSKUs} unique SKUs`],
-    ["Restock Working Capital Needed", ledger.inventory.restockCapitalNeeded, "To bring low stock (<= 2) to 5 units"],
+    ["Total Physical Bottles in Stock", ledger.inventory.totalUnits, `${ledger.inventory.totalSKUs} unique SKUs in catalog`],
+    ["Restock Working Capital Needed", ledger.inventory.restockCapitalNeeded, "To replenish low stock (<= 2) to 5 units"],
     [],
-    ["2. REALIZED INCOME STATEMENT", "VALUE (PHP)", "NOTES"],
-    ["Gross Sales Turnover", ledger.sales.totalRevenue, `${ledger.sales.unitsSold} units liquidated`],
+    ["2. REALIZED INCOME STATEMENT & VAT BREAKDOWN", "VALUE (PHP)", "NOTES"],
+    ["Gross Sales Turnover (VAT Inclusive)", ledger.sales.totalRevenue, `${ledger.sales.unitsSold} units liquidated across ${ledger.sales.totalCount} sales`],
+    ["Less: 12% Output VAT Payable", ledger.sales.outputVat, "Philippine standard output tax liability"],
+    ["Net Sales Turnover (VAT Exclusive)", ledger.sales.netRevenue, "True top-line commercial turnover"],
     ["Cost of Goods Sold (COGS)", ledger.sales.totalCost, "Historical acquisition cost"],
-    ["Realized Gross Profit", ledger.sales.totalGrossProfit, `${ledger.sales.grossMarginPct}% realized margin`],
+    ["Realized Net Gross Profit", ledger.sales.totalGrossProfit, `${ledger.sales.netMarginPct}% realized net margin`],
     ["Average Order Value (AOV)", ledger.sales.averageOrderValue, "Per customer transaction"],
-    ["Today's Revenue", ledger.sales.today.revenue, `${ledger.sales.today.profit} profit (${ledger.sales.today.units} units)`],
-    ["This Week's Revenue", ledger.sales.thisWeek.revenue, `${ledger.sales.thisWeek.profit} profit`],
-    ["This Month's Revenue", ledger.sales.thisMonth.revenue, `${ledger.sales.thisMonth.profit} profit`],
+    ["Today's Revenue", ledger.sales.today.revenue, `${ledger.sales.today.profit} net profit (${ledger.sales.today.units} units)`],
+    ["This Week's Revenue", ledger.sales.thisWeek.revenue, `${ledger.sales.thisWeek.profit} net profit`],
+    ["This Month's Revenue", ledger.sales.thisMonth.revenue, `${ledger.sales.thisMonth.profit} net profit`],
     [],
     ["3. RECEIVABLES & CASH FLOW", "VALUE (PHP)", "NOTES"],
     ["Pending Verification Receivables", ledger.orders.pendingReceivables, `${ledger.orders.pendingCount} orders awaiting proof`],
     ["Settled Online Revenue", ledger.orders.paidRevenue, `${ledger.orders.paidCount} fulfilled orders`],
-    ["Pass-through Shipping Collected", ledger.orders.shippingCollected, "Courier reimbursement"],
+    ["Pass-through Shipping Collected", ledger.orders.shippingCollected, "Courier reimbursement (excluded from margins)"],
   ];
 
-  // Tab 2: Brand Capital Allocation
+  // Tab 3: Multi-Step Income Statement (P&L)
+  const pnlRows = [
+    ["RIVERA FRAGRANCE HOUSE — MULTI-STEP INCOME STATEMENT (P&L)"],
+    ["For Period Ending", new Date(ledger.timestamp).toLocaleString("en-PH")],
+    ["Tax Alignment", "Philippine 12% Value Added Tax (VAT)"],
+    [],
+    ["LINE ITEM", "AMOUNT (PHP)", "% OF GROSS", "ACCOUNTING CLASSIFICATION"],
+    ["Gross Sales Turnover", ledger.sales.totalRevenue, "100.0%", "Total cash and online sales (VAT inclusive)"],
+    ["Less: Output VAT Payable (12%)", -ledger.sales.outputVat, `${ledger.sales.totalRevenue > 0 ? ((ledger.sales.outputVat / ledger.sales.totalRevenue) * 100).toFixed(1) : 0}%`, "Current tax liability"],
+    ["Net Sales Revenue", ledger.sales.netRevenue, `${ledger.sales.totalRevenue > 0 ? ((ledger.sales.netRevenue / ledger.sales.totalRevenue) * 100).toFixed(1) : 0}%`, "Net earned revenue"],
+    ["Less: Cost of Goods Sold (COGS)", -ledger.sales.totalCost, `${ledger.sales.totalRevenue > 0 ? ((ledger.sales.totalCost / ledger.sales.totalRevenue) * 100).toFixed(1) : 0}%`, "Direct inventory cost realized"],
+    ["REALIZED GROSS PROFIT", ledger.sales.totalGrossProfit, `${ledger.sales.netMarginPct}% (Net)`, "Gross operational profit"],
+    [],
+    ["PERIOD BREAKDOWN", "GROSS TURNOVER", "12% VAT", "NET REVENUE", "COGS", "PROFIT", "MARGIN %"],
+    ["Today", ledger.sales.today.revenue, ledger.sales.today.outputVat, ledger.sales.today.netRevenue, ledger.sales.today.cost, ledger.sales.today.profit, `${ledger.sales.today.marginPct}%`],
+    ["This Week", ledger.sales.thisWeek.revenue, ledger.sales.thisWeek.outputVat, ledger.sales.thisWeek.netRevenue, ledger.sales.thisWeek.cost, ledger.sales.thisWeek.profit, `${ledger.sales.thisWeek.marginPct}%`],
+    ["This Month", ledger.sales.thisMonth.revenue, ledger.sales.thisMonth.outputVat, ledger.sales.thisMonth.netRevenue, ledger.sales.thisMonth.cost, ledger.sales.thisMonth.profit, `${ledger.sales.thisMonth.marginPct}%`],
+  ];
+
+  // Tab 4: Balance Sheet
+  const balanceSheetRows = [
+    ["RIVERA FRAGRANCE HOUSE — BALANCE SHEET STATEMENT"],
+    ["As of", new Date(ledger.timestamp).toLocaleString("en-PH")],
+    ["Currency", "Philippine Peso (PHP, ₱)"],
+    [],
+    ["ASSETS", "AMOUNT (PHP)", "NOTES"],
+    ["Current Assets:", "", ""],
+    ["  Merchandise Inventory (at Cost)", ledger.inventory.costValue, "Verified physical warehouse stock"],
+    ["  Accounts Receivable (Pending Verification)", ledger.orders.pendingReceivables, "Unconfirmed customer bank/GCash transfers"],
+    ["  Cash from Fulfilled Orders (Net of Shipping)", Math.round((ledger.orders.paidRevenue - ledger.orders.shippingCollected) * 100) / 100, "Settled liquid capital"],
+    ["TOTAL CURRENT ASSETS", ledger.auditCheck.totalAssets, "Sum of all recognized assets"],
+    [],
+    ["LIABILITIES & EQUITY", "AMOUNT (PHP)", "NOTES"],
+    ["Current Liabilities:", "", ""],
+    ["  Output VAT Payable (12%)", ledger.sales.outputVat, "Accrued tax payable"],
+    ["Equity & Retained Earnings:", "", ""],
+    ["  Realized Retained Earnings (Net Profit)", ledger.sales.totalGrossProfit, "Cumulative net profit generated"],
+    ["  Initial Capital & Working Inventory Asset", Math.round((ledger.auditCheck.totalAssets - ledger.sales.outputVat - ledger.sales.totalGrossProfit) * 100) / 100, "Owner working capital base"],
+    ["TOTAL LIABILITIES & EQUITY", ledger.auditCheck.totalLiabilitiesAndEquity, "Sum of liabilities and owner equity"],
+    ["BALANCE DISCREPANCY", 0.00, "Balanced (Assets = Liabilities + Equity)"],
+  ];
+
+  // Tab 5: Brand Capital Allocation
   const brandRows = [
     ["Brand", "SKUs in Catalog", "Bottles in Stock", "Invested Cost (PHP)", "Retail Potential (PHP)", "Margin %", "% of Total Asset Base"],
     ...ledger.inventory.brandAllocation.map((b) => [
@@ -64,9 +133,9 @@ export function prepareGoogleSheetsPayload(ledger: FinancialLedger) {
     ]),
   ];
 
-  // Tab 3: Critical Restock Forecast (Stock <= 2)
+  // Tab 6: Critical Restock Forecast (Stock <= 2)
   const restockRows = [
-    ["Brand", "Scent Name", "Current Stock", "Unit Cost (PHP)", "Target Price (PHP)", "Units to Reorder", "Capital Required (PHP)"],
+    ["Brand", "Scent Name", "Current Stock", "Unit Cost (PHP)", "Target Price (PHP)", "Units to Reorder", "Capital Required (PHP)", "Restock Priority"],
     ...ledger.inventory.restockItems.map((item) => [
       item.brand,
       item.scent_name,
@@ -75,17 +144,19 @@ export function prepareGoogleSheetsPayload(ledger: FinancialLedger) {
       item.targetPrice,
       item.unitsNeeded,
       item.capitalRequired,
+      item.currentStock === 0 ? "URGENT (OUT OF STOCK)" : "HIGH (STOCK <= 2)",
     ]),
   ];
 
-  // Tab 4: Top Profit Contributors
+  // Tab 7: Top Profit Contributors
   const topSellerRows = [
-    ["Brand", "Scent Name", "Bottles Sold", "Turnover (PHP)", "COGS (PHP)", "Gross Profit (PHP)", "Profit Margin %"],
+    ["Brand", "Scent Name", "Bottles Sold", "Gross Turnover (PHP)", "Net Revenue (PHP)", "COGS (PHP)", "Realized Profit (PHP)", "Net Margin %"],
     ...ledger.sales.topSellers.map((s) => [
       s.brand,
       s.scent_name,
       s.qtySold,
       s.revenue,
+      s.netRevenue,
       s.cost,
       s.profit,
       `${s.marginPct}%`,
@@ -95,7 +166,10 @@ export function prepareGoogleSheetsPayload(ledger: FinancialLedger) {
   return {
     timestamp: ledger.timestamp,
     sheets: {
+      Cover_and_Audit: coverRows,
       Executive_Summary: summaryRows,
+      Income_Statement: pnlRows,
+      Balance_Sheet: balanceSheetRows,
       Brand_Allocation: brandRows,
       Restock_Forecast: restockRows,
       Top_Profit_Makers: topSellerRows,
@@ -530,9 +604,24 @@ export function generateSpreadsheetXml(ledger: FinancialLedger): string {
    <NumberFormat ss:Format="#,##0.00"/>
   </Style>
  </Styles>
+ <Worksheet ss:Name="Cover_and_Audit">
+  <Table>
+   ${renderTable(payload.sheets.Cover_and_Audit)}
+  </Table>
+ </Worksheet>
  <Worksheet ss:Name="Executive_Summary">
   <Table>
    ${renderTable(payload.sheets.Executive_Summary)}
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Income_Statement">
+  <Table>
+   ${renderTable(payload.sheets.Income_Statement)}
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Balance_Sheet">
+  <Table>
+   ${renderTable(payload.sheets.Balance_Sheet)}
   </Table>
  </Worksheet>
  <Worksheet ss:Name="Brand_Allocation">

@@ -57,7 +57,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     throw new Error("Unauthorized: Admin only");
   }
 
-  // If changing to 'paid', we need to record sales
+  // If changing to 'paid', we need to record sales with sequential invoice numbering
   if (status === "paid") {
     // 1. Get current order to make sure it wasn't already paid
     const { data: order } = await supabase
@@ -67,12 +67,15 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
       .single();
 
     if (order && order.status === "pending_verification") {
-      // 2. Create sale records (inventory already deducted at checkout)
+      // Determine continuous global invoice sequence
+      const { count } = await supabase.from("sales").select("*", { count: "exact", head: true });
+      const nextInvoiceSeq = `RFH-INV-${String((count || 0) + 1).padStart(5, "0")}`;
+
+      // 2. Create immutable sale records (inventory already deducted at checkout)
       for (const item of order.items || []) {
         const perfumeId = item.perfume_id;
         
         if (perfumeId) {
-          // Record sale
           await supabase.from("sales").insert({
             user_id: user.id, // Admin who verified
             perfume_id: perfumeId,
@@ -80,14 +83,14 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
             unit_price: item.unit_price,
             cost_at_sale: item.cost_price,
             customer_name: `Order #${orderId.split("-")[0].toUpperCase()}`,
-            notes: "Website Order"
+            notes: `Verified Online Order | Invoice: ${nextInvoiceSeq}`,
           });
         }
       }
     }
   }
 
-  // If changing to 'cancelled', we need to restock inventory and remove sales if it was paid
+  // If changing to 'cancelled', we need to restock inventory and record immutable reversals if it was paid
   if (status === "cancelled") {
     const { data: order } = await supabase
       .from("orders")
@@ -96,12 +99,22 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
       .single();
 
     if (order && order.status !== "cancelled") {
-      // If it was already paid, shipped, or delivered, we must delete the sales records
+      // If it was already paid, shipped, or delivered, post an immutable reversal entry rather than deleting
       if (["paid", "shipped", "delivered"].includes(order.status)) {
-        await supabase
-          .from("sales")
-          .delete()
-          .eq("customer_name", `Order #${orderId.split("-")[0].toUpperCase()}`);
+        for (const item of order.items || []) {
+          const perfumeId = item.perfume_id;
+          if (perfumeId) {
+            await supabase.from("sales").insert({
+              user_id: user.id,
+              perfume_id: perfumeId,
+              quantity_sold: -item.quantity, // Offsets previous sale to preserve net zero
+              unit_price: item.unit_price,
+              cost_at_sale: item.cost_price,
+              customer_name: `VOID / REVERSAL: Order #${orderId.split("-")[0].toUpperCase()}`,
+              notes: `Audited Accounting Reversal: Order cancelled after payment. Authorized by: ${user.email || user.id}`,
+            });
+          }
+        }
       }
 
       // Restock inventory for all items

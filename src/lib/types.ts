@@ -73,6 +73,7 @@ export interface Order {
   notes: string | null;
   receipt_url?: string | null;
   created_at: string;
+  invoice_number?: string | null;
   
   // Joined fields
   address?: Address | null;
@@ -89,6 +90,12 @@ export interface Sale {
   customer_name: string | null;
   notes: string | null;
   created_at: string;
+  invoice_number?: string | null;
+  net_price?: number; // VAT-exclusive amount (PHP)
+  vat_amount?: number; // 12% output VAT (PHP)
+  is_reversed?: boolean;
+  reversal_of_id?: string | null;
+  reversal_reason?: string | null;
   // Joined fields
   brand?: string;
   scent_name?: string;
@@ -102,4 +109,61 @@ export interface MonthlySalesSummary {
   totalCost: number;
   totalProfit: number;
   unitsSold: number;
+}
+
+export interface AccountingPeriod {
+  id: string;
+  name: string; // e.g. "2026-10" or "FY2026-P10"
+  start_date: string;
+  end_date: string;
+  is_closed: boolean;
+  closed_at: string | null;
+  closed_by: string | null;
+  opening_inventory_cents: number;
+  closing_inventory_cents: number;
+  total_revenue_cents: number;
+  total_cogs_cents: number;
+  total_vat_cents: number;
+  net_income_cents: number;
+}
+
+export interface AuditAnomaly {
+  id: string;
+  severity: "CRITICAL" | "WARNING" | "NOTICE";
+  category: "MARGIN_VIOLATION" | "UNVERIFIED_RECEIVABLE" | "INVENTORY_STOCKOUT" | "SHRINKAGE_RISK";
+  title: string;
+  description: string;
+  discrepancy_amount?: number;
+  affected_item?: string;
+}
+
+export interface BIRReceiptData {
+  businessName: string;
+  tagline: string;
+  address: string;
+  invoiceNumber: string; // Global sequence (e.g. RFH-INV-00001)
+  orderId?: string;
+  transactionDate: string;
+  cashierName: string;
+  customerName: string;
+  customerAddress?: string;
+  items: Array<{
+    brand: string;
+    scent_name: string;
+    quantity: number;
+    unit_price: number;
+    gross_amount: number;
+    net_amount: number;
+    vat_amount: number;
+  }>;
+  grossTotal: number;
+  vatableSales: number;
+  vatAmount: number; // 12%
+  vatExemptSales: number;
+  zeroRatedSales: number;
+  shippingFee: number;
+  amountDue: number;
+  paymentMethod: string;
+  paymentReference?: string;
+  isDisclaimerNotice: string;
 }

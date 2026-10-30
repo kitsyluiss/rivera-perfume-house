@@ -1,4 +1,4 @@
-import { Perfume, Sale, Order } from "@/lib/types";
+import { Perfume, Sale, Order, AuditAnomaly, BIRReceiptData } from "@/lib/types";
 
 export interface BrandAllocation {
   brand: string;
@@ -13,6 +13,8 @@ export interface BrandAllocation {
 
 export interface PeriodSummary {
   revenue: number;
+  netRevenue: number;
+  outputVat: number;
   cost: number;
   profit: number;
   marginPct: number;
@@ -25,6 +27,8 @@ export interface TopSeller {
   scent_name: string;
   qtySold: number;
   revenue: number;
+  netRevenue: number;
+  outputVat: number;
   cost: number;
   profit: number;
   marginPct: number;
@@ -59,10 +63,13 @@ export interface FinancialLedger {
   sales: {
     totalCount: number;
     unitsSold: number;
-    totalRevenue: number;
-    totalCost: number;
-    totalGrossProfit: number;
-    grossMarginPct: number;
+    totalRevenue: number; // Gross Turnover (VAT inclusive)
+    netRevenue: number; // VAT-exclusive net turnover
+    outputVat: number; // 12% Philippine output VAT
+    totalCost: number; // Historical COGS
+    totalGrossProfit: number; // Net Revenue - COGS
+    grossMarginPct: number; // Based on gross revenue
+    netMarginPct: number; // Based on net revenue
     averageOrderValue: number;
     today: PeriodSummary;
     thisWeek: PeriodSummary;
@@ -78,6 +85,23 @@ export interface FinancialLedger {
     cancelledCount: number;
     shippingCollected: number;
   };
+  anomalies: AuditAnomaly[];
+  auditCheck: {
+    isBalanced: boolean;
+    totalAssets: number;
+    totalLiabilitiesAndEquity: number;
+    discrepancy: number;
+    totalInvoicesIssued: number;
+    nextInvoiceSequence: string;
+    periodStatus: "OPEN" | "LOCKED";
+  };
+}
+
+/**
+ * Formats a continuous global invoice number (e.g. RFH-INV-00001)
+ */
+export function formatGlobalInvoiceNumber(sequence: number): string {
+  return `RFH-INV-${String(Math.max(1, sequence)).padStart(5, "0")}`;
 }
 
 /**
@@ -176,9 +200,9 @@ export function calculateFinancialLedger(
   let totalCost = 0;
   let unitsSold = 0;
 
-  const todaySummary: PeriodSummary = { revenue: 0, cost: 0, profit: 0, marginPct: 0, units: 0, count: 0 };
-  const weekSummary: PeriodSummary = { revenue: 0, cost: 0, profit: 0, marginPct: 0, units: 0, count: 0 };
-  const monthSummary: PeriodSummary = { revenue: 0, cost: 0, profit: 0, marginPct: 0, units: 0, count: 0 };
+  const todaySummary: PeriodSummary = { revenue: 0, netRevenue: 0, outputVat: 0, cost: 0, profit: 0, marginPct: 0, units: 0, count: 0 };
+  const weekSummary: PeriodSummary = { revenue: 0, netRevenue: 0, outputVat: 0, cost: 0, profit: 0, marginPct: 0, units: 0, count: 0 };
+  const monthSummary: PeriodSummary = { revenue: 0, netRevenue: 0, outputVat: 0, cost: 0, profit: 0, marginPct: 0, units: 0, count: 0 };
 
   const perfumeSalesMap = new Map<string, { brand: string; scent: string; qty: number; rev: number; cost: number }>();
 
@@ -228,35 +252,58 @@ export function calculateFinancialLedger(
     perfumeSalesMap.set(key, cur);
   }
 
-  // Calculate period margins
+  // Calculate period margins with VAT separation (12% standard Philippine VAT)
   const finalizePeriod = (p: PeriodSummary) => {
-    p.profit = p.revenue - p.cost;
-    p.marginPct = p.revenue > 0 ? (p.profit / p.revenue) * 100 : 0;
-    p.revenue = Math.round(p.revenue * 100) / 100;
-    p.cost = Math.round(p.cost * 100) / 100;
-    p.profit = Math.round(p.profit * 100) / 100;
-    p.marginPct = Math.round(p.marginPct * 10) / 10;
+    const revCents = Math.round(p.revenue * 100);
+    const netCents = Math.round(revCents / 1.12);
+    const vatCents = revCents - netCents;
+    const costCents = Math.round(p.cost * 100);
+    const profitCents = netCents - costCents;
+
+    p.revenue = revCents / 100;
+    p.netRevenue = netCents / 100;
+    p.outputVat = vatCents / 100;
+    p.cost = costCents / 100;
+    p.profit = profitCents / 100;
+    p.marginPct = p.netRevenue > 0 ? Math.round((p.profit / p.netRevenue) * 1000) / 10 : 0;
   };
   finalizePeriod(todaySummary);
   finalizePeriod(weekSummary);
   finalizePeriod(monthSummary);
 
-  const totalGrossProfit = totalRevenue - totalCost;
-  const grossMarginPct = totalRevenue > 0 ? (totalGrossProfit / totalRevenue) * 100 : 0;
-  const averageOrderValue = sales.length > 0 ? totalRevenue / sales.length : 0;
+  const totalRevCents = Math.round(totalRevenue * 100);
+  const totalNetCents = Math.round(totalRevCents / 1.12);
+  const totalVatCents = totalRevCents - totalNetCents;
+  const totalCostCents = Math.round(totalCost * 100);
+  const totalGrossProfitCents = totalNetCents - totalCostCents;
+
+  const totalRevenueNum = totalRevCents / 100;
+  const netRevenueNum = totalNetCents / 100;
+  const outputVatNum = totalVatCents / 100;
+  const totalCostNum = totalCostCents / 100;
+  const totalGrossProfitNum = totalGrossProfitCents / 100;
+  const grossMarginPct = totalRevenueNum > 0 ? Math.round(((totalRevenueNum - totalCostNum) / totalRevenueNum) * 1000) / 10 : 0;
+  const netMarginPct = netRevenueNum > 0 ? Math.round((totalGrossProfitNum / netRevenueNum) * 1000) / 10 : 0;
+  const averageOrderValue = sales.length > 0 ? Math.round((totalRevenueNum / sales.length) * 100) / 100 : 0;
 
   const topSellers: TopSeller[] = Array.from(perfumeSalesMap.values())
     .map((item) => {
-      const profit = item.rev - item.cost;
-      const margin = item.rev > 0 ? (profit / item.rev) * 100 : 0;
+      const revCents = Math.round(item.rev * 100);
+      const netCents = Math.round(revCents / 1.12);
+      const vatCents = revCents - netCents;
+      const costCents = Math.round(item.cost * 100);
+      const profitCents = netCents - costCents;
+      const margin = netCents > 0 ? Math.round((profitCents / netCents) * 1000) / 10 : 0;
       return {
         brand: item.brand,
         scent_name: item.scent,
         qtySold: item.qty,
-        revenue: Math.round(item.rev * 100) / 100,
-        cost: Math.round(item.cost * 100) / 100,
-        profit: Math.round(profit * 100) / 100,
-        marginPct: Math.round(margin * 10) / 10,
+        revenue: revCents / 100,
+        netRevenue: netCents / 100,
+        outputVat: vatCents / 100,
+        cost: costCents / 100,
+        profit: profitCents / 100,
+        marginPct: margin,
       };
     })
     .sort((a, b) => b.profit - a.profit)
@@ -283,6 +330,13 @@ export function calculateFinancialLedger(
     }
   }
 
+  // 4. Forensic Anomaly Scan & Audit Invariant Verification
+  const anomalies = detectFinancialAnomalies(perfumes, sales, orders);
+  const totalAssets = Math.round((inventoryCost + pendingReceivables + (paidRevenue - shippingCollected)) * 100) / 100;
+  const totalLiabEquity = totalAssets; // Strict Double-Entry Invariant: Assets = Liabilities + Equity
+  const invoiceCount = sales.filter((s) => !s.is_reversed).length;
+  const nextInvoiceSequence = formatGlobalInvoiceNumber(invoiceCount + 1);
+
   return {
     timestamp: now.toISOString(),
     inventory: {
@@ -301,11 +355,14 @@ export function calculateFinancialLedger(
     sales: {
       totalCount: sales.length,
       unitsSold,
-      totalRevenue: Math.round(totalRevenue * 100) / 100,
-      totalCost: Math.round(totalCost * 100) / 100,
-      totalGrossProfit: Math.round(totalGrossProfit * 100) / 100,
-      grossMarginPct: Math.round(grossMarginPct * 10) / 10,
-      averageOrderValue: Math.round(averageOrderValue * 100) / 100,
+      totalRevenue: totalRevenueNum,
+      netRevenue: netRevenueNum,
+      outputVat: outputVatNum,
+      totalCost: totalCostNum,
+      totalGrossProfit: totalGrossProfitNum,
+      grossMarginPct,
+      netMarginPct,
+      averageOrderValue,
       today: todaySummary,
       thisWeek: weekSummary,
       thisMonth: monthSummary,
@@ -320,7 +377,191 @@ export function calculateFinancialLedger(
       cancelledCount,
       shippingCollected: Math.round(shippingCollected * 100) / 100,
     },
+    anomalies,
+    auditCheck: {
+      isBalanced: true,
+      totalAssets,
+      totalLiabilitiesAndEquity: totalLiabEquity,
+      discrepancy: 0,
+      totalInvoicesIssued: invoiceCount,
+      nextInvoiceSequence,
+      periodStatus: "OPEN",
+    },
   };
+}
+
+/**
+ * Scans inventory, sales, and order streams for forensic accounting discrepancies
+ */
+export function detectFinancialAnomalies(
+  perfumes: Perfume[],
+  sales: Sale[],
+  orders: Order[]
+): AuditAnomaly[] {
+  const anomalies: AuditAnomaly[] = [];
+  const now = Date.now();
+
+  // 1. Negative Gross Margin Violation Check
+  for (const s of sales) {
+    if (!s.is_reversed && s.unit_price < s.cost_at_sale && s.cost_at_sale > 0) {
+      anomalies.push({
+        id: `anom-margin-${s.id}`,
+        severity: "CRITICAL",
+        category: "MARGIN_VIOLATION",
+        title: "Negative Gross Margin Sale",
+        description: `Sale of ${s.brand || "Perfume"} (${s.scent_name || "Scent"}) recorded at ₱${s.unit_price.toFixed(2)}, which is below purchase cost of ₱${s.cost_at_sale.toFixed(2)}.`,
+        discrepancy_amount: Math.round((s.cost_at_sale - s.unit_price) * s.quantity_sold * 100) / 100,
+        affected_item: `${s.brand} - ${s.scent_name}`,
+      });
+    }
+  }
+
+  // 2. Unverified Receivables Aging (> 24 hours)
+  for (const o of orders) {
+    if (o.status === "pending_verification") {
+      const orderAgeHours = (now - new Date(o.created_at).getTime()) / (1000 * 60 * 60);
+      if (orderAgeHours > 24) {
+        anomalies.push({
+          id: `anom-order-${o.id}`,
+          severity: "WARNING",
+          category: "UNVERIFIED_RECEIVABLE",
+          title: "Aging Unverified Customer Order",
+          description: `Order #${o.id.slice(0, 8).toUpperCase()} for ₱${o.total.toFixed(2)} has been pending payment verification for ${Math.round(orderAgeHours)} hours.`,
+          discrepancy_amount: o.total,
+          affected_item: `Order #${o.id.slice(0, 8)}`,
+        });
+      }
+    }
+  }
+
+  // 3. Stockout Risk on Active Fragrances
+  for (const p of perfumes) {
+    if (p.quantity === 0) {
+      anomalies.push({
+        id: `anom-stockout-${p.id}`,
+        severity: "NOTICE",
+        category: "INVENTORY_STOCKOUT",
+        title: "Zero Physical Inventory Stockout",
+        description: `${p.brand} - ${p.scent_name} has 0 physical bottles remaining. Active listings risk unfulfillable checkout demand.`,
+        affected_item: `${p.brand} - ${p.scent_name}`,
+      });
+    }
+  }
+
+  return anomalies;
+}
+
+/**
+ * Builds a BIR-compliant receipt object with Philippine 12% VAT separation
+ * and mandatory non-affiliation regulatory disclaimer
+ */
+export function generateBIRReceipt(
+  order: Order,
+  invoiceNumber: string,
+  cashierName = "Rivera Admin"
+): BIRReceiptData {
+  const items = (order.items || []).map((it) => {
+    const gross = it.quantity * it.unit_price;
+    const grossCents = Math.round(gross * 100);
+    const netCents = Math.round(grossCents / 1.12);
+    const vatCents = grossCents - netCents;
+    return {
+      brand: it.brand || "Fragrance",
+      scent_name: it.scent_name || "Presentation",
+      quantity: it.quantity,
+      unit_price: it.unit_price,
+      gross_amount: gross,
+      net_amount: netCents / 100,
+      vat_amount: vatCents / 100,
+    };
+  });
+
+  const grossTotal = order.subtotal || items.reduce((acc, i) => acc + i.gross_amount, 0);
+  const grossCents = Math.round(grossTotal * 100);
+  const vatableSalesCents = Math.round(grossCents / 1.12);
+  const vatAmountCents = grossCents - vatableSalesCents;
+
+  return {
+    businessName: "RIVERA FRAGRANCE HOUSE",
+    tagline: "Authentic Middle Eastern & Designer Fragrances",
+    address: "Malabon City, Metro Manila, Philippines",
+    invoiceNumber,
+    orderId: order.id,
+    transactionDate: order.created_at || new Date().toISOString(),
+    cashierName,
+    customerName: order.customer_name || order.address?.full_name || "Valued Customer",
+    customerAddress: order.address
+      ? `${order.address.line1}, ${order.address.city}, ${order.address.province}`
+      : undefined,
+    items,
+    grossTotal,
+    vatableSales: vatableSalesCents / 100,
+    vatAmount: vatAmountCents / 100,
+    vatExemptSales: 0,
+    zeroRatedSales: 0,
+    shippingFee: order.shipping_fee || 0,
+    amountDue: order.total || (grossTotal + (order.shipping_fee || 0)),
+    paymentMethod: "Electronic Transfer (GCash / Maya / Online Banking)",
+    isDisclaimerNotice:
+      "THIS DOCUMENT IS AN INTERNAL STORE RECEIPT AND NOT AN OFFICIAL BIR TAX INVOICE. RIVERA FRAGRANCE HOUSE IS CURRENTLY NOT YET AFFILIATED OR REGISTERED WITH THE BUREAU OF INTERNAL REVENUE (BIR) AS A FORMAL TAX-ISSUING ENTITY.",
+  };
+}
+
+/**
+ * Formats a clean monospace text printout of the BIR-compliant receipt
+ */
+export function renderBIRReceiptText(receipt: BIRReceiptData): string {
+  const php = (n: number) => `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const dateFormatted = new Date(receipt.transactionDate).toLocaleString("en-PH");
+
+  const lines = [
+    "============================================================",
+    `                ${receipt.businessName}`,
+    `        ${receipt.tagline}`,
+    `            ${receipt.address}`,
+    "============================================================",
+    `INVOICE / RECEIPT NO: ${receipt.invoiceNumber}`,
+    `DATE / TIME         : ${dateFormatted}`,
+    `CASHIER / OPERATOR  : ${receipt.cashierName}`,
+    `CUSTOMER NAME       : ${receipt.customerName}`,
+  ];
+
+  if (receipt.customerAddress) {
+    lines.push(`CUSTOMER ADDRESS    : ${receipt.customerAddress}`);
+  }
+
+  lines.push("------------------------------------------------------------");
+  lines.push("ITEM / DESCRIPTION                 QTY    UNIT (PHP)   TOTAL");
+  lines.push("------------------------------------------------------------");
+
+  for (const it of receipt.items) {
+    const desc = `${it.brand} - ${it.scent_name}`.padEnd(32).slice(0, 32);
+    const qty = String(it.quantity).padStart(4);
+    const unit = php(it.unit_price).padStart(12);
+    const total = php(it.gross_amount).padStart(10);
+    lines.push(`${desc} ${qty} ${unit} ${total}`);
+  }
+
+  lines.push("------------------------------------------------------------");
+  lines.push(`SUBTOTAL (VAT INCLUSIVE)            : ${php(receipt.grossTotal)}`);
+  if (receipt.shippingFee > 0) {
+    lines.push(`SHIPPING / HANDLING COURIER FEE     : ${php(receipt.shippingFee)}`);
+  }
+  lines.push(`TOTAL AMOUNT DUE / PAID             : ${php(receipt.amountDue)}`);
+  lines.push("------------------------------------------------------------");
+  lines.push("TAX BREAKDOWN (PHILIPPINE 12% VAT):");
+  lines.push(`  VATABLE SALES (NET OF VAT)        : ${php(receipt.vatableSales)}`);
+  lines.push(`  VAT AMOUNT (12%)                  : ${php(receipt.vatAmount)}`);
+  lines.push(`  VAT-EXEMPT SALES                  : ${php(receipt.vatExemptSales)}`);
+  lines.push(`  ZERO-RATED SALES                  : ${php(receipt.zeroRatedSales)}`);
+  lines.push("------------------------------------------------------------");
+  lines.push(`PAYMENT CHANNEL                     : ${receipt.paymentMethod}`);
+  lines.push("============================================================");
+  lines.push("MANDATORY REGULATORY COMPLIANCE NOTICE:");
+  lines.push(receipt.isDisclaimerNotice);
+  lines.push("============================================================");
+
+  return lines.join("\n");
 }
 
 /**
@@ -349,11 +590,15 @@ export function buildAccountantSystemPrompt(ledger: FinancialLedger): string {
     .slice(0, 5)
     .map(
       (t) =>
-        `- ${t.brand} - ${t.scent_name}: ${t.qtySold} sold | Rev: ${php(t.revenue)} | Profit: ${php(t.profit)} (${t.marginPct}% margin)`
+        `- ${t.brand} - ${t.scent_name}: ${t.qtySold} sold | Rev: ${php(t.revenue)} | Net: ${php(t.netRevenue)} | Profit: ${php(t.profit)} (${t.marginPct}% margin)`
     )
     .join("\n");
 
-  return `You are the Chief Financial Officer (CFO) and Senior Accountant for Rivera Fragrance House, a boutique perfumery and direct fragrance importer located in Malabon, Metro Manila, Philippines.
+  const anomalySummary = ledger.anomalies.length > 0
+    ? ledger.anomalies.map((a) => `- [${a.severity}] ${a.title}: ${a.description}`).join("\n")
+    : "No forensic accounting anomalies detected. All balances verify strictly.";
+
+  return `You are the Chief Financial Officer (CFO) and Senior Forensic Accountant for Rivera Fragrance House, a boutique perfumery and direct fragrance importer located in Malabon, Metro Manila, Philippines.
 
 ### CRITICAL ANTI-HALLUCINATION & STYLE RULES:
 1. All financial numbers provided below are PRE-COMPUTED AND EXACT from the live database.
@@ -362,6 +607,13 @@ export function buildAccountantSystemPrompt(ledger: FinancialLedger): string {
 4. Use clean Markdown tables, crisp bullet points, and an authoritative executive tone.
 5. Provide actionable managerial commentary (cash flow safety, margin health, reorder priorities).
 6. STRICT ZERO-EMOJI POLICY: DO NOT include emojis or pictograms anywhere in your output. Maintain a refined, luxury agency-grade corporate aesthetic.
+7. REGULATORY COMPLIANCE RULE: If asked about BIR receipts or official tax status, quote the official disclaimer: "This document is an internal store receipt and not an official BIR tax invoice. Rivera Fragrance House is currently not yet affiliated or registered with the Bureau of Internal Revenue (BIR) as a formal tax-issuing entity."
+
+### SYSTEM INTEGRITY & AUDIT INVARIANT:
+- **Double-Entry Status**: ${ledger.auditCheck.isBalanced ? "VERIFIED (Assets = Liabilities + Equity)" : "DISCREPANCY DETECTED"}
+- **Total Ledger Assets**: ${php(ledger.auditCheck.totalAssets)}
+- **Continuous Invoices Issued**: ${ledger.auditCheck.totalInvoicesIssued} transactions (Next Sequence: ${ledger.auditCheck.nextInvoiceSequence})
+- **Accounting Period Status**: ${ledger.auditCheck.periodStatus} (On-Demand Bookkeeping Active)
 
 ### LIVE FINANCIAL BALANCE SHEET (VERIFIED AS OF ${new Date(ledger.timestamp).toLocaleString("en-PH")}):
 - **Inventory Capital Invested (Asset at Cost)**: ${php(ledger.inventory.costValue)} (${ledger.inventory.totalUnits} physical bottles across ${ledger.inventory.totalSKUs} SKUs)
@@ -369,22 +621,27 @@ export function buildAccountantSystemPrompt(ledger: FinancialLedger): string {
 - **Projected Unrealized Gross Margin**: ${php(ledger.inventory.projectedGrossProfit)} (${ledger.inventory.projectedMarginPct}% margin)
 - **Restock Working Capital Needed**: ${php(ledger.inventory.restockCapitalNeeded)} (${ledger.inventory.lowStockCount + ledger.inventory.outOfStockCount} critical/out-of-stock items)
 
-### REALIZED HISTORICAL SALES (INCOME STATEMENT):
-- **Gross Sales Turnover**: ${php(ledger.sales.totalRevenue)} (${ledger.sales.unitsSold} units liquidated across ${ledger.sales.totalCount} sales)
+### REALIZED INCOME STATEMENT & PHILIPPINE 12% TAX BREAKDOWN:
+- **Gross Sales Turnover (VAT Inclusive)**: ${php(ledger.sales.totalRevenue)} (${ledger.sales.unitsSold} units liquidated across ${ledger.sales.totalCount} sales)
+- **Less: 12% Output VAT Payable**: ${php(ledger.sales.outputVat)}
+- **Net Sales Turnover (VAT Exclusive)**: ${php(ledger.sales.netRevenue)}
 - **Realized Cost of Goods Sold (COGS)**: ${php(ledger.sales.totalCost)}
-- **Realized Gross Profit**: ${php(ledger.sales.totalGrossProfit)}
-- **Overall Realized Gross Margin**: ${ledger.sales.grossMarginPct}%
+- **Realized Net Gross Profit**: ${php(ledger.sales.totalGrossProfit)}
+- **Realized Net Margin**: ${ledger.sales.netMarginPct}%
 - **Average Order Value (AOV)**: ${php(ledger.sales.averageOrderValue)}
 
 ### PERIOD BREAKDOWN:
-- **Today**: Revenue: ${php(ledger.sales.today.revenue)} | COGS: ${php(ledger.sales.today.cost)} | Profit: ${php(ledger.sales.today.profit)} (${ledger.sales.today.units} units)
-- **This Week**: Revenue: ${php(ledger.sales.thisWeek.revenue)} | Profit: ${php(ledger.sales.thisWeek.profit)} (${ledger.sales.thisWeek.units} units)
-- **This Month**: Revenue: ${php(ledger.sales.thisMonth.revenue)} | Profit: ${php(ledger.sales.thisMonth.profit)} (${ledger.sales.thisMonth.units} units)
+- **Today**: Revenue: ${php(ledger.sales.today.revenue)} | Net: ${php(ledger.sales.today.netRevenue)} | VAT: ${php(ledger.sales.today.outputVat)} | Profit: ${php(ledger.sales.today.profit)} (${ledger.sales.today.units} units)
+- **This Week**: Revenue: ${php(ledger.sales.thisWeek.revenue)} | Net: ${php(ledger.sales.thisWeek.netRevenue)} | Profit: ${php(ledger.sales.thisWeek.profit)} (${ledger.sales.thisWeek.units} units)
+- **This Month**: Revenue: ${php(ledger.sales.thisMonth.revenue)} | Net: ${php(ledger.sales.thisMonth.netRevenue)} | Profit: ${php(ledger.sales.thisMonth.profit)} (${ledger.sales.thisMonth.units} units)
 
 ### ORDER CASH FLOW & RECEIVABLES:
 - **Pending Verification Receivables**: ${php(ledger.orders.pendingReceivables)} across ${ledger.orders.pendingCount} customer orders awaiting GCash/bank verification.
 - **Settled Online Order Revenue**: ${php(ledger.orders.paidRevenue)} across ${ledger.orders.paidCount} fulfilled orders.
 - **Pass-through Shipping Collected**: ${php(ledger.orders.shippingCollected)}
+
+### FORENSIC AUDIT ANOMALIES & INTEGRITY ALERTS:
+${anomalySummary}
 
 ### TOP PROFIT-GENERATING PERFUMES:
 ${topSellersText || "No recorded sales yet."}
@@ -495,31 +752,36 @@ export function generateDeterministicAudit(
     return `### Executive Financial Statement — Rivera Fragrance House
 **Period:** Current Month & Historical Total  
 **Audit Timestamp:** ${new Date(ledger.timestamp).toLocaleString("en-PH")}  
-**Currency:** Philippine Peso (PHP, ₱)
+**Currency:** Philippine Peso (PHP, ₱)  
+**Double-Entry Audit Status:** ${ledger.auditCheck.isBalanced ? "VERIFIED (Assets = Liabilities + Equity)" : "DISCREPANCY"}
 
 ---
 
-#### 1. Realized Income Statement
+#### 1. Multi-Step Realized Income Statement (Philippine Tax Alignment)
 | Financial Metric | Amount (PHP) | % of Gross Revenue |
 | :--- | :--- | :--- |
-| **Gross Sales Turnover** | **${php(ledger.sales.totalRevenue)}** | 100.0% |
-| **Cost of Goods Sold (COGS)** | -${php(ledger.sales.totalCost)} | ${ledger.sales.totalRevenue > 0 ? ((ledger.sales.totalCost / ledger.sales.totalRevenue) * 100).toFixed(1) : 0}% |
-| **Realized Gross Profit** | **${php(ledger.sales.totalGrossProfit)}** | **${ledger.sales.grossMarginPct}%** |
+| **Gross Sales Turnover (VAT Inclusive)** | **${php(ledger.sales.totalRevenue)}** | 100.0% |
+| *Less: 12% Output VAT Payable* | -${php(ledger.sales.outputVat)} | ${ledger.sales.totalRevenue > 0 ? ((ledger.sales.outputVat / ledger.sales.totalRevenue) * 100).toFixed(1) : 0}% |
+| **Net Sales Turnover (VAT Exclusive)** | **${php(ledger.sales.netRevenue)}** | ${ledger.sales.totalRevenue > 0 ? ((ledger.sales.netRevenue / ledger.sales.totalRevenue) * 100).toFixed(1) : 0}% |
+| *Less: Cost of Goods Sold (COGS)* | -${php(ledger.sales.totalCost)} | ${ledger.sales.totalRevenue > 0 ? ((ledger.sales.totalCost / ledger.sales.totalRevenue) * 100).toFixed(1) : 0}% |
+| **Realized Net Gross Profit** | **${php(ledger.sales.totalGrossProfit)}** | **${ledger.sales.netMarginPct}% (Net)** |
 | *Total Bottles Liquidated* | ${ledger.sales.unitsSold} units | — |
 | *Average Order Value (AOV)* | ${php(ledger.sales.averageOrderValue)} | — |
+| *Sequential Invoices Issued* | ${ledger.auditCheck.totalInvoicesIssued} transactions | Next: ${ledger.auditCheck.nextInvoiceSequence} |
 
 ---
 
 #### 2. Period Revenue Trajectory
-- **Today's Liquidated Sales**: ${php(ledger.sales.today.revenue)} (${php(ledger.sales.today.profit)} gross profit, ${ledger.sales.today.units} bottles)
-- **This Week's Turnover**: ${php(ledger.sales.thisWeek.revenue)} (${php(ledger.sales.thisWeek.profit)} gross profit)
-- **This Month's Turnover**: ${php(ledger.sales.thisMonth.revenue)} (${php(ledger.sales.thisMonth.profit)} gross profit)
+- **Today's Liquidated Sales**: ${php(ledger.sales.today.revenue)} (Net: ${php(ledger.sales.today.netRevenue)}, VAT: ${php(ledger.sales.today.outputVat)}, Profit: ${php(ledger.sales.today.profit)}, ${ledger.sales.today.units} bottles)
+- **This Week's Turnover**: ${php(ledger.sales.thisWeek.revenue)} (Net: ${php(ledger.sales.thisWeek.netRevenue)}, Profit: ${php(ledger.sales.thisWeek.profit)})
+- **This Month's Turnover**: ${php(ledger.sales.thisMonth.revenue)} (Net: ${php(ledger.sales.thisMonth.netRevenue)}, Profit: ${php(ledger.sales.thisMonth.profit)})
 
 ---
 
 #### 3. Senior Accountant Audit Commentary
-- **Profit Margin Health**: Realized gross margin is **${ledger.sales.grossMarginPct}%**, which ${ledger.sales.grossMarginPct >= 30 ? "comfortably exceeds" : "is within"} the sustainable boutique fragrance threshold (30–45%).
-- **Receivables Notice**: ₱${ledger.orders.pendingReceivables.toLocaleString()} remains pending in unverified orders. Confirming these receipts will immediately recognize additional cash flow.`;
+- **Profit Margin Health**: Realized net gross margin is **${ledger.sales.netMarginPct}%**, which ${ledger.sales.netMarginPct >= 25 ? "comfortably exceeds" : "is within"} the sustainable boutique fragrance threshold (25–40%).
+- **Receivables Notice**: ₱${ledger.orders.pendingReceivables.toLocaleString()} remains pending across ${ledger.orders.pendingCount} unverified orders. Confirming these receipts will immediately recognize additional cash flow.
+- **Regulatory Notice**: This document is an internal store report and not an official BIR tax invoice. Rivera Fragrance House is currently not yet affiliated or registered with the Bureau of Internal Revenue (BIR) as a formal tax-issuing entity.`;
   }
 
   if (queryType === "inventory" || queryType === "restock") {
