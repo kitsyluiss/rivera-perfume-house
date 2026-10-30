@@ -228,12 +228,61 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
     }
   }, [appsScriptCode]);
 
+  // Lock body scroll and pause Lenis when any modal is open
+  useEffect(() => {
+    const isAnyModalOpen = apiKeyModalOpen || sheetsModalOpen || restockModalOpen;
+    const lenis = typeof window !== "undefined" ? (window as any).__lenis : null;
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
+      lenis?.stop();
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.body.classList.remove("modal-open");
+      lenis?.start();
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.body.classList.remove("modal-open");
+      lenis?.start();
+    };
+  }, [apiKeyModalOpen, sheetsModalOpen, restockModalOpen]);
+
+  // Handle ESC key to dismiss modals
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (sheetsModalOpen) setSheetsModalOpen(false);
+        if (restockModalOpen) setRestockModalOpen(false);
+        if (apiKeyModalOpen) setApiKeyModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [sheetsModalOpen, restockModalOpen, apiKeyModalOpen]);
+
   // Track user scroll position so scrolling up is never blocked
   const handleChatScroll = () => {
     if (!chatScrollRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = chatScrollRef.current;
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-    setUserScrolledUp(distanceFromBottom > 80);
+    setUserScrolledUp(distanceFromBottom > 25);
+  };
+
+  // Immediate detection on 2-finger trackpad or wheel scroll up
+  const handleChatWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY < 0) {
+      setUserScrolledUp(true);
+    } else if (chatScrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatScrollRef.current;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      if (distanceFromBottom <= 20) {
+        setUserScrolledUp(false);
+      }
+    }
   };
 
   const scrollToBottom = (smooth = true) => {
@@ -855,7 +904,9 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
         <div
           ref={chatScrollRef}
           onScroll={handleChatScroll}
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-6 scroll-smooth"
+          onWheel={handleChatWheel}
+          data-lenis-prevent="true"
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-6"
         >
           {messages.map((msg) => (
             <motion.div
@@ -965,7 +1016,10 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                         </blockquote>
                       ),
                       table: ({ children }) => (
-                        <div className="overflow-x-auto my-3 rounded-xl border border-white/10 bg-black/40 shadow-inner">
+                        <div
+                          className="overflow-x-auto overscroll-contain my-3 rounded-xl border border-white/10 bg-black/40 shadow-inner"
+                          data-lenis-prevent="true"
+                        >
                           <table className="w-full text-left border-collapse text-xs font-mono">
                             {children}
                           </table>
@@ -1065,11 +1119,18 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
       {/* ── 4. API Key Configuration Modal ─────────────────────────────────── */}
       <AnimatePresence>
         {apiKeyModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            data-lenis-prevent="true"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setApiKeyModalOpen(false);
+            }}
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              data-lenis-prevent="true"
               className="w-full max-w-md rounded-3xl border border-white/10 bg-card p-6 shadow-2xl relative"
             >
               <button
@@ -1142,12 +1203,19 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
       {/* ── 5. Google Sheets Sync Modal ────────────────────────────────────── */}
       <AnimatePresence>
         {sheetsModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            data-lenis-prevent="true"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setSheetsModalOpen(false);
+            }}
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-card p-6 shadow-2xl relative"
+              data-lenis-prevent="true"
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain rounded-3xl border border-white/10 bg-card p-6 shadow-2xl relative"
             >
               <button
                 type="button"
@@ -1622,11 +1690,18 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
       {/* ── 6. Restock Priority Register Modal ─────────────────────────────── */}
       <AnimatePresence>
         {restockModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md"
+            data-lenis-prevent="true"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setRestockModalOpen(false);
+            }}
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              data-lenis-prevent="true"
               className="w-full max-w-4xl max-h-[90vh] rounded-3xl border border-white/10 bg-card p-5 sm:p-7 shadow-2xl relative flex flex-col overflow-hidden"
             >
               {/* Close Button */}
@@ -1721,7 +1796,10 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
               </div>
 
               {/* Scrollable Restock Table */}
-              <div className="flex-1 overflow-auto rounded-xl border border-white/10 bg-black/40 min-h-0">
+              <div
+                className="flex-1 overflow-auto overscroll-contain rounded-xl border border-white/10 bg-black/40 min-h-0"
+                data-lenis-prevent="true"
+              >
                 <table className="w-full text-left border-collapse text-xs font-mono">
                   <thead className="sticky top-0 bg-[#161616] text-[#e1b854] uppercase tracking-wider text-[10px] border-b border-white/10 z-10">
                     <tr>
