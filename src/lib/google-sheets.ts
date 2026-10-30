@@ -455,3 +455,101 @@ function updateSheet(ss, sheetName, rows, isSummary) {
 }
 `;
 }
+
+/**
+ * Formats a sheet array into tab-separated values (TSV) for instant Cmd+V paste into Google Sheets
+ */
+export function formatSheetToTsv(rows: any[][]): string {
+  return rows
+    .map((row) =>
+      row
+        .map((cell) => {
+          if (cell === null || cell === undefined) return "";
+          return String(cell).replace(/\t/g, " ").replace(/\n/g, " ");
+        })
+        .join("\t")
+    )
+    .join("\n");
+}
+
+/**
+ * Builds a multi-tab XML Spreadsheet (.xls) file that opens natively in Google Sheets & Excel
+ */
+export function generateSpreadsheetXml(ledger: FinancialLedger): string {
+  const payload = prepareGoogleSheetsPayload(ledger);
+
+  const escapeXml = (str: any) => {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  };
+
+  const renderTable = (rows: any[][]) => {
+    return rows
+      .map((row, rIdx) => {
+        const isHeader = rIdx === 0;
+        const cells = row
+          .map((cell) => {
+            const isNum = typeof cell === "number";
+            const type = isNum ? "Number" : "String";
+            const style = isHeader ? ' ss:StyleID="HeaderStyle"' : isNum ? ' ss:StyleID="NumStyle"' : "";
+            return `<Cell${style}><Data ss:Type="${type}">${escapeXml(cell)}</Data></Cell>`;
+          })
+          .join("");
+        return `<Row>${cells}</Row>`;
+      })
+      .join("\n");
+  };
+
+  return `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Center"/>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#000000"/>
+  </Style>
+  <Style ss:ID="HeaderStyle">
+   <Alignment ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e1b854"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#e1b854"/>
+   <Interior ss:Color="#1a1a1a" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="NumStyle">
+   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+   <NumberFormat ss:Format="#,##0.00"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Executive_Summary">
+  <Table>
+   ${renderTable(payload.sheets.Executive_Summary)}
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Brand_Allocation">
+  <Table>
+   ${renderTable(payload.sheets.Brand_Allocation)}
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Restock_Forecast">
+  <Table>
+   ${renderTable(payload.sheets.Restock_Forecast)}
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Top_Profit_Makers">
+  <Table>
+   ${renderTable(payload.sheets.Top_Profit_Makers)}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+}
+

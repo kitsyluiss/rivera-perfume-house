@@ -38,6 +38,11 @@ import { formatPhp } from "@/lib/format";
 import { toast } from "sonner";
 import { Perfume, Sale, Order } from "@/lib/types";
 import { FinancialLedger, calculateFinancialLedger } from "@/lib/accountant-engine";
+import {
+  prepareGoogleSheetsPayload,
+  formatSheetToTsv,
+  generateSpreadsheetXml,
+} from "@/lib/google-sheets";
 
 interface AccountantAssistantProps {
   perfumes: Perfume[];
@@ -97,8 +102,11 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
   const [oauthLoading, setOauthLoading] = useState(false);
   const [oauthSpreadsheetId, setOauthSpreadsheetId] = useState("");
   const [oauthSpreadsheetUrl, setOauthSpreadsheetUrl] = useState<string | null>(null);
-  const [activeSheetsMode, setActiveSheetsMode] = useState<"oauth" | "webhook">("oauth");
+  const [activeSheetsMode, setActiveSheetsMode] = useState<"easy" | "live" | "oauth">("easy");
   const [copiedRedirectUri, setCopiedRedirectUri] = useState<string | null>(null);
+  const [oauthClientSecret, setOauthClientSecret] = useState("");
+  const [copiedTab, setCopiedTab] = useState<string | null>(null);
+  const [copiedFeed, setCopiedFeed] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // Recalculate local ledger when props change
@@ -121,10 +129,36 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
         setOauthSpreadsheetId(savedOauthId);
         setOauthSpreadsheetUrl(`https://docs.google.com/spreadsheets/d/${savedOauthId}/edit`);
       }
+      const savedSecret = localStorage.getItem("rivera_oauth_client_secret");
+      if (savedSecret) setOauthClientSecret(savedSecret);
     } catch {
       // Ignore localStorage access errors
     }
   }, []);
+
+  const handleDownloadXmlWorkbook = () => {
+    const xmlContent = generateSpreadsheetXml(ledger);
+    const blob = new Blob([xmlContent], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Rivera_Fragrance_House_Ledger_${new Date().toISOString().split("T")[0]}.xls`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Downloaded 4-tab workbook! Drag into Google Drive to open directly in Google Sheets.");
+  };
+
+  const handleCopyTabTsv = (
+    tabKey: "Executive_Summary" | "Brand_Allocation" | "Restock_Forecast" | "Top_Profit_Makers",
+    title: string
+  ) => {
+    const payload = prepareGoogleSheetsPayload(ledger);
+    const tsv = formatSheetToTsv(payload.sheets[tabKey]);
+    navigator.clipboard.writeText(tsv);
+    setCopiedTab(tabKey);
+    toast.success(`Copied "${title}"! In Google Sheets, click cell A1 and press Cmd+V (or Ctrl+V).`);
+    setTimeout(() => setCopiedTab(null), 2500);
+  };
 
   const checkOAuthStatus = useCallback(async () => {
     try {
@@ -1030,6 +1064,28 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
               <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/10 mb-5">
                 <button
                   type="button"
+                  onClick={() => setActiveSheetsMode("easy")}
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono transition-all ${
+                    activeSheetsMode === "easy"
+                      ? "bg-[#e1b854] text-black font-semibold shadow-md"
+                      : "text-muted-foreground hover:text-white"
+                  }`}
+                >
+                  1-Click Sheets (Easiest)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSheetsMode("live")}
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono transition-all ${
+                    activeSheetsMode === "live"
+                      ? "bg-[#e1b854] text-black font-semibold shadow-md"
+                      : "text-muted-foreground hover:text-white"
+                  }`}
+                >
+                  Live Auto-Sync (=IMPORTDATA)
+                </button>
+                <button
+                  type="button"
                   onClick={() => setActiveSheetsMode("oauth")}
                   className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono transition-all ${
                     activeSheetsMode === "oauth"
@@ -1037,22 +1093,204 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                       : "text-muted-foreground hover:text-white"
                   }`}
                 >
-                  Google OAuth 2.0 (Recommended)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveSheetsMode("webhook")}
-                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono transition-all ${
-                    activeSheetsMode === "webhook"
-                      ? "bg-[#e1b854] text-black font-semibold shadow-md"
-                      : "text-muted-foreground hover:text-white"
-                  }`}
-                >
-                  Apps Script Webhook
+                  Google Cloud OAuth
                 </button>
               </div>
 
-              {/* ── TAB 1: GOOGLE OAUTH 2.0 ──────────────────────────────────── */}
+              {/* ── TAB 1: 1-CLICK EASY COPY & DOWNLOAD (RECOMMENDED) ──────── */}
+              {activeSheetsMode === "easy" && (
+                <div className="space-y-4">
+                  {/* Step 1: Open Google Sheets */}
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-mono uppercase tracking-wider text-[#e1b854]">
+                        Step 1: Open Your Spreadsheet
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-400">Zero Cloud Setup Required</span>
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={() => window.open("https://sheets.new", "_blank")}
+                      className="w-full bg-[#e1b854] hover:bg-white text-black font-semibold text-xs h-11 gap-2 shadow-lg"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      <span>Open New Blank Google Sheet (sheets.new)</span>
+                    </Button>
+                    <p className="text-[11px] text-muted-foreground font-body">
+                      Opens Google Sheets in your browser with your active Google account (<strong className="text-white">LuisRivera24349@gmail.com</strong>).
+                    </p>
+                  </div>
+
+                  {/* Step 2: 1-Click Copy Tabs */}
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-mono uppercase tracking-wider text-white/90">
+                        Step 2: Copy Tab Data (Click to copy &bull; Press Cmd+V in cell A1)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => handleCopyTabTsv("Executive_Summary", "Executive Balance Sheet")}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
+                      >
+                        <div>
+                          <div className="font-medium text-white/95">Tab 1: Executive Balance Sheet</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">Valuation, P&amp;L, Receivables</div>
+                        </div>
+                        {copiedTab === "Executive_Summary" ? (
+                          <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-[#e1b854] shrink-0" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyTabTsv("Brand_Allocation", "Brand Capital Allocation")}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
+                      >
+                        <div>
+                          <div className="font-medium text-white/95">Tab 2: Brand Allocation</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">Rasasi, Lattafa, French Ave</div>
+                        </div>
+                        {copiedTab === "Brand_Allocation" ? (
+                          <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-[#e1b854] shrink-0" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyTabTsv("Restock_Forecast", "Restock Forecast")}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
+                      >
+                        <div>
+                          <div className="font-medium text-white/95">Tab 3: Restock Forecast</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">Low-stock &le; 2 replenishment</div>
+                        </div>
+                        {copiedTab === "Restock_Forecast" ? (
+                          <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-[#e1b854] shrink-0" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyTabTsv("Top_Profit_Makers", "Top Margin Champions")}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
+                      >
+                        <div>
+                          <div className="font-medium text-white/95">Tab 4: Top Margin Champions</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">Ranked by gross margin</div>
+                        </div>
+                        {copiedTab === "Top_Profit_Makers" ? (
+                          <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-[#e1b854] shrink-0" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Option B: Download Full 4-Tab Spreadsheet */}
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div>
+                      <div className="font-medium text-xs text-white">Download Multi-Tab Formatted Workbook (.xls)</div>
+                      <p className="text-[11px] text-muted-foreground font-body mt-0.5">
+                        Contains all 4 tabs pre-formatted with Rivera gold headers. Drag into Google Drive to open directly in Google Sheets.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleDownloadXmlWorkbook}
+                      className="bg-white/10 hover:bg-white text-white hover:text-black font-semibold text-xs h-10 px-4 shrink-0 gap-1.5 transition-all"
+                    >
+                      <Download className="h-4 w-4 text-[#e1b854]" />
+                      <span>Download Workbook</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── TAB 2: LIVE AUTO-SYNC VIA =IMPORTDATA ────────────────────── */}
+              {activeSheetsMode === "live" && (
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-2">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-[#e1b854] block">
+                      Live Formulas (Real-Time Cloud Synchronization)
+                    </span>
+                    <p className="text-xs text-muted-foreground font-body leading-relaxed">
+                      In your Google Sheet, create a tab and paste the formula below into cell <strong className="text-white">A1</strong>. Google Sheets will automatically pull fresh figures directly from your inventory database whenever the spreadsheet is opened.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {[
+                      {
+                        name: "Tab 1: Executive_Summary",
+                        formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=summary")',
+                        id: "summary",
+                      },
+                      {
+                        name: "Tab 2: Brand_Allocation",
+                        formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=brands")',
+                        id: "brands",
+                      },
+                      {
+                        name: "Tab 3: Restock_Forecast",
+                        formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=restock")',
+                        id: "restock",
+                      },
+                      {
+                        name: "Tab 4: Top_Profit_Makers",
+                        formula: '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=top_sellers")',
+                        id: "top_sellers",
+                      },
+                    ].map((feed) => (
+                      <div
+                        key={feed.id}
+                        className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-medium text-white/90">{feed.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(feed.formula);
+                              setCopiedFeed(feed.id);
+                              toast.success(`Formula for ${feed.name} copied!`);
+                              setTimeout(() => setCopiedFeed(null), 2000);
+                            }}
+                            className="text-[10px] font-mono text-[#e1b854] hover:underline flex items-center gap-1"
+                          >
+                            {copiedFeed === feed.id ? (
+                              <>
+                                <Check className="h-3 w-3 text-emerald-400" />
+                                <span>Copied Formula!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3 w-3" />
+                                <span>Copy Formula</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <code className="block text-[11px] font-mono text-white/70 bg-black/50 p-2 rounded-lg overflow-x-auto truncate">
+                          {feed.formula}
+                        </code>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── TAB 3: GOOGLE CLOUD OAUTH ─────────────────────────────────── */}
               {activeSheetsMode === "oauth" && (
                 <div className="space-y-4">
                   {/* Connection Card */}
@@ -1083,14 +1321,34 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                     </div>
 
                     {!oauthConnected ? (
-                      <Button
-                        type="button"
-                        onClick={handleOAuthConnect}
-                        className="w-full bg-white hover:bg-white/90 text-black font-semibold text-xs h-11 gap-2 shadow-lg"
-                      >
-                        <Globe className="h-4 w-4 text-emerald-600" />
-                        <span>Connect Google Account via OAuth</span>
-                      </Button>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
+                            OAuth Client Secret (from your Google Cloud Console)
+                          </label>
+                          <input
+                            type="password"
+                            value={oauthClientSecret}
+                            onChange={(e) => {
+                              setOauthClientSecret(e.target.value);
+                              try {
+                                localStorage.setItem("rivera_oauth_client_secret", e.target.value.trim());
+                              } catch {}
+                            }}
+                            placeholder="GOCSPX-..."
+                            className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs text-foreground font-mono focus:outline-none focus:border-[#e1b854] placeholder:text-muted-foreground/60"
+                          />
+                        </div>
+
+                        <Button
+                          type="button"
+                          onClick={handleOAuthConnect}
+                          className="w-full bg-white hover:bg-white/90 text-black font-semibold text-xs h-11 gap-2 shadow-lg"
+                        >
+                          <Globe className="h-4 w-4 text-emerald-600" />
+                          <span>Connect Google Account via OAuth</span>
+                        </Button>
+                      </div>
                     ) : (
                       <div className="space-y-3 pt-1">
                         <div>
@@ -1145,183 +1403,6 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     )}
-                  </div>
-
-                  {/* Required GCP Console Configuration Box */}
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-white font-medium text-xs">
-                      <Key className="h-4 w-4 text-[#e1b854]" />
-                      <span>Google Cloud Console Configuration Checklist</span>
-                    </div>
-
-                    <div className="space-y-2 text-xs font-body text-muted-foreground leading-relaxed">
-                      {/* Redirect URIs */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-white/90 font-medium">
-                            1. Add Authorized Redirect URI in Google Cloud Console:
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground mb-2">
-                          Google requires an exact match. If you saw <code className="text-rose-400">Error 400: redirect_uri_mismatch</code>, click your Client ID in Google Cloud Console, add the URI below under <strong>Authorized redirect URIs</strong>, and click <strong>Save</strong>.
-                        </p>
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/40 border border-white/10 font-mono text-[10px] text-[#e1b854]">
-                            <span className="truncate">https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-oauth/callback</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-oauth/callback");
-                                setCopiedRedirectUri("prod");
-                                toast.success("Production Redirect URI copied!");
-                                setTimeout(() => setCopiedRedirectUri(null), 2000);
-                              }}
-                              className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white shrink-0 flex items-center gap-1"
-                            >
-                              {copiedRedirectUri === "prod" ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-                              <span>{copiedRedirectUri === "prod" ? "Copied" : "Copy"}</span>
-                            </button>
-                          </div>
-
-                          <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/40 border border-white/10 font-mono text-[10px] text-white/70">
-                            <span className="truncate">http://localhost:3001/api/admin/accountant/sheets-oauth/callback</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText("http://localhost:3001/api/admin/accountant/sheets-oauth/callback");
-                                setCopiedRedirectUri("local");
-                                toast.success("Localhost Redirect URI copied!");
-                                setTimeout(() => setCopiedRedirectUri(null), 2000);
-                              }}
-                              className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white shrink-0 flex items-center gap-1"
-                            >
-                              {copiedRedirectUri === "local" ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-                              <span>{copiedRedirectUri === "local" ? "Copied" : "Copy"}</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Test Users Warning from Screenshot */}
-                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 space-y-1">
-                        <div className="flex items-center gap-1.5 font-medium text-amber-300">
-                          <ShieldAlert className="h-3.5 w-3.5 text-amber-400" />
-                          <span>Important: Add Test Users in OAuth Consent Screen</span>
-                        </div>
-                        <p>
-                          Google restricts testing apps to registered <strong>Test users</strong>. Go to{" "}
-                          <strong className="text-white">Google Cloud Console &gt; APIs &amp; Services &gt; OAuth consent screen &gt; Test users</strong>{" "}
-                          and click <strong className="text-white">+ ADD USERS</strong> to add your email (<code className="text-white">LuisRivera24349@gmail.com</code>). Otherwise Google returns <code>Error 403: access_denied</code>.
-                        </p>
-                      </div>
-
-                      {/* Enabled APIs */}
-                      <div className="text-[11px] text-white/70">
-                        <strong className="text-white">APIs to enable:</strong> In Google Cloud Console, ensure both{" "}
-                        <span className="text-[#e1b854]">Google Sheets API v4</span> (<code>sheets.googleapis.com</code>) and{" "}
-                        <span className="text-[#e1b854]">Google Drive API v3</span> (<code>drive.googleapis.com</code>) are enabled.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ── TAB 2: APPS SCRIPT WEBHOOK ───────────────────────────────── */}
-              {activeSheetsMode === "webhook" && (
-                <div className="space-y-4">
-                  {/* Sync Action Card */}
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-                        Google Apps Script Webhook URL
-                      </label>
-                      {lastSyncedAt && (
-                        <span className="text-[10px] font-mono text-emerald-400">
-                          Last synced: {lastSyncedAt}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input
-                        type="url"
-                        value={sheetsWebhookUrl}
-                        onChange={(e) => setSheetsWebhookUrl(e.target.value)}
-                        placeholder="https://script.google.com/macros/s/.../exec"
-                        className="flex-1 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-xs text-foreground font-mono focus:outline-none focus:border-emerald-400 placeholder:text-muted-foreground/60"
-                      />
-                      <Button
-                        size="sm"
-                        disabled={sheetsSyncing || !sheetsWebhookUrl.trim()}
-                        onClick={handleSyncGoogleSheets}
-                        className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs h-10 px-4 shrink-0 gap-1.5"
-                      >
-                        {sheetsSyncing ? (
-                          <>
-                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                            <span>Syncing...</span>
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCw className="h-3.5 w-3.5" />
-                            <span>Sync to Sheet</span>
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Step-by-Step Setup Guide */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                      <span className="text-xs font-mono uppercase tracking-wider text-[#e1b854] flex items-center gap-1.5">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                        Apps Script Setup Instructions
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCopyScript}
-                        className="h-7 text-xs font-mono text-[#e1b854] hover:bg-[#e1b854]/10 gap-1"
-                      >
-                        {sheetsCopied ? (
-                          <>
-                            <Check className="h-3 w-3 text-emerald-400" />
-                            <span>Copied!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-3 w-3" />
-                            <span>Copy Script</span>
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                    <ol className="text-xs text-muted-foreground font-body space-y-2 list-decimal list-inside leading-relaxed">
-                      <li>
-                        Open a spreadsheet on{" "}
-                        <a
-                          href="https://sheets.new"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[#e1b854] underline inline-flex items-center gap-1"
-                        >
-                          Google Sheets (sheets.new)
-                          <ExternalLink className="h-3 w-3 inline" />
-                        </a>
-                      </li>
-                      <li>Click <strong className="text-white">Extensions &gt; Apps Script</strong>.</li>
-                      <li>Replace the code in <code className="text-[#e1b854]">Code.gs</code> with the script (click <strong>Copy Script</strong> above).</li>
-                      <li>
-                        Click <strong className="text-white">Deploy &gt; New deployment &gt; Web app</strong>:
-                        <ul className="list-disc list-inside ml-4 mt-1 text-[11px]">
-                          <li>Execute as: <strong className="text-white">Me</strong></li>
-                          <li>Who has access: <strong className="text-white">Anyone</strong></li>
-                        </ul>
-                      </li>
-                      <li>Copy the <strong className="text-white">Web app URL</strong> and paste it into the box above.</li>
-                    </ol>
                   </div>
                 </div>
               )}
