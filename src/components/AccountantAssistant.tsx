@@ -27,6 +27,10 @@ import {
   Copy,
   Check,
   ExternalLink,
+  ArrowDown,
+  LogOut,
+  Globe,
+  ShieldAlert,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -88,6 +92,13 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
   const [sheetsCopied, setSheetsCopied] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [appsScriptCode, setAppsScriptCode] = useState<string>("");
+  const [userScrolledUp, setUserScrolledUp] = useState(false);
+  const [oauthConnected, setOauthConnected] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
+  const [oauthSpreadsheetId, setOauthSpreadsheetId] = useState("");
+  const [oauthSpreadsheetUrl, setOauthSpreadsheetUrl] = useState<string | null>(null);
+  const [activeSheetsMode, setActiveSheetsMode] = useState<"oauth" | "webhook">("oauth");
+  const [copiedRedirectUri, setCopiedRedirectUri] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // Recalculate local ledger when props change
@@ -105,10 +116,51 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
       if (savedWebhook) setSheetsWebhookUrl(savedWebhook);
       const savedSync = localStorage.getItem("rivera_sheets_last_synced");
       if (savedSync) setLastSyncedAt(savedSync);
+      const savedOauthId = localStorage.getItem("rivera_sheets_oauth_id");
+      if (savedOauthId) {
+        setOauthSpreadsheetId(savedOauthId);
+        setOauthSpreadsheetUrl(`https://docs.google.com/spreadsheets/d/${savedOauthId}/edit`);
+      }
     } catch {
       // Ignore localStorage access errors
     }
   }, []);
+
+  const checkOAuthStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/accountant/sheets-oauth/status");
+      const data = await res.json();
+      if (data?.connected) {
+        setOauthConnected(true);
+      }
+    } catch {}
+  }, []);
+
+  // Check OAuth callback state on mount
+  useEffect(() => {
+    checkOAuthStatus();
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("oauth") === "success") {
+        toast.success("Google Account successfully connected! You can now sync directly.");
+        setOauthConnected(true);
+        setSheetsModalOpen(true);
+        setActiveSheetsMode("oauth");
+        const url = new URL(window.location.href);
+        url.searchParams.delete("oauth");
+        window.history.replaceState({}, document.title, url.toString());
+      } else if (params.get("oauth_error")) {
+        const err = params.get("oauth_error");
+        toast.error(`OAuth error: ${err}. Ensure your Google email is added to Test Users in Google Cloud Console.`);
+        setSheetsModalOpen(true);
+        setActiveSheetsMode("oauth");
+        const url = new URL(window.location.href);
+        url.searchParams.delete("oauth_error");
+        window.history.replaceState({}, document.title, url.toString());
+      }
+    }
+  }, [checkOAuthStatus]);
 
   // Fetch the Google Apps Script template code
   const loadAppsScriptCode = useCallback(async () => {
@@ -126,12 +178,30 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
     }
   }, [appsScriptCode]);
 
-  // Auto scroll to bottom of chat
-  useEffect(() => {
+  // Track user scroll position so scrolling up is never blocked
+  const handleChatScroll = () => {
+    if (!chatScrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatScrollRef.current;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    setUserScrolledUp(distanceFromBottom > 80);
+  };
+
+  const scrollToBottom = (smooth = true) => {
     if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTo({
+        top: chatScrollRef.current.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      });
+      setUserScrolledUp(false);
+    }
+  };
+
+  // Only auto-scroll down if user is at the bottom
+  useEffect(() => {
+    if (!userScrolledUp && chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
-  }, [messages, loading]);
+  }, [messages, loading, userScrolledUp]);
 
   const handleSaveApiKey = () => {
     try {
@@ -140,6 +210,61 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
       setApiKeyModalOpen(false);
     } catch {
       toast.error("Failed to save API key to local storage.");
+    }
+  };
+
+  const handleOAuthConnect = () => {
+    window.location.href = "/api/admin/accountant/sheets-oauth/authorize";
+  };
+
+  const handleOAuthDisconnect = async () => {
+    try {
+      await fetch("/api/admin/accountant/sheets-oauth/disconnect", { method: "POST" });
+      setOauthConnected(false);
+      setOauthSpreadsheetUrl(null);
+      toast.success("Google Account disconnected.");
+    } catch {
+      toast.error("Failed to disconnect Google Account.");
+    }
+  };
+
+  const handleOAuthSync = async () => {
+    setOauthLoading(true);
+    try {
+      const res = await fetch("/api/admin/accountant/sheets-oauth/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          spreadsheetId: oauthSpreadsheetId.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "OAuth Sync failed");
+      }
+
+      if (data.spreadsheetId) {
+        setOauthSpreadsheetId(data.spreadsheetId);
+        try {
+          localStorage.setItem("rivera_sheets_oauth_id", data.spreadsheetId);
+        } catch {}
+      }
+      if (data.spreadsheetUrl) {
+        setOauthSpreadsheetUrl(data.spreadsheetUrl);
+      }
+
+      const timestamp = new Date().toLocaleString("en-PH");
+      setLastSyncedAt(timestamp);
+      try {
+        localStorage.setItem("rivera_sheets_last_synced", timestamp);
+      } catch {}
+
+      toast.success("Google Sheets synchronized! 4 tabs updated with live financial records.");
+    } catch (err: any) {
+      toast.error(err?.message || "Sync failed. Ensure Google Sheets API v4 is enabled in Google Cloud Console.");
+    } finally {
+      setOauthLoading(false);
     }
   };
 
@@ -199,6 +324,10 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
+    setUserScrolledUp(false);
+    setTimeout(() => {
+      scrollToBottom(true);
+    }, 50);
 
     try {
       const res = await fetch("/api/admin/accountant", {
@@ -579,7 +708,11 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
       {/* ── 3. Conversational Accountant Workspace ────────────────────────── */}
       <Card className="rounded-[1.5rem] border-white/10 bg-card/70 backdrop-blur-2xl shadow-2xl overflow-hidden flex flex-col h-[650px] relative">
         {/* Chat message stream */}
-        <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+        <div
+          ref={chatScrollRef}
+          onScroll={handleChatScroll}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-6 scroll-smooth"
+        >
           {messages.map((msg) => (
             <motion.div
               key={msg.id}
@@ -741,6 +874,18 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
           )}
         </div>
 
+        {/* Floating scroll-to-latest button */}
+        {userScrolledUp && (
+          <button
+            type="button"
+            onClick={() => scrollToBottom(true)}
+            className="absolute bottom-24 right-6 z-20 flex items-center gap-1.5 rounded-full bg-[#e1b854] text-black px-3.5 py-1.5 text-xs font-mono font-semibold shadow-2xl hover:bg-white transition-all cursor-pointer border border-black/20"
+          >
+            <ArrowDown className="h-3.5 w-3.5" />
+            <span>Scroll to latest</span>
+          </button>
+        )}
+
         {/* Input form */}
         <div className="p-3 sm:p-4 border-t border-white/10 bg-black/40">
           <form
@@ -875,135 +1020,305 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                 <div>
                   <h3 className="font-display text-lg text-foreground">Google Sheets Synchronization</h3>
                   <span className="text-[10px] font-mono uppercase text-emerald-400">
-                    Live 4-Tab Ledger Sync &bull; 100% Free
+                    Live 4-Tab Ledger Sync &bull; Official Google Sheets API v4
                   </span>
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground font-body leading-relaxed mb-4">
-                Automatically formats and populates 4 tabs in your Google Sheet: <strong className="text-white">Executive_Summary</strong>, <strong className="text-white">Brand_Allocation</strong>, <strong className="text-white">Restock_Forecast</strong>, and <strong className="text-white">Top_Profit_Makers</strong> with Rivera styling.
-              </p>
-
-              {/* Sync Action Card */}
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3 mb-5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-                    Google Apps Script Webhook URL
-                  </label>
-                  {lastSyncedAt && (
-                    <span className="text-[10px] font-mono text-emerald-400">
-                      Last synced: {lastSyncedAt}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="url"
-                    value={sheetsWebhookUrl}
-                    onChange={(e) => setSheetsWebhookUrl(e.target.value)}
-                    placeholder="https://script.google.com/macros/s/.../exec"
-                    className="flex-1 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-xs text-foreground font-mono focus:outline-none focus:border-emerald-400 placeholder:text-muted-foreground/60"
-                  />
-                  <Button
-                    size="sm"
-                    disabled={sheetsSyncing || !sheetsWebhookUrl.trim()}
-                    onClick={handleSyncGoogleSheets}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs h-10 px-4 shrink-0 gap-1.5"
-                  >
-                    {sheetsSyncing ? (
-                      <>
-                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                        <span>Syncing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="h-3.5 w-3.5" />
-                        <span>Sync to Sheet</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
+              {/* Tab Selector */}
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/10 mb-5">
+                <button
+                  type="button"
+                  onClick={() => setActiveSheetsMode("oauth")}
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono transition-all ${
+                    activeSheetsMode === "oauth"
+                      ? "bg-[#e1b854] text-black font-semibold shadow-md"
+                      : "text-muted-foreground hover:text-white"
+                  }`}
+                >
+                  Google OAuth 2.0 (Recommended)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSheetsMode("webhook")}
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono transition-all ${
+                    activeSheetsMode === "webhook"
+                      ? "bg-[#e1b854] text-black font-semibold shadow-md"
+                      : "text-muted-foreground hover:text-white"
+                  }`}
+                >
+                  Apps Script Webhook
+                </button>
               </div>
 
-              {/* Step-by-Step Setup Guide */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                  <span className="text-xs font-mono uppercase tracking-wider text-[#e1b854] flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                    2-Minute Setup Instructions (Zero API Console Required)
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCopyScript}
-                    className="h-7 text-xs font-mono text-[#e1b854] hover:bg-[#e1b854]/10 gap-1"
-                  >
-                    {sheetsCopied ? (
-                      <>
-                        <Check className="h-3 w-3 text-emerald-400" />
-                        <span>Copied!</span>
-                      </>
+              {/* ── TAB 1: GOOGLE OAUTH 2.0 ──────────────────────────────────── */}
+              {activeSheetsMode === "oauth" && (
+                <div className="space-y-4">
+                  {/* Connection Card */}
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                        Google Account Connection
+                      </span>
+                      {oauthConnected ? (
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Connected
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleOAuthDisconnect}
+                            className="text-[10px] font-mono text-rose-400 hover:text-rose-300 underline"
+                          >
+                            Disconnect
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                          Not Connected
+                        </span>
+                      )}
+                    </div>
+
+                    {!oauthConnected ? (
+                      <Button
+                        type="button"
+                        onClick={handleOAuthConnect}
+                        className="w-full bg-white hover:bg-white/90 text-black font-semibold text-xs h-11 gap-2 shadow-lg"
+                      >
+                        <Globe className="h-4 w-4 text-emerald-600" />
+                        <span>Connect Google Account via OAuth</span>
+                      </Button>
                     ) : (
-                      <>
-                        <Copy className="h-3 w-3" />
-                        <span>Copy Script</span>
-                      </>
+                      <div className="space-y-3 pt-1">
+                        <div>
+                          <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
+                            Google Spreadsheet ID (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={oauthSpreadsheetId}
+                            onChange={(e) => setOauthSpreadsheetId(e.target.value)}
+                            placeholder="Leave empty to auto-create 'Rivera Fragrance House — Financial Ledger'"
+                            className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-xs text-foreground font-mono focus:outline-none focus:border-emerald-400 placeholder:text-muted-foreground/60"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 pt-1">
+                          {lastSyncedAt && (
+                            <span className="text-[10px] font-mono text-emerald-400">
+                              Last synced: {lastSyncedAt}
+                            </span>
+                          )}
+                          <Button
+                            type="button"
+                            disabled={oauthLoading}
+                            onClick={handleOAuthSync}
+                            className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs h-10 px-5 ml-auto gap-1.5"
+                          >
+                            {oauthLoading ? (
+                              <>
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                <span>Syncing to Google Sheets...</span>
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="h-3.5 w-3.5" />
+                                <span>Sync to Google Sheet (OAuth)</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                     )}
-                  </Button>
-                </div>
 
-                <ol className="text-xs text-muted-foreground font-body space-y-2.5 list-decimal list-inside leading-relaxed">
-                  <li>
-                    Open or create a blank spreadsheet on{" "}
-                    <a
-                      href="https://sheets.new"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[#e1b854] underline inline-flex items-center gap-1"
-                    >
-                      Google Sheets (sheets.new)
-                      <ExternalLink className="h-3 w-3 inline" />
-                    </a>
-                  </li>
-                  <li>
-                    In Google Sheets, click menu <strong className="text-white">Extensions &gt; Apps Script</strong>.
-                  </li>
-                  <li>
-                    Replace the placeholder code in <code className="text-[#e1b854]">Code.gs</code> with our prepared script (click <strong>Copy Script</strong> above).
-                  </li>
-                  <li>
-                    Click <strong className="text-white">Deploy &gt; New deployment</strong>:
-                    <ul className="list-disc list-inside ml-4 mt-1 space-y-1 text-[11px]">
-                      <li>Select type: <strong className="text-white">Web app</strong></li>
-                      <li>Description: <strong className="text-white">Rivera Fragrance Sync</strong></li>
-                      <li>Execute as: <strong className="text-white">Me (your google email)</strong></li>
-                      <li>Who has access: <strong className="text-white">Anyone</strong></li>
-                    </ul>
-                  </li>
-                  <li>
-                    Click <strong className="text-white">Deploy</strong>, grant permission, copy the <strong className="text-white">Web app URL</strong>, and paste it into the box above!
-                  </li>
-                </ol>
-
-                {/* Google Cloud API Clarification Box */}
-                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-[11px] text-muted-foreground font-body space-y-1.5">
-                  <div className="text-white font-medium flex items-center gap-1.5">
-                    <Key className="h-3.5 w-3.5 text-[#e1b854]" />
-                    <span>Which Google APIs Are Needed?</span>
+                    {oauthSpreadsheetUrl && (
+                      <a
+                        href={oauthSpreadsheetUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all font-body text-xs mt-2"
+                      >
+                        <span className="font-medium">Open Synchronized Google Sheet in New Tab</span>
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    )}
                   </div>
-                  <p>
-                    <strong className="text-emerald-400">Google Apps Script Webhook (Recommended):</strong> Requires <strong>ZERO Google Cloud Console APIs</strong>, zero billing account, and zero GCP IAM keys. It runs natively inside Google Sheets 100% free.
-                  </p>
-                  <p>
-                    <strong className="text-white">Direct GCP Service Account (Alternative):</strong> If you prefer server-to-server OAuth instead of Apps Script, enable:
-                  </p>
-                  <ul className="list-disc list-inside ml-2 text-[10px] space-y-0.5 font-mono text-white/80">
-                    <li>1. <span className="text-[#e1b854]">Google Sheets API v4</span> (<code className="text-emerald-400">sheets.googleapis.com</code>)</li>
-                    <li>2. <span className="text-[#e1b854]">Google Drive API v3</span> (<code className="text-emerald-400">drive.googleapis.com</code>)</li>
-                  </ul>
+
+                  {/* Required GCP Console Configuration Box */}
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-white font-medium text-xs">
+                      <Key className="h-4 w-4 text-[#e1b854]" />
+                      <span>Google Cloud Console Configuration Checklist</span>
+                    </div>
+
+                    <div className="space-y-2 text-xs font-body text-muted-foreground leading-relaxed">
+                      {/* Redirect URIs */}
+                      <div>
+                        <span className="text-white/90 font-medium block mb-1">
+                          1. Add Authorized Redirect URI (in your OAuth client dialog):
+                        </span>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/40 border border-white/10 font-mono text-[10px] text-[#e1b854]">
+                            <span className="truncate">https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-oauth/callback</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-oauth/callback");
+                                setCopiedRedirectUri("prod");
+                                toast.success("Production Redirect URI copied!");
+                                setTimeout(() => setCopiedRedirectUri(null), 2000);
+                              }}
+                              className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white shrink-0 flex items-center gap-1"
+                            >
+                              {copiedRedirectUri === "prod" ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                              <span>{copiedRedirectUri === "prod" ? "Copied" : "Copy"}</span>
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/40 border border-white/10 font-mono text-[10px] text-white/70">
+                            <span className="truncate">http://localhost:3001/api/admin/accountant/sheets-oauth/callback</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText("http://localhost:3001/api/admin/accountant/sheets-oauth/callback");
+                                setCopiedRedirectUri("local");
+                                toast.success("Localhost Redirect URI copied!");
+                                setTimeout(() => setCopiedRedirectUri(null), 2000);
+                              }}
+                              className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white shrink-0 flex items-center gap-1"
+                            >
+                              {copiedRedirectUri === "local" ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                              <span>{copiedRedirectUri === "local" ? "Copied" : "Copy"}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Test Users Warning from Screenshot */}
+                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 space-y-1">
+                        <div className="flex items-center gap-1.5 font-medium text-amber-300">
+                          <ShieldAlert className="h-3.5 w-3.5 text-amber-400" />
+                          <span>Important: Add Test Users in OAuth Consent Screen</span>
+                        </div>
+                        <p>
+                          As noted in your screenshot, Google restricts access to <strong>Test users</strong>. You must go to{" "}
+                          <strong className="text-white">Google Cloud Console &gt; APIs &amp; Services &gt; OAuth consent screen &gt; Test users</strong>{" "}
+                          and click <strong className="text-white">+ ADD USERS</strong> with your Google email. Otherwise Google returns <code>Error 403: access_denied</code>.
+                        </p>
+                      </div>
+
+                      {/* Enabled APIs */}
+                      <div className="text-[11px] text-white/70">
+                        <strong className="text-white">APIs to enable:</strong> In Google Cloud Console, ensure both{" "}
+                        <span className="text-[#e1b854]">Google Sheets API v4</span> (<code>sheets.googleapis.com</code>) and{" "}
+                        <span className="text-[#e1b854]">Google Drive API v3</span> (<code>drive.googleapis.com</code>) are enabled.
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* ── TAB 2: APPS SCRIPT WEBHOOK ───────────────────────────────── */}
+              {activeSheetsMode === "webhook" && (
+                <div className="space-y-4">
+                  {/* Sync Action Card */}
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                        Google Apps Script Webhook URL
+                      </label>
+                      {lastSyncedAt && (
+                        <span className="text-[10px] font-mono text-emerald-400">
+                          Last synced: {lastSyncedAt}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="url"
+                        value={sheetsWebhookUrl}
+                        onChange={(e) => setSheetsWebhookUrl(e.target.value)}
+                        placeholder="https://script.google.com/macros/s/.../exec"
+                        className="flex-1 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-xs text-foreground font-mono focus:outline-none focus:border-emerald-400 placeholder:text-muted-foreground/60"
+                      />
+                      <Button
+                        size="sm"
+                        disabled={sheetsSyncing || !sheetsWebhookUrl.trim()}
+                        onClick={handleSyncGoogleSheets}
+                        className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs h-10 px-4 shrink-0 gap-1.5"
+                      >
+                        {sheetsSyncing ? (
+                          <>
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                            <span>Syncing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            <span>Sync to Sheet</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Step-by-Step Setup Guide */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <span className="text-xs font-mono uppercase tracking-wider text-[#e1b854] flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                        Apps Script Setup Instructions
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCopyScript}
+                        className="h-7 text-xs font-mono text-[#e1b854] hover:bg-[#e1b854]/10 gap-1"
+                      >
+                        {sheetsCopied ? (
+                          <>
+                            <Check className="h-3 w-3 text-emerald-400" />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3" />
+                            <span>Copy Script</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    <ol className="text-xs text-muted-foreground font-body space-y-2 list-decimal list-inside leading-relaxed">
+                      <li>
+                        Open a spreadsheet on{" "}
+                        <a
+                          href="https://sheets.new"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[#e1b854] underline inline-flex items-center gap-1"
+                        >
+                          Google Sheets (sheets.new)
+                          <ExternalLink className="h-3 w-3 inline" />
+                        </a>
+                      </li>
+                      <li>Click <strong className="text-white">Extensions &gt; Apps Script</strong>.</li>
+                      <li>Replace the code in <code className="text-[#e1b854]">Code.gs</code> with the script (click <strong>Copy Script</strong> above).</li>
+                      <li>
+                        Click <strong className="text-white">Deploy &gt; New deployment &gt; Web app</strong>:
+                        <ul className="list-disc list-inside ml-4 mt-1 text-[11px]">
+                          <li>Execute as: <strong className="text-white">Me</strong></li>
+                          <li>Who has access: <strong className="text-white">Anyone</strong></li>
+                        </ul>
+                      </li>
+                      <li>Copy the <strong className="text-white">Web app URL</strong> and paste it into the box above.</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/10 mt-4">
                 <Button

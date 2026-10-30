@@ -4,7 +4,18 @@ export interface GoogleSheetsSyncResult {
   success: boolean;
   message: string;
   syncedAt: string;
+  spreadsheetId?: string;
+  spreadsheetUrl?: string;
   sheetsUpdated?: string[];
+}
+
+export interface GoogleOAuthTokens {
+  access_token: string;
+  refresh_token?: string;
+  expires_in: number;
+  token_type: string;
+  scope: string;
+  created_at?: number;
 }
 
 /**
@@ -93,7 +104,236 @@ export function prepareGoogleSheetsPayload(ledger: FinancialLedger) {
 }
 
 /**
- * Sends formatted financial ledger to the Google Sheets Apps Script Webhook
+ * Resolves Google OAuth Client credentials from environment or fallback
+ */
+export function getGoogleOAuthCredentials() {
+  const clientId =
+    process.env.GOOGLE_CLIENT_ID ||
+    "426399570206-5juos740nu5eahkf68hdvdc9vggnrvfe.apps.googleusercontent.com";
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || "";
+  return { clientId, clientSecret };
+}
+
+/**
+ * Builds Google OAuth 2.0 authorization URL
+ */
+export function buildGoogleOAuthConsentUrl(origin: string, state?: string): string {
+  const { clientId } = getGoogleOAuthCredentials();
+  const redirectUri = `${origin}/api/admin/accountant/sheets-oauth/callback`;
+  const scopes = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive.file",
+  ].join(" ");
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: scopes,
+    access_type: "offline",
+    prompt: "consent",
+    include_granted_scopes: "true",
+  });
+
+  if (state) params.set("state", state);
+
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
+/**
+ * Exchanges authorization code for OAuth tokens
+ */
+export async function exchangeGoogleCodeForTokens(
+  code: string,
+  origin: string
+): Promise<GoogleOAuthTokens> {
+  const { clientId, clientSecret } = getGoogleOAuthCredentials();
+  const redirectUri = `${origin}/api/admin/accountant/sheets-oauth/callback`;
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+      grant_type: "authorization_code",
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    throw new Error(data.error_description || data.error || "Failed to exchange Google OAuth code");
+  }
+
+  return {
+    ...data,
+    created_at: Date.now(),
+  };
+}
+
+/**
+ * Refreshes an expired Google access token using the refresh token
+ */
+export async function refreshGoogleAccessToken(
+  refreshToken: string
+): Promise<{ access_token: string; expires_in: number }> {
+  const { clientId, clientSecret } = getGoogleOAuthCredentials();
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      refresh_token: refreshToken,
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: "refresh_token",
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    throw new Error(data.error_description || data.error || "Failed to refresh Google access token");
+  }
+
+  return {
+    access_token: data.access_token,
+    expires_in: data.expires_in,
+  };
+}
+
+/**
+ * Synchronizes financial ledger via official Google Sheets REST API v4 using OAuth
+ */
+export async function syncToGoogleSheetsViaOAuth(
+  accessToken: string,
+  ledger: FinancialLedger,
+  existingSpreadsheetId?: string
+): Promise<GoogleSheetsSyncResult> {
+  const payload = prepareGoogleSheetsPayload(ledger);
+  const sheetNames = ["Executive_Summary", "Brand_Allocation", "Restock_Forecast", "Top_Profit_Makers"];
+  let spreadsheetId = existingSpreadsheetId?.trim();
+
+  // 1. If no existing spreadsheet, create a new one with the 4 tabs
+  if (!spreadsheetId) {
+    const createRes = await fetch("https://sheets.googleapis.com/v4/spreadsheets", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        properties: {
+          title: `Rivera Fragrance House — Financial Ledger (${new Date().toLocaleDateString("en-PH")})`,
+        },
+        sheets: sheetNames.map((title) => ({
+          properties: { title },
+        })),
+      }),
+    });
+
+    const createData = await createRes.json();
+    if (!createRes.ok || createData.error) {
+      throw new Error(createData.error?.message || "Failed to create Google Spreadsheet");
+    }
+
+    spreadsheetId = createData.spreadsheetId;
+  } else {
+    // Check if the sheets exist, add any missing ones
+    const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const meta = await metaRes.json();
+    if (!metaRes.ok || meta.error) {
+      throw new Error(meta.error?.message || "Unable to access specified Google Sheet. Check ID and permissions.");
+    }
+
+    const existingTitles = new Set(
+      (meta.sheets || []).map((s: any) => s.properties?.title)
+    );
+
+    const missingTitles = sheetNames.filter((name) => !existingTitles.has(name));
+    if (missingTitles.length > 0) {
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          requests: missingTitles.map((title) => ({
+            addSheet: { properties: { title } },
+          })),
+        }),
+      });
+    }
+  }
+
+  // 2. Clear old contents on all 4 tabs
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchClear`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      ranges: sheetNames.map((name) => `${name}!A1:Z200`),
+    }),
+  });
+
+  // 3. Write data to all 4 tabs in a single batchUpdate
+  const batchWriteRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        valueInputOption: "USER_ENTERED",
+        data: [
+          {
+            range: "Executive_Summary!A1",
+            values: payload.sheets.Executive_Summary,
+          },
+          {
+            range: "Brand_Allocation!A1",
+            values: payload.sheets.Brand_Allocation,
+          },
+          {
+            range: "Restock_Forecast!A1",
+            values: payload.sheets.Restock_Forecast,
+          },
+          {
+            range: "Top_Profit_Makers!A1",
+            values: payload.sheets.Top_Profit_Makers,
+          },
+        ],
+      }),
+    }
+  );
+
+  const writeResult = await batchWriteRes.json();
+  if (!batchWriteRes.ok || writeResult.error) {
+    throw new Error(writeResult.error?.message || "Failed to write values to Google Sheet");
+  }
+
+  const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
+
+  return {
+    success: true,
+    message: "Google Sheets synchronized successfully via Google OAuth.",
+    syncedAt: new Date().toISOString(),
+    spreadsheetId,
+    spreadsheetUrl: url,
+    sheetsUpdated: sheetNames,
+  };
+}
+
+/**
+ * Sends formatted financial ledger to the Google Sheets Apps Script Webhook (Method A fallback)
  */
 export async function syncToGoogleSheetsWebhook(
   webhookUrl: string,
@@ -103,9 +343,9 @@ export async function syncToGoogleSheetsWebhook(
 
   const res = await fetch(webhookUrl, {
     method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" }, // Apps Script accepts text/plain to avoid CORS preflight issues
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(20000), // 20s timeout
+    signal: AbortSignal.timeout(20000),
   });
 
   if (!res.ok) {
@@ -123,7 +363,7 @@ export async function syncToGoogleSheetsWebhook(
 }
 
 /**
- * Generates the Google Apps Script code for the user to paste into their Google Sheet
+ * Generates Google Apps Script code for webhook mode
  */
 export function getGoogleAppsScriptTemplate(): string {
   return `/**
@@ -176,7 +416,6 @@ function updateSheet(ss, sheetName, rows, isSummary) {
     if (rows[i].length > numCols) numCols = rows[i].length;
   }
 
-  // Pad rows
   var matrix = [];
   for (var r = 0; r < numRows; r++) {
     var rowData = [];
@@ -188,7 +427,6 @@ function updateSheet(ss, sheetName, rows, isSummary) {
 
   sheet.getRange(1, 1, numRows, numCols).setValues(matrix);
 
-  // Style header row
   var header = sheet.getRange(1, 1, 1, numCols);
   header.setBackground("#1a1a1a");
   header.setFontColor("#e1b854");
