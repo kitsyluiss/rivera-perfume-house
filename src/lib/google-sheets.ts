@@ -531,7 +531,44 @@ function updateSheet(ss, sheetName, rows, isSummary) {
 }
 
 /**
- * Formats a sheet array into tab-separated values (TSV) for instant Cmd+V paste into Google Sheets
+ * Formats a 2D sheet array into an HTML table (text/html) for native rich paste into Google Sheets & Excel.
+ * Google Sheets uses its internal HTML table parser, guaranteeing that every row becomes a distinct spreadsheet row
+ * and every column becomes a distinct spreadsheet column without in-cell collapsing or tab stripping.
+ */
+export function formatSheetToHtmlTable(rows: any[][]): string {
+  const escapeHtml = (val: any) => {
+    if (val === null || val === undefined) return "";
+    return String(val)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  };
+
+  const trs = rows
+    .map((row, rIdx) => {
+      const isHeader = rIdx === 0;
+      const tag = isHeader ? "th" : "td";
+      const cells = row
+        .map((cell) => {
+          const style = isHeader
+            ? 'style="font-weight:bold;background-color:#1a1a1a;color:#e1b854;"'
+            : typeof cell === "number"
+            ? 'style="text-align:right;"'
+            : "";
+          return `<${tag} ${style}>${escapeHtml(cell)}</${tag}>`;
+        })
+        .join("");
+      return `<tr>${cells}</tr>`;
+    })
+    .join("\r\n");
+
+  return `<meta charset="utf-8"><table>\r\n${trs}\r\n</table>`;
+}
+
+/**
+ * Formats a sheet array into tab-separated values (TSV) with CRLF row breaks
  */
 export function formatSheetToTsv(rows: any[][]): string {
   return rows
@@ -539,11 +576,40 @@ export function formatSheetToTsv(rows: any[][]): string {
       row
         .map((cell) => {
           if (cell === null || cell === undefined) return "";
-          return String(cell).replace(/\t/g, " ").replace(/\n/g, " ");
+          return String(cell).replace(/\t/g, " ").replace(/[\r\n]+/g, " ");
         })
         .join("\t")
     )
-    .join("\n");
+    .join("\r\n");
+}
+
+/**
+ * Copies sheet data to user clipboard using dual text/html and text/plain formats.
+ * Google Sheets and Excel recognize the HTML table and expand rows and columns automatically.
+ */
+export async function copySheetDataToClipboard(rows: any[][]): Promise<void> {
+  const html = formatSheetToHtmlTable(rows);
+  const tsv = formatSheetToTsv(rows);
+
+  if (typeof navigator !== "undefined" && navigator.clipboard) {
+    if (typeof ClipboardItem !== "undefined") {
+      try {
+        const htmlBlob = new Blob([html], { type: "text/html" });
+        const textBlob = new Blob([tsv], { type: "text/plain" });
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": htmlBlob,
+            "text/plain": textBlob,
+          }),
+        ]);
+        return;
+      } catch (clipErr) {
+        console.warn("ClipboardItem write failed, falling back to writeText:", clipErr);
+      }
+    }
+
+    await navigator.clipboard.writeText(tsv);
+  }
 }
 
 /**

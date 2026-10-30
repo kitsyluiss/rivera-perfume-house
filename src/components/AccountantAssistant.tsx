@@ -42,6 +42,7 @@ import {
   prepareGoogleSheetsPayload,
   formatSheetToTsv,
   generateSpreadsheetXml,
+  copySheetDataToClipboard,
 } from "@/lib/google-sheets";
 
 interface AccountantAssistantProps {
@@ -107,6 +108,7 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
   const [oauthClientSecret, setOauthClientSecret] = useState("");
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
   const [copiedFeed, setCopiedFeed] = useState<string | null>(null);
+  const [restockModalOpen, setRestockModalOpen] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // Recalculate local ledger when props change
@@ -145,10 +147,10 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
     a.download = `Rivera_Fragrance_House_Ledger_${new Date().toISOString().split("T")[0]}.xls`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Downloaded 4-tab workbook! Drag into Google Drive to open directly in Google Sheets.");
+    toast.success("Downloaded 7-tab institutional workbook! Drag into Google Drive to open directly in Google Sheets.");
   };
 
-  const handleCopyTabTsv = (
+  const handleCopyTabTsv = async (
     tabKey:
       | "Cover_and_Audit"
       | "Executive_Summary"
@@ -159,12 +161,18 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
       | "Top_Profit_Makers",
     title: string
   ) => {
-    const payload = prepareGoogleSheetsPayload(ledger);
-    const tsv = formatSheetToTsv(payload.sheets[tabKey]);
-    navigator.clipboard.writeText(tsv);
-    setCopiedTab(tabKey);
-    toast.success(`Copied "${title}"! In Google Sheets, click cell A1 and press Cmd+V (or Ctrl+V).`);
-    setTimeout(() => setCopiedTab(null), 2500);
+    try {
+      const payload = prepareGoogleSheetsPayload(ledger);
+      const rows = payload.sheets[tabKey];
+      await copySheetDataToClipboard(rows);
+      setCopiedTab(tabKey);
+      toast.success(
+        `Copied "${title}" (${rows.length} rows, ${rows[0]?.length || 0} columns)! In Google Sheets, single-click cell A1 and press Cmd+V.`
+      );
+      setTimeout(() => setCopiedTab(null), 3000);
+    } catch (err: any) {
+      toast.error(`Copy error: ${err?.message || "Failed to copy tab data"}`);
+    }
   };
 
   const checkOAuthStatus = useCallback(async () => {
@@ -649,9 +657,14 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
               </p>
               <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground font-body">
                 <span>{ledger.orders.pendingCount} orders awaiting proof</span>
-                <span className="text-amber-400 font-mono font-medium">
-                  Restock: {formatPhp(ledger.inventory.restockCapitalNeeded)}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setRestockModalOpen(true)}
+                  className="text-amber-400 hover:text-white font-mono font-medium hover:underline flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <span>Restock: {formatPhp(ledger.inventory.restockCapitalNeeded)}</span>
+                  <ExternalLink className="h-3 w-3" />
+                </button>
               </div>
             </div>
           </div>
@@ -1205,7 +1218,7 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                   <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-mono uppercase tracking-wider text-white/90">
-                        Step 2: Copy Tab Data (Click to copy &bull; Press Cmd+V in cell A1)
+                        Step 2: Copy Tab Data (Single-click cell A1 in Google Sheets &bull; Press Cmd+V)
                       </span>
                     </div>
 
@@ -1292,12 +1305,14 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
 
                       <button
                         type="button"
-                        onClick={() => handleCopyTabTsv("Restock_Forecast", "Restock Forecast")}
+                        onClick={() => handleCopyTabTsv("Restock_Forecast", "Restock Priority Register")}
                         className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#e1b854]/60 hover:bg-[#e1b854]/10 transition-all text-left text-xs font-body text-white"
                       >
                         <div>
                           <div className="font-medium text-white/95">Tab 6: Restock Priority Register</div>
-                          <div className="text-[10px] text-muted-foreground font-mono">Low-stock replenishment budget</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">
+                            {ledger.inventory.restockItems.length} SKUs &bull; 8 columns &bull; Safety Buffer 5
+                          </div>
                         </div>
                         {copiedTab === "Restock_Forecast" ? (
                           <Check className="h-4 w-4 text-emerald-400 shrink-0" />
@@ -1555,6 +1570,178 @@ Live inventory valuation, exact profit and loss margins, pending customer receiv
                   size="sm"
                   onClick={() => setSheetsModalOpen(false)}
                   className="text-xs"
+                >
+                  Close
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 6. Restock Priority Register Modal ─────────────────────────────── */}
+      <AnimatePresence>
+        {restockModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-4xl max-h-[90vh] rounded-3xl border border-white/10 bg-card p-5 sm:p-7 shadow-2xl relative flex flex-col overflow-hidden"
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setRestockModalOpen(false)}
+                className="absolute top-5 right-5 rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              {/* Modal Header */}
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
+                  <Package className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-display text-lg sm:text-xl text-foreground">
+                    Restock Priority Register &amp; Forecast
+                  </h3>
+                  <p className="text-xs text-muted-foreground font-body">
+                    Wholesale replenishment requirements to bring all fragrances (Stock &le; 2) to safety buffer stock of 5 units.
+                  </p>
+                </div>
+              </div>
+
+              {/* KPI Summary Strip */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center sm:text-left">
+                  <span className="text-[10px] font-mono uppercase text-muted-foreground block">
+                    Critical SKUs Requiring Reorder
+                  </span>
+                  <span className="font-display text-xl sm:text-2xl text-white font-light tabular-nums">
+                    {ledger.inventory.restockItems.length} SKUs
+                  </span>
+                </div>
+                <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-center sm:text-left">
+                  <span className="text-[10px] font-mono uppercase text-red-400/90 block">
+                    Out of Stock (Zero Units)
+                  </span>
+                  <span className="font-display text-xl sm:text-2xl text-red-400 font-light tabular-nums">
+                    {ledger.inventory.outOfStockCount} SKUs (URGENT)
+                  </span>
+                </div>
+                <div className="rounded-xl border border-[#e1b854]/30 bg-[#e1b854]/5 p-3 text-center sm:text-left">
+                  <span className="text-[10px] font-mono uppercase text-[#e1b854] block">
+                    Total Working Capital Needed
+                  </span>
+                  <span className="font-display text-xl sm:text-2xl text-[#e1b854] font-light tabular-nums">
+                    {formatPhp(ledger.inventory.restockCapitalNeeded)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 mb-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                <span className="text-[11px] font-mono text-muted-foreground">
+                  8 Columns &bull; {ledger.inventory.restockItems.length} Products Sorted by Stock Ascending
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => handleCopyTabTsv("Restock_Forecast", "Restock Priority Register")}
+                    className="bg-[#e1b854] hover:bg-white text-black font-semibold text-xs h-9 px-4 gap-1.5 transition-all cursor-pointer"
+                  >
+                    {copiedTab === "Restock_Forecast" ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-black" />
+                        <span>Copied for Sheets!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" />
+                        <span>Copy for Google Sheets (Cmd+V)</span>
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        '=IMPORTDATA("https://rivera.perfumehouse.workers.dev/api/admin/accountant/sheets-feed?tab=restock")'
+                      );
+                      toast.success("Copied live =IMPORTDATA formula for Restock!");
+                    }}
+                    className="border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs h-9 px-3 gap-1.5 cursor-pointer font-mono"
+                  >
+                    <span>=IMPORTDATA</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Scrollable Restock Table */}
+              <div className="flex-1 overflow-auto rounded-xl border border-white/10 bg-black/40 min-h-0">
+                <table className="w-full text-left border-collapse text-xs font-mono">
+                  <thead className="sticky top-0 bg-[#161616] text-[#e1b854] uppercase tracking-wider text-[10px] border-b border-white/10 z-10">
+                    <tr>
+                      <th className="p-3 font-medium">Brand</th>
+                      <th className="p-3 font-medium">Scent Name</th>
+                      <th className="p-3 font-medium text-center">Stock</th>
+                      <th className="p-3 font-medium text-right">Unit Cost</th>
+                      <th className="p-3 font-medium text-right">Target Price</th>
+                      <th className="p-3 font-medium text-center">Reorder Qty</th>
+                      <th className="p-3 font-medium text-right">Capital Req.</th>
+                      <th className="p-3 font-medium">Restock Priority</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {ledger.inventory.restockItems.map((item) => (
+                      <tr key={item.id} className="hover:bg-white/[0.03] transition-colors">
+                        <td className="p-3 font-medium text-white">{item.brand}</td>
+                        <td className="p-3 text-white/85">{item.scent_name}</td>
+                        <td className="p-3 text-center">
+                          {item.currentStock === 0 ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-500/20 text-red-400 border border-red-500/30">
+                              0 (OUT)
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                              {item.currentStock} units
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3 text-right text-muted-foreground">{formatPhp(item.costPrice)}</td>
+                        <td className="p-3 text-right text-white/80">{formatPhp(item.targetPrice)}</td>
+                        <td className="p-3 text-center text-emerald-400 font-semibold">+{item.unitsNeeded}</td>
+                        <td className="p-3 text-right text-white font-medium">{formatPhp(item.capitalRequired)}</td>
+                        <td className="p-3">
+                          {item.currentStock === 0 ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wide bg-red-500/20 text-red-300 border border-red-500/40">
+                              URGENT (OUT OF STOCK)
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-medium tracking-wide bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                              HIGH (STOCK &le; 2)
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Instructions footer */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-white/10 mt-3 text-[11px] text-muted-foreground font-body">
+                <span>
+                  Tip: In Google Sheets, select cell <strong className="text-white">A1</strong> with a single click and press <strong className="text-[#e1b854]">Cmd+V</strong> (or Ctrl+V). All 8 columns will fill cleanly.
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setRestockModalOpen(false)}
+                  className="text-xs shrink-0"
                 >
                   Close
                 </Button>
