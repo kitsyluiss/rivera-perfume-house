@@ -61,7 +61,9 @@ export async function GET(req: Request) {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Cache-Control": "public, max-age=60, s-maxage=60",
+        "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
+        "Expires": "0",
         "Content-Disposition": `inline; filename="rivera-${tab}.csv"`,
       },
     });
