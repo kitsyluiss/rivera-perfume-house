@@ -8,13 +8,15 @@ export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-request-id", requestId);
 
-  // Immediately bypass middleware for search engine crawlers, static files, and sitemaps
+  // Immediately bypass middleware for search engine crawlers, static feeds, and sitemaps
   if (
     pathname === "/sitemap.xml" ||
     pathname === "/robots.txt" ||
     pathname === "/llms.txt" ||
     pathname === "/llms-full.txt" ||
-    pathname.startsWith("/perfumes/")
+    pathname.startsWith("/perfumes/") ||
+    pathname.startsWith("/api/admin/accountant/sheets-feed") ||
+    pathname.startsWith("/api/health")
   ) {
     const res = NextResponse.next({ request: { headers: requestHeaders } });
     res.headers.set("x-request-id", requestId);

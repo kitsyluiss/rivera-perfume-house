@@ -5,7 +5,7 @@ import { formatPhp } from "@/lib/format";
 import { Order, OrderStatus } from "@/lib/types";
 import { updateOrderStatus, uploadReceipt } from "@/lib/admin-actions";
 import { toast } from "sonner";
-import { Loader2, ExternalLink, MapPin } from "lucide-react";
+import { Loader2, ExternalLink, MapPin, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { formatDistanceToNow } from "date-fns";
@@ -67,8 +67,19 @@ export default function OrdersTable({
 
   if (orders.length === 0) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center rounded-[1.1rem] border border-border border-dashed bg-card/30">
-        <p className="text-sm text-muted-foreground">No orders found.</p>
+      <div className="flex min-h-[18rem] flex-col items-center justify-center rounded-[1.1rem] border border-border border-dashed bg-card/30 p-8 text-center">
+        <div className="h-10 w-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3 border border-primary/20">
+          <ClipboardList className="h-5 w-5" />
+        </div>
+        <h4 className="font-display text-base text-foreground mb-1">
+          No Online Web Checkout Orders
+        </h4>
+        <p className="text-xs text-muted-foreground max-w-md font-body leading-relaxed mb-4">
+          This tab tracks e-commerce customer checkout orders placed through your storefront. Historical walk-in sales and liquidated stock records (77 entries) are located under the <strong className="text-foreground">Sales</strong> tab.
+        </p>
+        <span className="text-[11px] font-mono text-primary/80 bg-primary/5 px-3 py-1.5 rounded-full border border-primary/20">
+          Check the &quot;Sales&quot; tab to view all past transactions
+        </span>
       </div>
     );
   }

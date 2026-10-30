@@ -25,13 +25,12 @@ export async function getAdminOrders(): Promise<Order[]> {
     .select(`
       *,
       address:addresses (*),
-      items:order_items!inner (
+      items:order_items (
         *,
-        perfume:perfumes!inner (user_id)
+        perfume:perfumes (brand, scent_name, image_url)
       ),
       customer:profiles!orders_user_id_fkey (display_name)
     `)
-    .eq("items.perfume.user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
