@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   TrendingUp,
   ClipboardList,
+  Calculator,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +24,7 @@ import InventoryTable from "@/components/InventoryTable";
 import SalesDashboard from "@/components/SalesDashboard";
 import OrdersTable from "@/components/OrdersTable";
 import PaymentMethodsTable from "@/components/PaymentMethodsTable";
+import AccountantAssistant from "@/components/AccountantAssistant";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import { formatPhp } from "@/lib/format";
 import { toast } from "sonner";
@@ -42,7 +44,7 @@ import { LogOut } from "lucide-react";
 const ease = [0.22, 1, 0.36, 1] as const;
 const php = (n: number) => formatPhp(n);
 
-type Tab = "inventory" | "sales" | "orders" | "payments";
+type Tab = "inventory" | "sales" | "orders" | "payments" | "accountant";
 
 function StatsGrid({
   stats,
@@ -258,25 +260,29 @@ export default function AdminDashboard() {
 
       <div className="mx-auto max-w-7xl space-y-5 px-4 py-5 sm:space-y-6 sm:px-5 sm:py-6 lg:px-6 lg:py-7">
 
-        {/* Stats row — swaps between inventory and sales */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={tab}
-            className="w-full block pt-3 sm:pt-4"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25, ease }}
-          >
-            <StatsGrid stats={currentStats} />
-          </motion.div>
-        </AnimatePresence>
+        {/* Stats row — swaps between inventory, sales, and orders (Accountant tab renders dedicated executive bento) */}
+        {tab !== "accountant" && (
+          <>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={tab}
+                className="w-full block pt-3 sm:pt-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25, ease }}
+              >
+                <StatsGrid stats={currentStats} />
+              </motion.div>
+            </AnimatePresence>
 
-        <Separator className="bg-border" />
+            <Separator className="bg-border" />
+          </>
+        )}
 
         {/* ── Low-stock banner ─────────────────────────────────────── */}
         <AnimatePresence>
-          {lowStockItems.length > 0 && (
+          {lowStockItems.length > 0 && tab !== "accountant" && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -299,7 +305,7 @@ export default function AdminDashboard() {
 
         {/* Tab navigation */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <div className="flex items-center justify-between gap-1 rounded-xl sm:rounded-full border border-border bg-card/60 p-1 backdrop-blur-md w-full sm:w-auto">
+          <div className="flex items-center justify-between gap-1 rounded-xl sm:rounded-full border border-border bg-card/60 p-1 backdrop-blur-md w-full sm:w-auto overflow-x-auto">
             <button
               type="button"
               onClick={() => setTab("inventory")}
@@ -353,6 +359,21 @@ export default function AdminDashboard() {
               <DollarSign className="h-3.5 w-3.5 shrink-0" />
               <span className="hidden xs:inline sm:inline">Payments</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setTab("accountant")}
+              className={`flex flex-1 justify-center items-center gap-1.5 rounded-lg sm:rounded-full px-2.5 py-2 text-[10px] uppercase tracking-[0.18em] transition-all sm:gap-2 sm:px-4 sm:text-xs ${
+                tab === "accountant"
+                  ? "bg-[#e1b854] text-black font-semibold shadow-lg shadow-[#e1b854]/25"
+                  : "text-[#e1b854]/80 hover:bg-[#e1b854]/15 hover:text-[#e1b854]"
+              }`}
+            >
+              <Calculator className="h-3.5 w-3.5 shrink-0" />
+              <span>Accountant</span>
+              <span className="hidden md:inline rounded-full bg-emerald-500/20 px-1.5 py-0.2 text-[8px] font-mono text-emerald-400 border border-emerald-500/30">
+                AI
+              </span>
+            </button>
           </div>
 
           <motion.div 
@@ -368,7 +389,7 @@ export default function AdminDashboard() {
                 <Plus className="mr-1.5 h-4 w-4 sm:mr-2" />
                 Add New
               </Button>
-            ) : (
+            ) : tab === "sales" ? (
               <Button
                 onClick={() => setSellOpen(true)}
                 className="w-full h-9 px-3 text-[10px] uppercase tracking-wider sm:h-10 sm:px-4 sm:text-xs sm:w-auto"
@@ -376,7 +397,7 @@ export default function AdminDashboard() {
                 <Plus className="mr-1.5 h-4 w-4 sm:mr-2" />
                 Sell
               </Button>
-            )}
+            ) : null}
           </motion.div>
         </div>
 
@@ -437,7 +458,7 @@ export default function AdminDashboard() {
                 onUpdate={() => { fetchOrders(); fetchPerfumes(); fetchSales(); }}
               />
             </motion.div>
-          ) : (
+          ) : tab === "payments" ? (
             <motion.div
               key="payments"
               className="w-full"
@@ -447,6 +468,26 @@ export default function AdminDashboard() {
               transition={{ duration: 0.35, ease }}
             >
               <PaymentMethodsTable />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="accountant"
+              className="w-full"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.35, ease }}
+            >
+              <AccountantAssistant
+                perfumes={perfumes}
+                sales={sales}
+                orders={orders}
+                onRefreshData={() => {
+                  fetchPerfumes();
+                  fetchSales();
+                  fetchOrders();
+                }}
+              />
             </motion.div>
           )}
         </AnimatePresence>
