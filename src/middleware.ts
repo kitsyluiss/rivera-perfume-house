@@ -16,6 +16,7 @@ export async function middleware(request: NextRequest) {
     pathname === "/llms-full.txt" ||
     pathname.startsWith("/perfumes/") ||
     pathname.startsWith("/api/admin/accountant/sheets-feed") ||
+    (pathname.startsWith("/api/admin/accountant") && (request.method === "GET" || request.method === "OPTIONS")) ||
     pathname.startsWith("/api/health")
   ) {
     const res = NextResponse.next({ request: { headers: requestHeaders } });
