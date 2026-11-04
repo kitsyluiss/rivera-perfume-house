@@ -26,6 +26,7 @@
 - Backgrounds: Luxury Obsidian `#000000`, Glassmorphism `bg-white/[0.03]`, `backdrop-blur-md`
 - Accents: Rivera Gold `#e1b854`, gradient `from-[#f9d976] to-[#bd9135]`
 - Typography: Display serif / tracking for brand headers, sans for product copy, mono for batch codes and prices
+- Mobile Ergonomics: Touch targets $\ge 44\text{px}$, slide-over sheet drawer (`Navbar.tsx`), context-aware sticky bottom bar (`StickyMobileCTA.tsx`), safe-area insets (`env(safe-area-inset-top/bottom)`)
 
 ## 4. Key Data & APIs
 - Product Feed: Supabase database synced with Google Sheets feed (`src/lib/sheets-feed-handler.ts`)
