@@ -15,10 +15,10 @@ export const metadata: Metadata = {
     url: "/",
     images: [
       {
-        url: "/perfumes/hawas_black.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Rivera Fragrance House — Luxury Middle Eastern Fragrances",
+        alt: "Rivera Fragrance House — 100% Authentic Fragrances Philippines",
       },
     ],
   },

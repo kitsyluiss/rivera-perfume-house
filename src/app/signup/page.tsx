@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Loader2, Mail, Lock, User } from "lucide-react";
+import { Loader2, Mail, Lock, User, AlertCircle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -25,10 +25,18 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setFormError(null);
+
+    if (password.length < 6) {
+      setFormError("Password must be at least 6 characters");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -37,6 +45,7 @@ export default function SignUpPage() {
       const result = await signUp(email, password, name, redirectUrl);
       
       if (result?.error) {
+        setFormError(result.error);
         toast.error(result.error);
       } else {
         toast.success("Account created successfully!");
@@ -44,7 +53,9 @@ export default function SignUpPage() {
         router.refresh();
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Sign up failed");
+      const msg = error instanceof Error ? error.message : "Sign up failed";
+      setFormError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -92,6 +103,15 @@ export default function SignUpPage() {
               </CardHeader>
               <CardContent className="px-6 pb-7 sm:px-8 sm:pb-8">
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  {formError && (
+                    <div
+                      role="alert"
+                      className="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive"
+                    >
+                      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                      <span>{formError}</span>
+                    </div>
+                  )}
                   {[
                     {
                       id: "name",

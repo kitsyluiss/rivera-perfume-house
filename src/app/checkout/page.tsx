@@ -24,6 +24,7 @@ export default function CheckoutPage() {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addressErrors, setAddressErrors] = useState<Record<string, string>>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -68,7 +69,27 @@ export default function CheckoutPage() {
 
   const handleSaveAddress = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setAddressErrors({});
     const formData = new FormData(e.currentTarget);
+    
+    const fullName = (formData.get("full_name") as string)?.trim();
+    const phone = (formData.get("phone") as string)?.trim();
+    const line1 = (formData.get("line1") as string)?.trim();
+    const city = (formData.get("city") as string)?.trim();
+    const postalCode = (formData.get("postal_code") as string)?.trim();
+
+    const errors: Record<string, string> = {};
+    if (!fullName || fullName.length < 2) errors.full_name = "Recipient full name is required";
+    if (!phone || phone.replace(/\D/g, "").length < 10) errors.phone = "Valid 10-11 digit mobile number required";
+    if (!line1) errors.line1 = "Street address and house/unit number required";
+    if (!city) errors.city = "City or municipality is required";
+    if (!postalCode) errors.postal_code = "Postal code is required";
+
+    if (Object.keys(errors).length > 0) {
+      setAddressErrors(errors);
+      return;
+    }
+
     try {
       const result = await saveAddress(formData);
       if (result?.error) {
@@ -150,20 +171,56 @@ export default function CheckoutPage() {
             </div>
 
             {showAddressForm ? (
-              <form onSubmit={handleSaveAddress} className="space-y-4 border-t border-border/50 pt-4">
+              <form onSubmit={handleSaveAddress} className="space-y-4 border-t border-border/50 pt-4" noValidate>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="full_name">Full Name</Label>
-                    <Input id="full_name" name="full_name" required className="bg-secondary/50" />
+                    <Input
+                      id="full_name"
+                      name="full_name"
+                      required
+                      aria-invalid={!!addressErrors.full_name}
+                      aria-describedby={addressErrors.full_name ? "full_name_error" : undefined}
+                      className={`bg-secondary/50 ${addressErrors.full_name ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    />
+                    {addressErrors.full_name && (
+                      <p id="full_name_error" role="alert" className="text-destructive text-xs mt-1">
+                        {addressErrors.full_name}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" name="phone" required className="bg-secondary/50" />
+                    <Input
+                      id="phone"
+                      name="phone"
+                      required
+                      aria-invalid={!!addressErrors.phone}
+                      aria-describedby={addressErrors.phone ? "phone_error" : undefined}
+                      className={`bg-secondary/50 ${addressErrors.phone ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    />
+                    {addressErrors.phone && (
+                      <p id="phone_error" role="alert" className="text-destructive text-xs mt-1">
+                        {addressErrors.phone}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="line1">Address Line 1</Label>
-                  <Input id="line1" name="line1" required className="bg-secondary/50" />
+                  <Input
+                    id="line1"
+                    name="line1"
+                    required
+                    aria-invalid={!!addressErrors.line1}
+                    aria-describedby={addressErrors.line1 ? "line1_error" : undefined}
+                    className={`bg-secondary/50 ${addressErrors.line1 ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                  />
+                  {addressErrors.line1 && (
+                    <p id="line1_error" role="alert" className="text-destructive text-xs mt-1">
+                      {addressErrors.line1}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="line2">Address Line 2 (Optional)</Label>
@@ -172,11 +229,35 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2 sm:col-span-2">
                     <Label htmlFor="city">City/Municipality</Label>
-                    <Input id="city" name="city" required className="bg-secondary/50" />
+                    <Input
+                      id="city"
+                      name="city"
+                      required
+                      aria-invalid={!!addressErrors.city}
+                      aria-describedby={addressErrors.city ? "city_error" : undefined}
+                      className={`bg-secondary/50 ${addressErrors.city ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    />
+                    {addressErrors.city && (
+                      <p id="city_error" role="alert" className="text-destructive text-xs mt-1">
+                        {addressErrors.city}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="postal_code">Postal Code</Label>
-                    <Input id="postal_code" name="postal_code" required className="bg-secondary/50" />
+                    <Input
+                      id="postal_code"
+                      name="postal_code"
+                      required
+                      aria-invalid={!!addressErrors.postal_code}
+                      aria-describedby={addressErrors.postal_code ? "postal_code_error" : undefined}
+                      className={`bg-secondary/50 ${addressErrors.postal_code ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    />
+                    {addressErrors.postal_code && (
+                      <p id="postal_code_error" role="alert" className="text-destructive text-xs mt-1">
+                        {addressErrors.postal_code}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">

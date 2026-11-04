@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import { createClient } from "@/lib/supabase/server";
 import { getUserProfile } from "@/lib/actions";
@@ -7,6 +8,7 @@ import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import CookieBanner from "@/components/CookieBanner";
+import Analytics from "@/components/Analytics";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://rivera.perfumehouse.workers.dev").replace(/\/+$/, "");
 
@@ -51,10 +53,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/perfumes/hawas_black.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Rivera Fragrance House — Authentic Middle Eastern Fragrances",
+        alt: "Rivera Fragrance House — 100% Authentic Fragrances Philippines",
       },
     ],
   },
@@ -63,7 +65,14 @@ export const metadata: Metadata = {
     title: "Rivera Fragrance House | Authentic Perfumes Philippines",
     description:
       "100% original factory-sealed Middle Eastern & designer perfumes at honest prices with verified batch codes.",
-    images: ["/perfumes/hawas_black.png"],
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Rivera Fragrance House — 100% Authentic Fragrances Philippines",
+      },
+    ],
   },
   icons: {
     icon: [
@@ -255,6 +264,9 @@ export default async function RootLayout({
         <SmoothScroll>{children}</SmoothScroll>
         <StickyMobileCTA />
         <CookieBanner />
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
         <Toaster
           position="bottom-right"
           toastOptions={{

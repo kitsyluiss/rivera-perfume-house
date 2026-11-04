@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Loader2, Mail, Lock } from "lucide-react";
+import { Loader2, Mail, Lock, AlertCircle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -24,16 +24,19 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setFormError(null);
     setLoading(true);
 
     try {
       const result = await signIn(email, password);
       
       if (result?.error) {
+        setFormError(result.error);
         if (result.error.includes("Email not confirmed")) {
           toast.error("Please check your inbox and click the verification link before logging in.");
         } else {
@@ -45,7 +48,9 @@ export default function LoginPage() {
         router.refresh();
       }
     } catch (error: any) {
-      toast.error(error instanceof Error ? error.message : "Sign in failed");
+      const msg = error instanceof Error ? error.message : "Sign in failed";
+      setFormError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -93,6 +98,15 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent className="px-6 pb-7 sm:px-8 sm:pb-8">
             <form onSubmit={handleSubmit} className="space-y-5">
+              {formError && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive"
+                >
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
               {[
                 {
                   id: "email",
