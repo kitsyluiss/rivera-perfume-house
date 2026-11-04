@@ -513,6 +513,8 @@ export default function NarrativeScroll() {
               <Link href="/about" className="hover:text-[#e1b854] transition-colors">About Us</Link>
               <Link href="/atelier" className="hover:text-[#e1b854] transition-colors">The Atelier</Link>
               <Link href="/journal" className="hover:text-[#e1b854] transition-colors">Fragrance Journal</Link>
+              <Link href="/privacy" className="hover:text-[#e1b854] transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-[#e1b854] transition-colors">Terms of Service</Link>
             </div>
             <p className="font-display text-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#f9d976] to-[#bd9135] font-light tracking-[0.25em]">
               RIVERA
