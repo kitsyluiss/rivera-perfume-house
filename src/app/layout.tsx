@@ -5,6 +5,8 @@ import { getUserProfile } from "@/lib/actions";
 import { Toaster } from "sonner";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
+import StickyMobileCTA from "@/components/StickyMobileCTA";
+import CookieBanner from "@/components/CookieBanner";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://rivera.perfumehouse.workers.dev").replace(/\/+$/, "");
 
@@ -251,6 +253,8 @@ export default async function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased">
         <Navbar isLoggedIn={!!user} role={role} />
         <SmoothScroll>{children}</SmoothScroll>
+        <StickyMobileCTA />
+        <CookieBanner />
         <Toaster
           position="bottom-right"
           toastOptions={{

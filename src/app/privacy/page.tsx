@@ -4,7 +4,7 @@ import { ShieldCheck, Lock, Eye, FileText, ChevronRight, Mail, Phone, MapPin } f
 import { CONTACT_INFO } from "@/lib/contact-channels";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Rivera Fragrance House",
+  title: "Privacy Policy",
   description:
     "Review our transparent Privacy Policy under the Philippine Data Privacy Act (RA 10173). Learn how Rivera Fragrance House collects, protects, and handles your order information.",
   alternates: {
@@ -175,3 +175,4 @@ export default function PrivacyPolicyPage() {
     </main>
   );
 }
+

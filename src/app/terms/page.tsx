@@ -4,7 +4,7 @@ import { BadgeCheck, Truck, RotateCcw, AlertCircle, ChevronRight, Scale, ShieldC
 import { CONTACT_INFO } from "@/lib/contact-channels";
 
 export const metadata: Metadata = {
-  title: "Terms of Service & Order Guidelines | Rivera Fragrance House",
+  title: "Terms of Service & Order Guidelines",
   description:
     "Review our terms of purchase, authenticity pledge, nationwide shipping conditions, return procedures, and wholesale reseller guidelines at Rivera Fragrance House.",
   alternates: {
@@ -186,3 +186,4 @@ export default function TermsOfServicePage() {
     </main>
   );
 }
+
