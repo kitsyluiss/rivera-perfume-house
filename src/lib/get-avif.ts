@@ -12,6 +12,7 @@ export function getAvifUrl(p: Perfume): string {
   else if (name.includes("bade'e al oud amethyst")) fileName = "badee_al_oud_amethyst.avif";
   else if (name.includes("iii thriller")) fileName = "iii_thriller.avif";
   else if (name.includes("ameerat al arab prive rose")) fileName = "ameerat_al_arab_prive_rose.avif";
+  else if (name.includes("revolt uprising")) fileName = "revolt_uprising.avif";
   else if (name.includes("club de nuit")) fileName = "club_de_nuit_intense_man.avif";
   else if (name.includes("delilah")) fileName = "delilahblanc.avif";
   else if (name.includes("hawas ice")) fileName = "hawas ice.avif";
