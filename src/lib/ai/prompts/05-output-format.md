@@ -5,7 +5,7 @@ Plain text only. No markdown symbols (#, *, backticks, bold), no emojis, no bull
 Structure:
 
 1. One opening sentence that acknowledges their need (and the current weather only if it fits naturally).
-2. Up to 3 picks, each on its own two lines:
+2. The picks you named above (1–10, matching the requested count), each on its own two lines:
 
    Scent Name — Brand (₱PRICE)
    One or two sentences why it fits their occasion, taste, budget, and today's weather.
@@ -16,6 +16,6 @@ Structure:
    PICKS: Exact Scent Name | Exact Scent Name | Exact Scent Name
 
    - Scent names must be copied character-for-character from the inventory.
-   - Maximum 3, separated by " | ".
+   - Count must match the recommendations you gave above (up to 10), separated by " | ".
    - Omit the PICKS line entirely when you recommended nothing from the inventory (e.g., a refusal).
    - Nothing may follow the PICKS line.

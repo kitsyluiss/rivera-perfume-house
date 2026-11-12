@@ -51,16 +51,36 @@ async function getManilaWeather(): Promise<string> {
 }
 
 export async function POST(req: Request) {
-  let message: unknown;
+  let body: { message?: unknown; history?: unknown };
   try {
-    ({ message } = await req.json());
+    body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid body." }, { status: 400 });
   }
+  const message = body.message;
   if (typeof message !== "string" || !message.trim()) {
     return NextResponse.json({ error: "Empty message." }, { status: 400 });
   }
   const userMessage = message.trim().slice(0, 500);
+
+  // Conversation memory: last few turns so follow-ups can avoid repeats.
+  const history = Array.isArray(body.history) ? body.history : [];
+  const priorTurns = history
+    .filter(
+      (t): t is { role: "user" | "assistant"; content: string } =>
+        !!t &&
+        typeof t === "object" &&
+        ((t as { role?: unknown }).role === "user" ||
+          (t as { role?: unknown }).role === "assistant") &&
+        typeof (t as { content?: unknown }).content === "string"
+    )
+    .slice(-10)
+    .map((t) => ({
+      role: t.role,
+      // 1600 chars covers a 10-item reply; shorter caps amputate the tail
+      // and re-expose already-recommended items.
+      content: t.content.slice(0, 1600),
+    }));
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -94,10 +114,22 @@ export async function POST(req: Request) {
   });
 
   const weather = await getManilaWeather();
+  // Names already surfaced in prior assistant turns, parsed from history text:
+  // prompt rule alone was too soft, so repeats are also filtered in code.
+  const knownNames = new Set(inventory.map((i) => i.scent_name.toLowerCase()));
+  const alreadyRecommended = new Set<string>();
+  for (const t of priorTurns) {
+    if (t.role !== "assistant") continue;
+    const lower = t.content.toLowerCase();
+    for (const name of knownNames) if (lower.includes(name)) alreadyRecommended.add(name);
+  }
   const systemPrompt =
     AI_PROMPT_LAYERS.join("\n\n---\n\n") +
     `\n\n## ${weather}\n\n## AVAILABLE INVENTORY (the ONLY products you may recommend)\n` +
-    JSON.stringify(inventory);
+    JSON.stringify(inventory) +
+    (alreadyRecommended.size
+      ? `\n\n## DO NOT REPEAT — already recommended in this conversation\n${[...alreadyRecommended].join(", ")}\nOnly mention these if the customer asks for that exact item again.`
+      : "");
 
   try {
     const res = await fetch(NIM_URL, {
@@ -111,11 +143,12 @@ export async function POST(req: Request) {
         model: process.env.NVIDIA_SUGGEST_MODEL || FALLBACK_MODEL,
         messages: [
           { role: "system", content: systemPrompt },
+          ...priorTurns,
           { role: "user", content: userMessage },
         ],
         temperature: 0.6,
         top_p: 0.9,
-        max_tokens: 700,
+        max_tokens: 900,
         chat_template_kwargs: { thinking: false },
       }),
     });
@@ -143,7 +176,10 @@ export async function POST(req: Request) {
         (p) => p.scent_name.toLowerCase() === name
       ))
       .filter((p): p is InventoryRow => Boolean(p))
-      .slice(0, 3)
+      // ponytail: code-level no-repeat backstop; a customer re-asking for the
+      // same item loses its chip but the reply text still names it.
+      .filter((p) => !alreadyRecommended.has(p.scent_name.toLowerCase()))
+      .slice(0, 10)
       .map((p) => {
         const flashActive =
           p.flash_sale_price != null &&

@@ -42,6 +42,10 @@ export default function AiSuggestorPanel({
   const prevFocus = useRef<HTMLElement | null>(null);
   const reduceMotion = useReducedMotion();
 
+  // Last 4 exchanges so follow-ups ("give me more") remember prior picks.
+  const historyOf = (entries: ChatEntry[]) =>
+    entries.slice(-8).map(({ role, text }) => ({ role, content: text }));
+
   // Focus moves into the dialog on open and returns to the trigger on close.
   useEffect(() => {
     if (open) {
@@ -86,7 +90,7 @@ export default function AiSuggestorPanel({
       const res = await fetch("/api/suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: question }),
+        body: JSON.stringify({ message: question, history: historyOf(messages) }),
       });
       const data = (await res.json()) as { reply?: string; picks?: Pick[] };
       setMessages((m) => [
