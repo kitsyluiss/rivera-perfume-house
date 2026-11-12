@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/gen-ai-prompts.mjs",
     "dev": "next dev --webpack -p 3001",
+    "prebuild": "node scripts/gen-ai-prompts.mjs",
     "build": "next build",
     "build:cf": "opennextjs-cloudflare build",
     "start": "next start",
     "lint": "eslint",
-    "deploy": "opennextjs-cloudflare deploy"
+    "deploy": "node scripts/gen-ai-prompts.mjs && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
@@ -40,5 +42,12 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "wrangler": "^4.111.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.4": true,
+    "esbuild@0.28.1": true,
+    "workerd@1.20260710.1": true,
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.12.2": true
   }
 }

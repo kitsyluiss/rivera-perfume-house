@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingBag, Sparkles, MessageCircle, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { ShoppingBag, WandSparkles, MessageCircle, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { CONTACT_INFO } from "@/lib/contact-channels";
+import AiSuggestorPanel from "@/components/AiSuggestorPanel";
 
 export default function StickyMobileCTA() {
   const pathname = usePathname();
+  const [suggestorOpen, setSuggestorOpen] = useState(false);
 
   // Hide on admin routes, checkout, login/signup flows, or if already in full checkout
   const isExcludedRoute =
@@ -26,8 +29,9 @@ export default function StickyMobileCTA() {
   const isProduct = pathname.startsWith("/perfumes/");
 
   return (
-    <AnimatePresence>
-      <motion.aside
+    <>
+      <AnimatePresence>
+        <motion.aside
         aria-label="Mobile Quick Actions"
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -51,19 +55,18 @@ export default function StickyMobileCTA() {
             <span>Inquire</span>
           </a>
 
-          {/* Right: Primary Conversion Button */}
+          {/* Right: AI Perfume Suggestor (catalog) */}
           {isCatalog ? (
-            <a
-              href="#top"
-              onClick={(e) => {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
+            <button
+              type="button"
+              onClick={() => setSuggestorOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={suggestorOpen}
               className="flex-1 flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-gradient-to-r from-[#f9d976] to-[#bd9135] text-black font-semibold text-xs uppercase tracking-[0.15em] shadow-lg shadow-[#e1b854]/20 active:scale-95 transition-all"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Filter Perfumes</span>
-            </a>
+              <WandSparkles className="h-3.5 w-3.5" />
+              <span>Suggest For Me</span>
+            </button>
           ) : isProduct ? (
             <Link
               href="/cart"
@@ -84,7 +87,12 @@ export default function StickyMobileCTA() {
           )}
         </div>
       </motion.aside>
-    </AnimatePresence>
+      </AnimatePresence>
+      <AiSuggestorPanel
+        open={suggestorOpen}
+        onClose={() => setSuggestorOpen(false)}
+      />
+    </>
   );
 }
 
