@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -14,7 +14,7 @@ import {
   ShieldCheck,
   User as UserIcon,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { signOut } from "@/lib/actions";
 import { toast } from "sonner";
 import { CONTACT_INFO } from "@/lib/contact-channels";
@@ -28,6 +28,10 @@ export default function Navbar({ isLoggedIn, role }: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const menuHasOpened = useRef(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const handleSignOut = async () => {
     await signOut();
@@ -53,15 +57,45 @@ export default function Navbar({ isLoggedIn, role }: NavbarProps) {
     };
   }, [mobileMenuOpen]);
 
-  // Close on Escape key
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMobileMenuOpen(false);
-    };
-    if (mobileMenuOpen) {
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
+    if (!mobileMenuOpen) {
+      return;
     }
+
+    menuHasOpened.current = true;
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+
+    const focusableSelector =
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusableElements = () =>
+      Array.from(drawer.querySelectorAll<HTMLElement>(focusableSelector));
+
+    focusableElements()[0]?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileMenuOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const elements = focusableElements();
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (!first || !last) return;
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [mobileMenuOpen]);
 
   const navLinks = [
@@ -180,10 +214,12 @@ export default function Navbar({ isLoggedIn, role }: NavbarProps) {
             {/* Mobile Menu Hamburger Trigger */}
             <button
               type="button"
+              ref={menuButtonRef}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="flex md:hidden h-10 w-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all touch-manipulation"
               aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation-drawer"
             >
               {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
@@ -192,7 +228,11 @@ export default function Navbar({ isLoggedIn, role }: NavbarProps) {
       </header>
 
       {/* Mobile Drawer (Luxury Slide-over Sheet) */}
-      <AnimatePresence>
+      <AnimatePresence
+        onExitComplete={() => {
+          if (menuHasOpened.current) menuButtonRef.current?.focus();
+        }}
+      >
         {mobileMenuOpen && (
           <>
             {/* Backdrop Overlay */}
@@ -200,7 +240,7 @@ export default function Navbar({ isLoggedIn, role }: NavbarProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
               onClick={() => setMobileMenuOpen(false)}
               className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md md:hidden pointer-events-auto"
               aria-hidden="true"
@@ -208,19 +248,29 @@ export default function Navbar({ isLoggedIn, role }: NavbarProps) {
 
             {/* Slide-over Drawer Panel */}
             <motion.aside
-              initial={{ x: "100%" }}
+              ref={drawerRef}
+              id="mobile-navigation-drawer"
+              initial={prefersReducedMotion ? false : { x: "100%" }}
               animate={{ x: "0%" }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", stiffness: 340, damping: 30 }}
+              exit={prefersReducedMotion ? { opacity: 0 } : { x: "100%" }}
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 340, damping: 30 }
+              }
               role="dialog"
               aria-modal="true"
-              aria-label="Mobile Navigation Drawer"
+              aria-labelledby="mobile-navigation-title"
               className="fixed inset-y-0 right-0 z-50 w-[88vw] max-w-sm bg-black/95 backdrop-blur-2xl border-l border-white/10 p-6 flex flex-col justify-between shadow-2xl md:hidden pointer-events-auto text-white overflow-y-auto"
               style={{
                 paddingTop: "max(1.5rem, env(safe-area-inset-top))",
                 paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
               }}
             >
+              <h2 id="mobile-navigation-title" className="sr-only">
+                Mobile navigation menu
+              </h2>
+
               {/* Drawer Top Header */}
               <div>
                 <div className="flex items-center justify-between pb-5 border-b border-white/10">
@@ -264,6 +314,36 @@ export default function Navbar({ isLoggedIn, role }: NavbarProps) {
                       )}
                     </Link>
                   ))}
+
+                  {isLoggedIn && role === "admin" && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center justify-between h-12 px-3 rounded-xl transition-all ${
+                        pathname === "/admin"
+                          ? "bg-white/10 text-white border border-[#e1b854]/40"
+                          : "text-white/80 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <span className="font-display text-base tracking-wide">Admin</span>
+                      <ChevronRight className="h-4 w-4 text-white/30" />
+                    </Link>
+                  )}
+
+                  {isLoggedIn && role === "customer" && (
+                    <Link
+                      href="/orders"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center justify-between h-12 px-3 rounded-xl transition-all ${
+                        pathname === "/orders"
+                          ? "bg-white/10 text-white border border-[#e1b854]/40"
+                          : "text-white/80 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <span className="font-display text-base tracking-wide">Orders</span>
+                      <ChevronRight className="h-4 w-4 text-white/30" />
+                    </Link>
+                  )}
 
                   <div className="h-px bg-white/10 my-3" />
 
