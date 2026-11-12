@@ -129,7 +129,7 @@ export default function TermsOfServicePage() {
               </p>
             </div>
             <ul className="list-disc pl-5 space-y-2 text-white/70">
-              <li>Items with broken original plastic cellophane seals cannot be returned for "change of scent preference" due to hygiene and authenticity integrity.</li>
+              <li>Items with broken original plastic cellophane seals cannot be returned for &quot;change of scent preference&quot; due to hygiene and authenticity integrity.</li>
               <li>Eligible return or transit damage claims must be initiated within seven (7) calendar days of delivery.</li>
             </ul>
           </section>
