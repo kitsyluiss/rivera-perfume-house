@@ -602,6 +602,200 @@ const DNA_DICTIONARY: Record<string, FragranceDNA> = {
       heart: ["Gardenia", "Jasmine", "Vanilla Orchid"],
       base: ["Amber", "Sandalwood", "Chestnut"]
     }
+  },
+  "the kingdom for women": {
+    description: "A luscious, feminine blend of crisp pear, delicate peony, and tart cassis melting into an indulgent heart of nutty praline, jasmine, and tonka bean, resting on a warm, velvety base of vanilla, amber, and sandalwood.",
+    accords: [
+      { name: "Sweet", value: 100, color: "sweet" },
+      { name: "Fruity", value: 78, color: "fruity" },
+      { name: "Fresh", value: 78, color: "fresh" },
+      { name: "Vanilla", value: 76, color: "vanilla" },
+      { name: "Floral", value: 65, color: "floral" },
+      { name: "Powdery", value: 65, color: "powdery" },
+      { name: "Amber", value: 60, color: "amber" },
+      { name: "Musky", value: 57, color: "musky" },
+      { name: "Woody", value: 55, color: "woody" },
+      { name: "Aromatic", value: 53, color: "aromatic" }
+    ],
+    notes: {
+      top: ["Pear", "Peony", "Cassis"],
+      heart: ["Praline", "Jasmine", "Tonka Bean"],
+      base: ["Vanilla", "Musk", "Sandalwood", "Amber"]
+    }
+  },
+  "khair fusion": {
+    description: "A sparkling, mouth-watering burst of juicy lychee, crisp red apple, and zesty Italian lemon wrapped around a romantic bouquet of Taif rose and jasmine, drying down into a soft, creamy trail of vanilla, musk, and cedar.",
+    accords: [
+      { name: "Fruity", value: 100, color: "fruity" },
+      { name: "Fresh", value: 57, color: "fresh" },
+      { name: "Tropical", value: 53, color: "tropical" },
+      { name: "Powdery", value: 50, color: "powdery" },
+      { name: "Sweet", value: 49, color: "sweet" },
+      { name: "Vanilla", value: 48, color: "vanilla" },
+      { name: "Woody", value: 46, color: "woody" },
+      { name: "Citrus", value: 45, color: "citrus" },
+      { name: "Floral", value: 45, color: "floral" }
+    ],
+    notes: {
+      top: ["Litchi", "Red Apple", "Black Currant", "Italian Lemon"],
+      heart: ["Jasmine Sambac", "Taif Rose", "Pansy"],
+      base: ["Vanille", "Vanilla", "Musk", "Sandal", "Cedar"]
+    }
+  },
+  "club de nuit urban elixir": {
+    description: "A bold, versatile crowd-pleaser pairing sharp bergamot and spicy pink pepper with an aromatic heart of lavender, saffron, and vetiver, anchored by a powerhouse base of ambroxan, warm amber, and patchouli.",
+    accords: [
+      { name: "Amber", value: 100, color: "amber" },
+      { name: "Aromatic", value: 82, color: "aromatic" },
+      { name: "Citrus", value: 74, color: "citrus" },
+      { name: "Fresh Spicy", value: 73, color: "fresh_spicy" },
+      { name: "Musky", value: 67, color: "musky" },
+      { name: "Woody", value: 66, color: "woody" },
+      { name: "Lavender", value: 58, color: "lavender" },
+      { name: "Soft Spicy", value: 54, color: "soft_spicy" },
+      { name: "Warm Spicy", value: 46, color: "warm_spicy" },
+      { name: "Herbal", value: 45, color: "herbal" }
+    ],
+    notes: {
+      top: ["Bergamot", "Pink Pepper", "Jasmine", "Orange Blossom"],
+      heart: ["Lavender", "Elemi", "Geranium", "Vetiver", "Saffron", "Marigold"],
+      base: ["Ambroxan", "Amber", "Cedar", "Patchouli", "Labdanum"]
+    }
+  },
+  "musamam black intense": {
+    description: "A dark, captivating fusion of aromatic lavender, warm nutmeg, and herbal sage layered over crisp cedarwood and rosy florals, settling into an addictive, rich base of roasted cacao, sweet maple, tonka bean, and patchouli.",
+    accords: [
+      { name: "Fresh Spicy", value: 100, color: "fresh_spicy" },
+      { name: "Woody", value: 98, color: "woody" },
+      { name: "Aromatic", value: 95, color: "aromatic" },
+      { name: "Lavender", value: 72, color: "lavender" },
+      { name: "Floral", value: 61, color: "floral" },
+      { name: "Vanilla", value: 61, color: "vanilla" },
+      { name: "Herbal", value: 60, color: "herbal" },
+      { name: "Sweet", value: 58, color: "sweet" },
+      { name: "Amber", value: 52, color: "amber" },
+      { name: "Warm Spicy", value: 52, color: "warm_spicy" }
+    ],
+    notes: {
+      top: ["Lavender", "Nutmeg", "Sage", "Bergamot"],
+      heart: ["Cedarwood", "Geranium", "Mahonial", "Rosyfolia"],
+      base: ["Cocoapulse", "Tonka Bean", "Maple", "Ambrofix", "Patchouli"]
+    }
+  },
+  "infinity for men": {
+    description: "A sharp, crisp burst of bergamot, grapefruit, and spicy ginger balanced by a refined heart of rose, crisp apple, and cardamom, settling into a clean, professional base of cedar, vetiver, and cashmere wood.",
+    accords: [
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "Fresh Spicy", value: 85, color: "fresh_spicy" },
+      { name: "Rose", value: 75, color: "rose" },
+      { name: "Aromatic", value: 69, color: "aromatic" },
+      { name: "Woody", value: 63, color: "woody" },
+      { name: "Floral", value: 49, color: "floral" },
+      { name: "Fresh", value: 45, color: "fresh" }
+    ],
+    notes: {
+      top: ["Bergamot", "Ginger", "Grapefruit"],
+      heart: ["Rose", "Apple", "Cardamom", "Geranium"],
+      base: ["Cedar", "Vetiver", "Cashmere Wood"]
+    }
+  },
+  "vulcan feu": {
+    description: "A vibrant, mouth-watering explosion of ripe mango, tart rhubarb, and zesty lemon laced with ginger and pink pepper, melting into a sweet praline and floral heart over a rich base of tonka bean, ambergris, and oakmoss.",
+    accords: [
+      { name: "Tropical", value: 100, color: "tropical" },
+      { name: "Fruity", value: 98, color: "fruity" },
+      { name: "Sweet", value: 92, color: "sweet" },
+      { name: "Citrus", value: 73, color: "citrus" },
+      { name: "Fresh", value: 56, color: "fresh" },
+      { name: "Woody", value: 56, color: "woody" },
+      { name: "Fresh Spicy", value: 55, color: "fresh_spicy" },
+      { name: "Aromatic", value: 54, color: "aromatic" },
+      { name: "Terpenic", value: 52, color: "terpenic" },
+      { name: "Amber", value: 50, color: "amber" }
+    ],
+    notes: {
+      top: ["Mango", "Lemon", "Ginger", "Rhubarb"],
+      heart: ["Pink Pepper", "Jasmine", "Violet", "Praline"],
+      base: ["Tonka Bean", "Cedarwood", "Ambergris", "Moss"]
+    }
+  },
+  "revolt uprising": {
+    description: "An energetic, modern blend of zesty citrus, juicy melon, and fiery ginger with black pepper, softening into an aromatic floral heart of lavender and rose over a warm amber, patchouli, and musk foundation.",
+    accords: [
+      { name: "Citrus", value: 100, color: "citrus" },
+      { name: "Fresh Spicy", value: 95, color: "fresh_spicy" },
+      { name: "Fresh", value: 66, color: "fresh" },
+      { name: "Amber", value: 61, color: "amber" },
+      { name: "Aromatic", value: 53, color: "aromatic" },
+      { name: "Powdery", value: 47, color: "powdery" },
+      { name: "Rose", value: 47, color: "rose" },
+      { name: "Musky", value: 47, color: "musky" },
+      { name: "Ozonic", value: 46, color: "ozonic" }
+    ],
+    notes: {
+      top: ["Ginger", "Bergamot", "Melon", "Lemon", "Black Pepper"],
+      heart: ["Rose", "Lavender", "Jasmine"],
+      base: ["Amber", "Musk", "Patchouli"]
+    }
+  },
+  "bade'e al oud amethyst": {
+    description: "A dark, opulent swirl of jammy Turkish and Bulgarian roses sparked by pink pepper and bergamot, resting heavily on a rich, smoky foundation of agarwood, warm amber, and smooth vanilla.",
+    accords: [
+      { name: "Rose", value: 100, color: "rose" },
+      { name: "Oud", value: 85, color: "oud" },
+      { name: "Amber", value: 58, color: "amber" },
+      { name: "Soft Spicy", value: 57, color: "soft_spicy" },
+      { name: "Floral", value: 56, color: "floral" },
+      { name: "Vanilla", value: 51, color: "vanilla" },
+      { name: "Citrus", value: 49, color: "citrus" },
+      { name: "Fresh Spicy", value: 49, color: "fresh_spicy" },
+      { name: "White Floral", value: 47, color: "white_floral" }
+    ],
+    notes: {
+      top: ["Pink Pepper", "Bergamot"],
+      heart: ["Turkish Rose", "Bulgarian Rose", "Jasmine"],
+      base: ["Agarwood (Oud)", "Amber", "Vanilla"]
+    }
+  },
+  "iii thriller": {
+    description: "A bold, smoky powerhouse of saffron, cardamom, and black pepper draped over supple leather, resinous incense, and labdanum, drying down into a deeply warm, velvety base of sandalwood, benzoin, and vanilla.",
+    accords: [
+      { name: "Amber", value: 100, color: "amber" },
+      { name: "Warm Spicy", value: 93, color: "warm_spicy" },
+      { name: "Woody", value: 73, color: "woody" },
+      { name: "Vanilla", value: 70, color: "vanilla" },
+      { name: "Aromatic", value: 66, color: "aromatic" },
+      { name: "Powdery", value: 64, color: "powdery" },
+      { name: "Fresh Spicy", value: 62, color: "fresh_spicy" },
+      { name: "Balsamic", value: 59, color: "balsamic" },
+      { name: "Leather", value: 57, color: "leather" },
+      { name: "Smoky", value: 50, color: "smoky" }
+    ],
+    notes: {
+      top: ["Pepper", "Cardamom", "Saffron", "Elemi", "Bergamot", "Lemon"],
+      heart: ["Leather", "Tonka Bean", "Incense", "Labdanum", "Clary Sage"],
+      base: ["Sandalwood", "Vanilla", "Amber", "Benzoin", "Cashmeran", "Musk"]
+    }
+  },
+  "ameerat al arab prive rose": {
+    description: "A luscious, romantic bouquet led by sweet strawberry, juicy grapes, and bright orange melting into an opulent heart of velvety rose, white musk, and lush white florals, resting on a warm, creamy base of tonka bean, amber, and sandalwood.",
+    accords: [
+      { name: "Rose", value: 100, color: "rose" },
+      { name: "Sweet", value: 93, color: "sweet" },
+      { name: "Fruity", value: 90, color: "fruity" },
+      { name: "Musky", value: 78, color: "musky" },
+      { name: "White Floral", value: 69, color: "white_floral" },
+      { name: "Powdery", value: 66, color: "powdery" },
+      { name: "Amber", value: 60, color: "amber" },
+      { name: "Floral", value: 55, color: "floral" },
+      { name: "Woody", value: 53, color: "woody" },
+      { name: "Vanilla", value: 47, color: "vanilla" }
+    ],
+    notes: {
+      top: ["Strawberry", "Grapes", "Orange"],
+      heart: ["Rose", "White Musk", "Jasmine", "Gardenia", "Ylang-Ylang", "Lily"],
+      base: ["Tonka Bean", "Amber", "Sandalwood"]
+    }
   }
 };
 
@@ -690,6 +884,16 @@ export function getAccordGradient(color: string): string {
       return "linear-gradient(90deg, #a0522d, #8b4513)";
     case "rose":
       return "linear-gradient(90deg, #f43f5e, #fb7185)";
+    case "tropical":
+      return "linear-gradient(90deg, #14b8a6, #84cc16)";
+    case "herbal":
+      return "linear-gradient(90deg, #65a30d, #166534)";
+    case "terpenic":
+      return "linear-gradient(90deg, #22c55e, #0f766e)";
+    case "ozonic":
+      return "linear-gradient(90deg, #38bdf8, #c4b5fd)";
+    case "balsamic":
+      return "linear-gradient(90deg, #78350f, #a16207)";
     case "oud":
       return "linear-gradient(90deg, #3e2723, #5d4037)";
     case "caramel":

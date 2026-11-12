@@ -3,7 +3,16 @@ import { Perfume } from "@/lib/types";
 export function getAvifUrl(p: Perfume): string {
   const name = (p.scent_name || "").toLowerCase();
   let fileName = "";
-  if (name.includes("club de nuit")) fileName = "club_de_nuit_intense_man.avif";
+  if (name.includes("the kingdom for women")) fileName = "the_kingdom_for_women.avif";
+  else if (name.includes("khair fusion")) fileName = "khair_fusion.avif";
+  else if (name.includes("club de nuit urban")) fileName = "club_de_nuit_urban_elixir.avif";
+  else if (name.includes("musamam black intense")) fileName = "musamam_black_intense.avif";
+  else if (name.includes("infinity for men")) fileName = "infinity_for_men.avif";
+  else if (name.includes("vulcan feu") || name.includes("vulcan fue")) fileName = "vulcan_feu.avif";
+  else if (name.includes("bade'e al oud amethyst")) fileName = "badee_al_oud_amethyst.avif";
+  else if (name.includes("iii thriller")) fileName = "iii_thriller.avif";
+  else if (name.includes("ameerat al arab prive rose")) fileName = "ameerat_al_arab_prive_rose.avif";
+  else if (name.includes("club de nuit")) fileName = "club_de_nuit_intense_man.avif";
   else if (name.includes("delilah")) fileName = "delilahblanc.avif";
   else if (name.includes("hawas ice")) fileName = "hawas ice.avif";
   else if (name.includes("hawas black")) fileName = "hawas_black.avif";
